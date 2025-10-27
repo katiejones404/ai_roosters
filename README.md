@@ -9,7 +9,9 @@ In order to build and run the front end for our source control milestone locally
 In the terminal at the ai_roosters folder:
 
 cd frontend/my-react-app
+
 npm install
+
 npm run dev
 
 If the program is running successfully, you should see it running at: http://localhost:5173/
