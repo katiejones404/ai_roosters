@@ -1,0 +1,60 @@
+services:
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: stock_postgres
+    environment:
+      POSTGRES_DB: stock_db
+      POSTGRES_USER: stock_user
+      POSTGRES_PASSWORD: stock_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # - ./database/init.sql:/docker-entrypoint-initdb.d/init/sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stock_user -d stock_app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Backend.Dockerfile
+    container_name: stock_backend
+    environment:
+      DATABASE_URL: postgresql://stock_user:stock_pass@postgres:5432/stock_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+
+  # Frontend React App (Development)  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Frontend.Dockerfile
+    container_name: stock_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: ["npm", "run", "dev", "--", "--host"]
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

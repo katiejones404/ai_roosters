@@ -19,6 +19,8 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --prefix=/install -r requirements.txt
 
+COPY . .
+
 # 2. Runtime Stage
 # -------------------------
 FROM python:3.11-slim
@@ -32,9 +34,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy dependencies from build stage
 COPY --from=builder /install /usr/local
-
-# Copy backend code
-COPY ...
 
 EXPOSE 8000
 
