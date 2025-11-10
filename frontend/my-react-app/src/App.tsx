@@ -1,34 +1,84 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import CreateAccount from "./create_account.tsx";
+import Login from "./login.tsx";
+import Settings from "./settings.tsx";
 import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0);
-
+function Home() {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="app-container">
+      <div className="home-background-shapes">
+        <div className="home-shape home-shape-1"></div>
+        <div className="home-shape home-shape-2"></div>
+        <div className="home-shape home-shape-3"></div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+
+      <div className="home-card">
+        <div className="home-content">
+          <h1>Welcome to StockSense</h1>
+          <p>
+            Make smarter investment decisions with real-time market insights,
+            portfolio tracking, and AI-powered analytics. Join thousands of
+            investors who trust StockSense.
+          </p>
+
+          <div className="nav-links">
+            <Link to="/signup" className="nav-link nav-link-primary">
+              🚀 Create Account
+            </Link>
+            <Link to="/login" className="nav-link nav-link-secondary">
+              🔐 Sign In
+            </Link>
+          </div>
+
+          <div className="features-section">
+            <div className="features-grid">
+              <div className="feature-item">
+                <div className="feature-icon">📊</div>
+                <div className="feature-title">Live Analytics</div>
+                <div className="feature-description">
+                  Real-time market data and insights
+                </div>
+              </div>
+              <div className="feature-item">
+                <div className="feature-icon">🎯</div>
+                <div className="feature-title">Smart Tracking</div>
+                <div className="feature-description">
+                  Monitor your portfolio effortlessly
+                </div>
+              </div>
+              <div className="feature-item">
+                <div className="feature-icon">🤖</div>
+                <div className="feature-title">AI Powered</div>
+                <div className="feature-description">
+                  Intelligent recommendations
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="home-branding">
+          <div className="home-brand-name">
+            Stock<span className="home-brand-highlight">Sense</span>
+          </div>
+          <div className="home-tagline">Smart investing made simple</div>
+        </div>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/signup" element={<CreateAccount />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/settings" element={<Settings />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
