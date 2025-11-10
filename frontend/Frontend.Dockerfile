@@ -1,11 +1,11 @@
 # Development Dockerfile for React with hot reloading
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files first
-COPY package*.json ./
+COPY package.json package-lock.json* ./
 
 # Install dependenceis
 RUN npm install

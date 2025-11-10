@@ -7,14 +7,14 @@ services:
     environment:
       POSTGRES_DB: stock_db
       POSTGRES_USER: stock_user
-      POSTGRES_PASSWORD: stock_password
+      POSTGRES_PASSWORD: stock_pass
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       # - ./database/init.sql:/docker-entrypoint-initdb.d/init/sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U stock_user -d stock_app"]
+      test: ["CMD-SHELL", "pg_isready -U stock_user -d stock_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,7 +35,7 @@ services:
     volumes:
       - ./backend:/app
     command: >
-      uvicorn main:app
+      uvicorn app.main:app
       --host 0.0.0.0
       --port 8000
       --reload
