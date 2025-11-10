@@ -11,7 +11,7 @@ In order to build and run our current version of StockSense locally, you'll need
 ```bash
 docker-compose up --build
 ```
-Backend API: http://localhost:8000
+Backend API: http://localhost:8000  
 Frontend (React + Vite): http://localhost:5173
 
 Press "Ctrl+C" to stop running or run:
