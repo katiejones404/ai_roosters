@@ -7,7 +7,7 @@ StockSense is a full-stack web application that provides investors with an AI-dr
 In order to build and run our current version of StockSense locally, you'll need:  
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
 
-### Build and Run Containers:
+## Build and Run Containers:
 ```bash
 docker-compose up --build
 ```
