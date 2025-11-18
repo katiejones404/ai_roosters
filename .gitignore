@@ -3,3 +3,4 @@
 backend/data/kaggle.json
 .env
 ./.env
+*.pyc 
