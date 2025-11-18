@@ -19,6 +19,8 @@ Press "Ctrl+C" to stop running or run:
 docker-compose down
 ```
 
+To get the JSON files from Kaggle, you will need...
+
 # Authors
 Sofia Bacha - sofbacha01@gmail.com
 
