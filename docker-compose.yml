@@ -24,7 +24,7 @@ services:
   # FastAPI Backend
   backend:
     build:
-      context: ./Backend
+      context: ./backend
       dockerfile: Backend.Dockerfile
     container_name: stock_backend
     environment:
