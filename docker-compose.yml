@@ -65,6 +65,6 @@ services:
       - backend
     command: ["npm", "run", "dev", "--", "--host"]
     restart: unless-stopped
-#Comment2
+
 volumes:
   postgres_data:
