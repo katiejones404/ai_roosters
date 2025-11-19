@@ -19,6 +19,16 @@ Press "Ctrl+C" to stop running or run:
 docker-compose down
 ```
 
+
+## Install Requirements
+
+From ai_roosters folder:
+pip install -r ./backend/requirements.txt
+
+
+
+
+##
 To get the JSON files from Kaggle, you will need...
 
 # Authors
