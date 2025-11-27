@@ -15,6 +15,19 @@ CREATE TABLE IF NOT EXISTS articles (
   inserted_at timestamptz DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS stocks (
+  id SERIAL PRIMARY KEY,
+  ticker VARCHAR(20) NOT NULL,
+  date DATE NOT NULL,
+  adjusted_close NUMERIC NULL,
+  open NUMERIC,
+  high NUMERIC,
+  low NUMERIC,
+  close NUMERIC,
+  volume BIGINT,
+  CONSTRAINT uq_ticker_date UNIQUE (ticker, date)
+);
+
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at);
 CREATE INDEX IF NOT EXISTS idx_articles_source ON articles (source);
 CREATE INDEX IF NOT EXISTS idx_articles_url ON articles (url);
@@ -23,7 +36,7 @@ CREATE INDEX IF NOT EXISTS idx_articles_raw_gin ON articles USING gin (raw);
 
 -- Kevin: Sentiment database 
 
-CREATE TABLE IF NOT EXIST sentiment_snapshots (
+CREATE TABLE IF NOT EXISTS sentiment_snapshots (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Which stock this snapshot for 
@@ -60,8 +73,8 @@ CREATE TABLE IF NOT EXIST sentiment_snapshots (
   created_at timestamptz DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXIST idx_snapshots_ticker_date 
-ON sentiment_snapshots (ticker, snapshot_date);
+CREATE INDEX IF NOT EXISTS idx_snapshots_ticker_date 
+  ON sentiment_snapshots (ticker, snapshot_date);
 
-CREATE INDEX IF NOT EXIST idx_snapshot_ticker 
-ON stock_sentiment_snapshots (ticker);
+CREATE INDEX IF NOT EXISTS idx_snapshot_ticker 
+  ON sentiment_snapshots (ticker);
