@@ -16,6 +16,20 @@ CREATE TABLE IF NOT EXISTS articles (
   inserted_at timestamptz DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS stocks (
+  id SERIAL PRIMARY KEY,
+  ticker VARCHAR(20) NOT NULL,
+  date DATE NOT NULL,
+  adjusted_close NUMERIC NULL,
+  open NUMERIC,
+  high NUMERIC,
+  low NUMERIC,
+  close NUMERIC,
+  volume BIGINT,
+  CONSTRAINT uq_ticker_date UNIQUE (ticket, date)
+)
+
+
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at);
 CREATE INDEX IF NOT EXISTS idx_articles_source ON articles (source);
 CREATE INDEX IF NOT EXISTS idx_articles_url ON articles (url);
