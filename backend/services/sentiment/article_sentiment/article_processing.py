@@ -34,3 +34,12 @@ class Sentiment(Artifact):
     prob_neu_mean: List[float]
     prob_pos_max: List[float]
     prob_neg_max: List[float]
+
+
+    # Stage 1 - Relevance Screen for articles 
+
+
+    # Stage 2 - Sentiment AVG for 3 ranges 30/120/360 days 
+
+
+    # Stage 3 - Output complete object for this 

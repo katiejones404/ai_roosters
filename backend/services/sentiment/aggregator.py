@@ -37,3 +37,8 @@ class Snapshot(Artifact):
     prob_neu_mean: List[float]
     prob_pos_max: List[float]
     prob_neg_max: List[float]
+
+
+
+# Use linear regression model 
+# Features: Article , Stock Historical Data 

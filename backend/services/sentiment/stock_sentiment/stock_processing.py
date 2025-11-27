@@ -17,16 +17,6 @@ class Stock(Artifact):
     return_360d: List[float]
 
 
-class PriceSentiment(Artifact):
-    date: List[str]
-    ticker: List[str]
 
-    close_price: List[float]
 
-    return_30d: List[float]
-    return_120d: List[float]
-    return_360d: List[float]
-
-    behavior_30d: List[str]
-    behavior_120d: List[str]
-    behavior_360d: List[str]
+    # Compute the future return 
