@@ -35,6 +35,10 @@ CREATE TABLE IF NOT EXISTS stocks (
   close NUMERIC,
   volume BIGINT,
   CONSTRAINT uq_ticker_date UNIQUE (ticker, date)
+  return_1d   NUMERIC,
+  return_30d  NUMERIC,
+  return_120d NUMERIC,
+  return_360d NUMERIC
 );
 
 
