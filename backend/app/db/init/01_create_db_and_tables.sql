@@ -2,18 +2,27 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE IF NOT EXISTS articles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  title text,
-  author text,
+
   published_at timestamptz,
-  source text,
+  title text,
+  description text,
   url text UNIQUE,
-  image text,
-  category text,
-  language text,
-  country text,
-  raw jsonb,
-  inserted_at timestamptz DEFAULT now()
+  inserted_at timestamptz DEFAULT now(),
+
+  -- FinBERT sentiment fields (per article)
+  sentiment text,
+  sentiment_score numeric,
+  prob_pos numeric,
+  prob_neg numeric,
+  prob_neu numeric
 );
+
+CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at);
+CREATE INDEX IF NOT EXISTS idx_articles_source ON articles (source);
+CREATE INDEX IF NOT EXISTS idx_articles_url ON articles (url);
+CREATE INDEX IF NOT EXISTS idx_articles_sentiment ON articles (sentiment);
+
+
 
 CREATE TABLE IF NOT EXISTS stocks (
   id SERIAL PRIMARY KEY,
@@ -28,10 +37,6 @@ CREATE TABLE IF NOT EXISTS stocks (
   CONSTRAINT uq_ticker_date UNIQUE (ticker, date)
 );
 
-CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at);
-CREATE INDEX IF NOT EXISTS idx_articles_source ON articles (source);
-CREATE INDEX IF NOT EXISTS idx_articles_url ON articles (url);
-CREATE INDEX IF NOT EXISTS idx_articles_raw_gin ON articles USING gin (raw);
 
 
 -- Kevin: Sentiment database 
