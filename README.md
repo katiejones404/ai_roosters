@@ -2,21 +2,34 @@
 
 StockSense is a full-stack web application that provides investors with an AI-driven platform to track stock performance, analyze sentiment trends, and manage personalized portfolios. It integrates both quantitative (price and performance) and qualitative (news sentiment) data using a modern, containerized architecture.
 
-## External Requirements for Current Deliverable (Source Control)
+## External Requirements 
 
-In order to build and run the front end for our source control milestone locally, you must:
+In order to build and run our current version of StockSense locally, you'll need:  
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
 
-In the terminal at the ai_roosters folder:
+## Build and Run Containers:
+```bash
+docker-compose up --build
+```
+Backend API: http://localhost:8000  
+Frontend (React + Vite): http://localhost:5173
 
-cd frontend/my-react-app
+Press "Ctrl+C" to stop running or run:
+```bash
+docker-compose down
+```
 
-npm install
 
-npm run dev
+## Install Requirements
 
-If the program is running successfully, you should see it running at: http://localhost:5173/
+From ai_roosters folder:
+pip install -r ./backend/requirements.txt
 
-Press "Ctrl+C" to stop running 
+
+
+
+##
+To get the JSON files from Kaggle, you will need...
 
 # Authors
 Sofia Bacha - sofbacha01@gmail.com
