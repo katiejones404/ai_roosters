@@ -6,3 +6,14 @@ scikit-learn==1.3.2
 sqlalchemy==1.4.41
 psycopg2-binary==2.9.6
 pydantic==1.10.9
+python-dotenv
+#run notebooks from the backend container:
+papermill
+yfinance
+
+# For sentiment analysis 
+transformers 
+torch 
+xgboost
+# Manages postgreSQL database connections 
+psycopg2-binary 
