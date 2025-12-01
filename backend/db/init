@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS articles (
 );
 
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at);
-CREATE INDEX IF NOT EXISTS idx_articles_source ON articles (source);
+--CREATE INDEX IF NOT EXISTS idx_articles_source ON articles (source);
 CREATE INDEX IF NOT EXISTS idx_articles_url ON articles (url);
 CREATE INDEX IF NOT EXISTS idx_articles_sentiment ON articles (sentiment);
 
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS stocks (
   low NUMERIC,
   close NUMERIC,
   volume BIGINT,
-  CONSTRAINT uq_ticker_date UNIQUE (ticker, date)
+  CONSTRAINT uq_ticker_date UNIQUE (ticker, date),
   return_1d   NUMERIC,
   return_30d  NUMERIC,
   return_120d NUMERIC,
