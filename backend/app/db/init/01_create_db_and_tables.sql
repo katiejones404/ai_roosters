@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 
+-- Articles
 
 CREATE TABLE IF NOT EXISTS articles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -20,22 +21,6 @@ CREATE TABLE IF NOT EXISTS articles (
   url text UNIQUE,
   inserted_at timestamptz DEFAULT now(),
 
--- User Portfolio
-CREATE TABLE IF NOT EXISTS portfolio (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-
-  user_id uuid NOT NULL,
-  ticker text NOT NULL,
-  quantity numberic NOT NULL,
-  avg_price numberic NOT NULL,
-  add_at timestamptz DEFAULT now(),
-
-  CONSTRAINT fk_items_user
-    FOREIGN KEY (user_id)
-    REFERENCES users(id)
-    ON DELETE CASCADE
-);
-
   -- FinBERT sentiment fields (per article)
   sentiment text,
   sentiment_score numeric,
@@ -45,11 +30,27 @@ CREATE TABLE IF NOT EXISTS portfolio (
 );
 
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at);
-CREATE INDEX IF NOT EXISTS idx_articles_source ON articles (source);
+-- CREATE INDEX IF NOT EXISTS idx_articles_source ON articles (source);
 CREATE INDEX IF NOT EXISTS idx_articles_url ON articles (url);
 CREATE INDEX IF NOT EXISTS idx_articles_sentiment ON articles (sentiment);
 
+-- User Portfolio
+CREATE TABLE IF NOT EXISTS portfolio (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
+  user_id uuid NOT NULL,
+  ticker text NOT NULL,
+  quantity numeric NOT NULL,
+  avg_price numeric NOT NULL,
+  added_at timestamptz DEFAULT now(),
+
+  CONSTRAINT fk_items_user
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+);
+
+-- Stocks
 
 CREATE TABLE IF NOT EXISTS stocks (
   id SERIAL PRIMARY KEY,
@@ -61,14 +62,14 @@ CREATE TABLE IF NOT EXISTS stocks (
   low NUMERIC,
   close NUMERIC,
   volume BIGINT,
-  CONSTRAINT uq_ticker_date UNIQUE (ticker, date)
+
   return_1d   NUMERIC,
   return_30d  NUMERIC,
   return_120d NUMERIC,
-  return_360d NUMERIC
+  return_360d NUMERIC, 
+  
+  CONSTRAINT uq_ticker_date UNIQUE (ticker, date)
 );
-
-
 
 -- Kevin: Sentiment database 
 
