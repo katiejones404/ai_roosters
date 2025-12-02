@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Numeric, TIMESTAMP, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
-from db.base import Base
+from backend.app.db.base import Base
 
 class PortfolioItemModel(Base):
     __tablename__ = "portfolio"
