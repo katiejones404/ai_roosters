@@ -27,6 +27,7 @@ from ..core.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
+
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
