@@ -3,8 +3,8 @@ import sys
 from uuid import UUID
 from fastapi import HHTPException, status
 from sqlalchemy import Session
-from backend.app.models.portfolio_model import PortfolioItemModel
-from backend.app.schema.portfolio_schema import PortfolioCreateItem, PortfolioUpdateItem
+from app.models.portfolio_model import PortfolioItemModel
+from app.schema.portfolio_schema import PortfolioCreateItem, PortfolioUpdateItem
 
 class portfolio_service:
 
