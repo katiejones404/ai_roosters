@@ -1,5 +1,4 @@
 services:
-
   # PostgreSQL Database
   postgres:
     image: postgres:15
@@ -13,14 +12,14 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/app/db/init:/docker-entrypoint-initdb.d:ro   # <-- init SQL files run on first start
-    #- ${KAGGLE_CONFIG}:/root/.kaggle:ro 
+      - ./backend/db/init:/docker-entrypoint-initdb.d:ro # <-- init SQL files run on first start
+    #- ${KAGGLE_CONFIG}:/root/.kaggle:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stock_user -d stock_db"]
       interval: 10s
       timeout: 5s
       retries: 5
-  
+
   # FastAPI Backend
   backend:
     build:
@@ -50,7 +49,7 @@ services:
       --port 8000
       --reload
 
-  # Frontend React App (Development)  
+  # Frontend React App (Development)
   frontend:
     build:
       context: ./frontend
