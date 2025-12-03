@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { login } from "./utils/auth.ts";
 import "./login.css";
 
 interface LoginFormData {
@@ -45,7 +46,7 @@ const Login: React.FC = () => {
     const newErrors: FormErrors = {};
 
     if (!formData.username.trim()) {
-      newErrors.username = "Username is required";
+      newErrors.username = "Email is required";
     }
 
     if (!formData.password) {
@@ -62,22 +63,22 @@ const Login: React.FC = () => {
     if (validateForm()) {
       setIsSubmitting(true);
 
-      // Simulate API call
-      setTimeout(() => {
-        // Simulate login validation
-        if (
-          formData.username.toLowerCase() === "demo" &&
-          formData.password === "password"
-        ) {
-          alert("Login successful! Welcome back!");
-          console.log("Login successful:", formData);
-        } else {
-          setErrors({
-            general: "Invalid username or password. Please try again.",
-          });
-        }
+      try {
+        // Backend uses EMAIL not username, so we use username field as email
+        await login(formData.username, formData.password);
+
+        alert("Login successful! Welcome back!");
+        // Redirect to dashboard
+        window.location.href = "/dashboard";
+      } catch (error: any) {
+        setErrors({
+          general:
+            error.response?.data?.detail ||
+            "Invalid credentials. Please try again.",
+        });
+      } finally {
         setIsSubmitting(false);
-      }, 1500);
+      }
     }
   };
 
@@ -259,7 +260,7 @@ const Login: React.FC = () => {
         {/* Right Side - Login Form */}
         <div className="login-right">
           <div className="login-form-container">
-            <h1 className="welcome-title">Welcome</h1>
+            <h1 className="welcome-title">Welcome Back</h1>
             <p className="welcome-subtitle">
               Sign in to access your investment dashboard
             </p>
@@ -273,7 +274,7 @@ const Login: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="login-form" noValidate>
               <div className="form-group">
-                <label htmlFor="username">Username</label>
+                <label htmlFor="username">Email Address</label>
                 <div className="input-wrapper">
                   <input
                     type="text"
@@ -282,10 +283,10 @@ const Login: React.FC = () => {
                     value={formData.username}
                     onChange={handleChange}
                     className={errors.username ? "error" : ""}
-                    placeholder="Enter your username"
+                    placeholder="Enter your email"
                     autoComplete="username"
                   />
-                  <span className="input-icon">👤</span>
+                  <span className="input-icon">📧</span>
                 </div>
                 {errors.username && (
                   <span className="error-message">{errors.username}</span>
@@ -353,14 +354,7 @@ const Login: React.FC = () => {
               Don't have an account?{" "}
               <Link to="/signup" className="signup-link">
                 Create one now
-              </Link>{" "}
-            </div>
-
-            <div className="demo-credentials">
-              <small>
-                Demo: username: <strong>demo</strong>, password:{" "}
-                <strong>password</strong>
-              </small>
+              </Link>
             </div>
           </div>
         </div>
