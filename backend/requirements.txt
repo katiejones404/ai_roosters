@@ -10,3 +10,10 @@ python-dotenv
 #run notebooks from the backend container:
 papermill
 yfinance
+
+# For sentiment analysis 
+transformers 
+torch 
+xgboost
+# Manages postgreSQL database connections 
+psycopg2-binary 
