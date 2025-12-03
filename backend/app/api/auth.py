@@ -15,10 +15,10 @@ if backend_path not in sys.path:
     sys.path.insert(0, backend_path)
 
 # Now import
-from backend.app.db.main import get_db
-from backend.app.models.models import User
-from backend.app.schema.schemas import UserRegister, UserLogin, UserResponse, Token
-from app.core.security import (
+from ..db.main import get_db
+from ..models.models import User
+from ..schema.schemas import UserRegister, UserLogin, UserResponse, Token
+from ..core.security import (
     hash_password,
     verify_password,
     create_access_token,

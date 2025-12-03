@@ -4,7 +4,7 @@ Database connection and session management
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from backend.app.db.base import Base
+from app.db.base import Base
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
