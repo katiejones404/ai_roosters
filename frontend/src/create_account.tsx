@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { register } from "./utils/auth";
 import "./create_account.css";
 
 interface FormData {
@@ -135,12 +137,23 @@ const CreateAccount: React.FC = () => {
     if (validateForm()) {
       setIsSubmitting(true);
 
-      // Simulate API call
-      setTimeout(() => {
-        console.log("Form submitted:", formData);
-        alert("Account created successfully!");
+      try {
+        // Call real backend API
+        await register(formData.email, formData.password);
+
+        alert("Account created successfully! Please login.");
+        // Redirect to login page
+        window.location.href = "/login";
+      } catch (error: any) {
+        // Show error from backend
+        setErrors({
+          email:
+            error.response?.data?.detail ||
+            "Registration failed. Please try again.",
+        });
+      } finally {
         setIsSubmitting(false);
-      }, 1500);
+      }
     }
   };
 
@@ -290,6 +303,13 @@ const CreateAccount: React.FC = () => {
             <a href="#privacy">Privacy Policy</a>
           </p>
         </form>
+
+        <div className="login-prompt">
+          Already have an account?{" "}
+          <Link to="/login" className="login-link">
+            Sign in here
+          </Link>
+        </div>
 
         <div className="branding">
           <span className="brand-name">
