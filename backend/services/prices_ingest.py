@@ -22,8 +22,8 @@ class PriceIngestor:
         self._create_table()
     
     def _create_table(self):
-        self.stock_prices = Table(
-            'stock_prices',
+        self.stocks = Table(
+            'stocks',
             self.metadata,
             Column('id', Integer, primary_key=True, autoincrement=True),
             Column('ticker', String(20), nullable=False),
@@ -104,7 +104,7 @@ class PriceIngestor:
                 
                 with self.engine.begin() as conn:
                     if update_existing:
-                        stmt = insert(self.stock_prices).values(batch)
+                        stmt = insert(self.stocks).values(batch)
                         stmt = stmt.on_conflict_do_update(
                             constraint='unique_ticker_date',
                             set_={
@@ -117,7 +117,7 @@ class PriceIngestor:
                             }
                         )
                     else:
-                        stmt = insert(self.stock_prices).values(batch)
+                        stmt = insert(self.stocks).values(batch)
                         stmt = stmt.on_conflict_do_nothing(constraint='unique_ticker_date')
                     
                     conn.execute(stmt)
@@ -151,7 +151,7 @@ class PriceIngestor:
             with self.engine.connect() as conn:
                 query = text("""
                     SELECT MAX(date) as latest_date 
-                    FROM stock_prices 
+                    FROM stocks 
                     WHERE ticker = :ticker
                 """)
                 result = conn.execute(query, {"ticker": ticker}).fetchone()
@@ -209,7 +209,7 @@ if __name__ == "__main__":
     try:
         with ingestor.engine.connect() as conn:
             from sqlalchemy import text
-            result = conn.execute(text("SELECT ticker, COUNT(*) as count FROM stock_prices GROUP BY ticker"))
+            result = conn.execute(text("SELECT ticker, COUNT(*) as count FROM stocks GROUP BY ticker"))
             for row in result:
                 logger.info(f"  {row[0]}: {row[1]} records")
     except Exception as e:
