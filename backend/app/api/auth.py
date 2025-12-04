@@ -12,8 +12,8 @@ import sys
 sys.path.insert(0, '/app')
 
 from app.db.main import get_db
-from db.models import User
-from app.schemas import UserRegister, UserLogin, UserResponse, Token
+from app.models.models import User
+from app.schema.schemas import UserRegister, UserLogin, UserResponse, Token
 from app.core.security import (
     hash_password,
     verify_password,
