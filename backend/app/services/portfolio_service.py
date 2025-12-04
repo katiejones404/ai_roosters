@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import HHTPException, status
 from sqlalchemy import Session
 from app.models.portfolio_model import PortfolioItemModel
-from app.schema.portfolio_schema import PortfolioCreateItem, PortfolioUpdateItem
+from app.schema.schemas import PortfolioCreateItem, PortfolioUpdateItem
 
 class portfolio_service:
 

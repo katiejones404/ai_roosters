@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 
@@ -35,3 +36,24 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     """Schema for token payload data"""
     email: str | None = None
+
+# ============ PORTFOLIO SCHEMAS ============
+class PortfolioBaseItem(BaseModel):
+    ticker: str 
+    quantity: float 
+    avg_price: float
+
+class PortfolioCreateItem(PortfolioBaseItem):
+    pass
+
+class PortfolioUpdateItem(BaseModel):
+    quantity: Optional[float] = None
+    avg_price: Optional[float] = None
+
+class PortfolioItem(PortfolioBaseItem):
+    id: UUID
+    user_id: UUID
+    added_at: Optional[str]
+
+    class Config:
+        orm_mode: True
