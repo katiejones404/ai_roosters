@@ -26,6 +26,4 @@ tests
 *.tgz
 *.zip
 *.tar.gz
-package-lock.json
-package.json 
 images
