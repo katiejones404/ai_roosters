@@ -52,6 +52,7 @@ def get_sentiment_indicators(
 
     base_sql = """
         SELECT DISTINCT ON (ticker)
+            id,
             ticker,
             snapshot_date,
             close_price,
@@ -64,8 +65,11 @@ def get_sentiment_indicators(
     """
 
     if ticker:
-        sql = base_sql.format(where_clause="WHERE ticker = :ticker")
-        rows = db.execute(text(sql), {"ticker": ticker}).fetchall()
+        sql = base_sql.format(where_clause="WHERE ticker ILIKE :ticker")
+        rows = db.execute(
+            text(sql),
+            {"ticker": f"%{ticker}%"},
+        ).fetchall()
     else:
         sql = base_sql.format(where_clause="")
         rows = db.execute(text(sql)).fetchall()
@@ -95,6 +99,7 @@ def get_sentiment_indicators(
 
         results.append(
             StockIndicatorsOut(
+                id=str(row["id"]),
                 ticker=t,
                 snapshot_date=snapshot_date,
                 close_price=float(close_price) if close_price is not None else None,
@@ -103,3 +108,29 @@ def get_sentiment_indicators(
         )
 
     return results
+
+
+@router.delete("/indicators/{ticker}")
+def delete_ticker_indicators(
+    ticker: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Delete all sentiment_snapshots rows for a given ticker.
+    Used by the dashboard delete button.
+    """
+    sql = text(
+        """
+        DELETE FROM sentiment_snapshots
+        WHERE ticker = :ticker
+        """
+    )
+    result = db.execute(sql, {"ticker": ticker})
+    db.commit()
+
+    if result.rowcount == 0:
+        # nothing to delete, but this is fine for the dashboard
+        # you *could* return 404, but 200 is more user-friendly
+        return {"status": "ok", "deleted": 0}
+
+    return {"status": "ok", "deleted": result.rowcount}
