@@ -20,7 +20,8 @@ app.add_middleware(
 
 # Include auth router ← ADD THIS LINE
 app.include_router(auth.router, prefix="/api")
-app.include_router(sentiment.router, prefix="/api")
+app.include_router(sentiment.router)
+app.include_router(stocks.router)
 
 @app.get("/")
 def root():
