@@ -23,7 +23,7 @@ from app.core.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
