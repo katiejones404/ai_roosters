@@ -2,6 +2,8 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
+from typing import Literal, Optional, Dict, List
+from datetime import date
 
 
 # ============ AUTH SCHEMAS ============
@@ -37,6 +39,7 @@ class TokenData(BaseModel):
     """Schema for token payload data"""
     email: str | None = None
 
+<<<<<<< HEAD
 # ============ PORTFOLIO SCHEMAS ============
 class PortfolioBaseItem(BaseModel):
     ticker: str 
@@ -57,3 +60,21 @@ class PortfolioItem(PortfolioBaseItem):
 
     class Config:
         orm_mode: True
+=======
+
+
+# ============ Sentiment Schemas ============
+
+SentimentLabel = Literal["bullish", "neutral", "bearish"]
+
+class TimeRangeIndicators(BaseModel):
+    d30: SentimentLabel
+    d120: SentimentLabel
+    d360: SentimentLabel
+
+
+class StockIndicatorsOut(BaseModel):
+    ticker: str
+    snapshot_date: date
+    indicators: TimeRangeIndicators
+>>>>>>> 74c3d87b2cd59345b3d1117a71dbd934e1854245
