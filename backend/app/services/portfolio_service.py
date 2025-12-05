@@ -1,8 +1,8 @@
 import os
 import sys
 from uuid import UUID
-from fastapi import HHTPException, status
-from sqlalchemy import Session
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 from app.models.portfolio_model import PortfolioItemModel
 from app.schema.schemas import PortfolioCreateItem, PortfolioUpdateItem
 
@@ -43,7 +43,7 @@ class portfolio_service:
         )
 
         if not item:
-            raise HHTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio item not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio item not found")
         if data.quantity is not None:
             item.quantity = data.quantity
         if data.avg_price is not None:
@@ -65,7 +65,7 @@ class portfolio_service:
         )
 
         if not item:
-            raise HHTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio item not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio item not found")
         
         db.delete(item)
         db.commit()
