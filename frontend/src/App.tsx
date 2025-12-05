@@ -8,6 +8,9 @@ import { fetchAllStockIndicators } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
 import { StockSentimentCard } from "./SentimentIndicators";
 import Dashboard from "./Dashboard";
+import Layout from "./layout";
+
+
 
 
 function Home() {
@@ -124,10 +127,16 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/signup" element={<CreateAccount />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/settings" element={<Settings />} />
+
+        {/* Routes that use the header layout */}
+        <Route element={<Layout/>}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+          
+        </Route>
+
       </Routes>
     </BrowserRouter>
   );
