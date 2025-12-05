@@ -39,7 +39,6 @@ class TokenData(BaseModel):
     """Schema for token payload data"""
     email: str | None = None
 
-<<<<<<< HEAD
 # ============ PORTFOLIO SCHEMAS ============
 class PortfolioBaseItem(BaseModel):
     ticker: str 
@@ -60,7 +59,6 @@ class PortfolioItem(PortfolioBaseItem):
 
     class Config:
         orm_mode: True
-=======
 
 
 # ============ Sentiment Schemas ============
@@ -77,4 +75,3 @@ class StockIndicatorsOut(BaseModel):
     ticker: str
     snapshot_date: date
     indicators: TimeRangeIndicators
->>>>>>> 74c3d87b2cd59345b3d1117a71dbd934e1854245
