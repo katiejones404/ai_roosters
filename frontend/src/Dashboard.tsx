@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import "./app-header.css";
+
 import {
   fetchAllStockIndicators,
   fetchStockIndicatorsByTicker,
@@ -9,11 +11,10 @@ import { StockSentimentCard } from "./SentimentIndicators";
 
 const Dashboard: React.FC = () => {
   const [indicators, setIndicators] = useState<StockIndicators[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [searchTicker, setSearchTicker] = useState("");
-    const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTicker, setSearchTicker] = useState("");
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const handleSearch = async () => {
     const trimmed = searchTicker.trim();
@@ -66,6 +67,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="app-container">
+   
       <div className="home-background-shapes">
         <div className="home-shape home-shape-1"></div>
         <div className="home-shape home-shape-2"></div>
