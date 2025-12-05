@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth  # ← ADD THIS LINE
+from app.api import auth, sentiment, news, portfolio, stocks
 
 app = FastAPI(
     title="Stock Portfolio API",
@@ -11,7 +11,8 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+    #allow_origins=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://localhost:3000"],
+    allow_origins=["*"], #Safe for now, not safe for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -19,6 +20,7 @@ app.add_middleware(
 
 # Include auth router ← ADD THIS LINE
 app.include_router(auth.router, prefix="/api")
+app.include_router(sentiment.router, prefix="/api")
 
 @app.get("/")
 def root():
