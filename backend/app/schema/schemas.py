@@ -52,5 +52,6 @@ class TimeRangeIndicators(BaseModel):
 
 class StockIndicatorsOut(BaseModel):
     ticker: str
-    snapshot_date: date
+    snapshot_date: date | datetime
+    close_price: Optional[float]  # ← NEW
     indicators: TimeRangeIndicators
