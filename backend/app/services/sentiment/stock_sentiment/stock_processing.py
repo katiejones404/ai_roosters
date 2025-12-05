@@ -6,14 +6,15 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 
 logger = logging.getLogger("returns_pipeline")
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    logger.addHandler(_handler)
 logger.setLevel(logging.INFO)
-_handler = logging.StreamHandler()
-_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-logger.addHandler(_handler)
 
 
 def get_db_url() -> str:
-    """Build DB URL from env vars (same pattern as your PriceIngestor)."""
+    """Build DB URL from env vars (same pattern as PriceIngestor)."""
     db_url = os.getenv("DATABASE_URL")
     if db_url:
         return db_url
@@ -118,7 +119,7 @@ def update_returns_in_db(engine, df: pd.DataFrame) -> None:
             return_120d = :return_120d,
             return_360d = :return_360d
         WHERE ticker = :ticker AND date = :date
-    """
+        """
     )
 
     with engine.begin() as conn:
@@ -127,7 +128,11 @@ def update_returns_in_db(engine, df: pd.DataFrame) -> None:
     logger.info("Database update complete.")
 
 
-def main():
+def run_returns_pipeline(tickers: Optional[List[str]] = None) -> None:
+    """
+    Public entry point: compute & update returns for all tickers (or a subset).
+    This is what we'll call from FastAPI startup.
+    """
     db_url = get_db_url()
     logger.info(f"Connecting to database at {db_url} ...")
     engine = create_engine(db_url)
@@ -135,8 +140,7 @@ def main():
     # 1. Ensure columns exist
     ensure_return_columns(engine)
 
-    # 2. Load prices (all tickers, or specify list)
-    tickers = None  # e.g. ["BP", "RELIANCE.NS"]
+    # 2. Load prices
     df = load_prices(engine, tickers=tickers)
 
     # 3. Compute returns
@@ -147,8 +151,12 @@ def main():
 
     # Optional: peek at first few rows
     logger.info("Sample rows with returns:")
-    print(df_with_returns.head(10).to_string(index=False, justify="left"))
+    if not df_with_returns.empty:
+        print(df_with_returns.head(10).to_string(index=False, justify="left"))
+    else:
+        logger.info("No rows to show - df_with_returns is empty.")
 
 
 if __name__ == "__main__":
-    main()
+    # CLI usage: python app/services/returns_pipeline.py
+    run_returns_pipeline()
