@@ -1,10 +1,43 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import CreateAccount from "./create_account.tsx";
 import Login from "./login.tsx";
-import Settings from "./settings.tsx";
+import Settings from "./settings.tsx"; 
 import "./App.css";
+import { useEffect, useState } from "react";
+import { fetchAllStockIndicators } from "./utils/sentiment";
+import type { StockIndicators } from "./utils/sentiment";
+import { StockSentimentCard } from "./SentimentIndicators";
+
 
 function Home() {
+
+  const [indicators, setIndicators] = useState<StockIndicators[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadIndicators = async () => {
+      try {
+        const data = await fetchAllStockIndicators();
+
+        // If you only want specific stocks, filter here, e.g. BP + RELIANCE:
+        const filtered = data.filter((item) =>
+          ["BP", "RELIANCE"].includes(item.ticker)
+        );
+
+        setIndicators(filtered);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load sentiment indicators");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadIndicators();
+  }, []);
+
+
   return (
     <div className="app-container">
       <div className="home-background-shapes">
@@ -56,6 +89,22 @@ function Home() {
               </div>
             </div>
           </div>
+        
+
+        <div className="sentiment-section">
+            <div className="sentiment-title">Current Market Sentiment</div>
+
+            {loading && <p>Loading sentiment...</p>}
+            {error && <p className="sentiment-error">{error}</p>}
+
+            {!loading && !error && (
+              <div className="sentiment-grid">
+                {indicators.map((stock) => (
+                  <StockSentimentCard key={stock.ticker} data={stock} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="home-branding">
@@ -74,6 +123,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Home />} />
         <Route path="/signup" element={<CreateAccount />} />
         <Route path="/login" element={<Login />} />
         <Route path="/settings" element={<Settings />} />
