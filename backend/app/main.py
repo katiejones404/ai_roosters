@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, sentiment, news, stocks
+from app.services.prices_ingest import PriceIngestor
+import os
 
 app = FastAPI(
     title="Stock Portfolio API",
@@ -22,6 +24,23 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api")
 app.include_router(sentiment.router)
 app.include_router(stocks.router)
+
+# Automates price ingestion on startup 
+@app.on_event("startup")
+def ingest_stock_prices_on_startup():
+    db_url = os.getenv(
+        "DATABASE_URL",
+        "postgresql://stock_user:stock_pass@postgres:5432/stock_db"
+    )
+    ingestor = PriceIngestor(db_url)
+    tickers = ["BP", "RELIANCE.NS"]
+    ingestor.ingest_multiple_stocks(
+        tickers=tickers,
+        start_date="2021-10-01",
+        end_date="2022-02-28",
+        period=None,
+        update_existing=False,
+    )
 
 @app.get("/")
 def root():
