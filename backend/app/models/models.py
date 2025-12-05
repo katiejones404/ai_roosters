@@ -18,6 +18,7 @@ class User(Base):
     email = Column(Text, unique=True, index=True, nullable=False)
     password_hash = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+    #username = Column(String(50), unique=True, index=True, nullable=True)
+
     def __repr__(self):
         return f"<User {self.email}>"
