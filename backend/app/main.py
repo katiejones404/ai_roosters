@@ -16,11 +16,22 @@ app = FastAPI(
     version="1.0.0"
 )
 
+FRONTEND_ORIGINS = os.getenv("FRONTEND_ORIGINS", "https://your-frontend.vercel.app")
+
+# FRONTEND_ORIGINS may be a comma-separated list
+origins = [[o.strip() for o in FRONTEND_ORIGINS.split(",")], 
+           "http://localhost:5173", 
+           "http://localhost:5174", 
+           "http://127.0.0.1:5173", 
+           "http://localhost:3000"]
+
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
     #allow_origins=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://localhost:3000"],
-    allow_origins=["*"], #Safe for now, not safe for production
+    #allow_origins=["*"], #Safe for now, not safe for production
+    allow_origins = origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -69,7 +80,7 @@ def ingest_stock_prices_on_startup():
 
 @app.get("/")
 def root():
-    
+
     return {"message": "Backend is working!", "status": "healthy"}
 
 @app.get("/health")
