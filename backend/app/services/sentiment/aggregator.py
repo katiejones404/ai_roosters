@@ -932,16 +932,33 @@ sentiment_snapshot_pipeline = Pipeline(
 
 
 # --------------------------------------------------------------------------------------
-# CLI entry point
+# Public helper for FastAPI startup
 # --------------------------------------------------------------------------------------
 
-if __name__ == "__main__":
-    # Optional filters via env vars
+def run_sentiment_snapshot_pipeline_from_env() -> Dict[str, Any]:
+    """
+    Run the sentiment snapshot pipeline using optional filters from env vars:
+      - AGG_TICKER: filter by ticker (e.g. 'BP' or 'RELIANCE.NS')
+      - AGG_START_DATE: 'YYYY-MM-DD'
+      - AGG_END_DATE: 'YYYY-MM-DD'
+    If not set, runs for ALL stocks / dates currently in the stocks table.
+    """
     req = {
         "ticker": os.getenv("AGG_TICKER") or None,
         "start_date": os.getenv("AGG_START_DATE") or None,
         "end_date": os.getenv("AGG_END_DATE") or None,
     }
 
+    logger.info(f"[SnapshotPipeline] Running with request={req}")
     result = sentiment_snapshot_pipeline.run(req)
-    print("Snapshot pipeline result:", result)
+    logger.info(f"[SnapshotPipeline] Completed with result={result}")
+    return result
+
+
+# --------------------------------------------------------------------------------------
+# CLI entry point
+# --------------------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    # keep CLI behavior the same, just re-use the helper
+    run_sentiment_snapshot_pipeline_from_env()
