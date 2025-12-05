@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth  # ← ADD THIS LINE
+from app.api import auth, sentiment, news, portfolio, stocks
 
 app = FastAPI(
     title="Stock Portfolio API",
@@ -20,6 +20,7 @@ app.add_middleware(
 
 # Include auth router ← ADD THIS LINE
 app.include_router(auth.router, prefix="/api")
+app.include_router(sentiment.router, prefix="/api")
 
 @app.get("/")
 def root():
