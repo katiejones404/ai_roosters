@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS articles (
   sentiment_score numeric,
   prob_pos numeric,
   prob_neg numeric,
-  prob_neu numeric
+  prob_neu numeric,
 );
 
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at);
@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS stocks (
   return_30d  NUMERIC,
   return_120d NUMERIC,
   return_360d NUMERIC, 
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   
   CONSTRAINT uq_ticker_date UNIQUE (ticker, date)
 );
