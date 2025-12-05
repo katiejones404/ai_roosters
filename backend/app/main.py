@@ -4,6 +4,8 @@ from app.api import auth, sentiment, news, stocks
 from app.services.prices_ingest import PriceIngestor
 from app.services.sentiment.article_sentiment.article_processing import run_finbert_pipeline_from_env
 from app.services.sentiment.stock_sentiment.stock_processing import run_returns_pipeline
+from app.services.sentiment.aggregator import run_sentiment_snapshot_pipeline_from_env
+import logging
 import os
 
 app = FastAPI(
@@ -46,6 +48,7 @@ def ingest_stock_prices_on_startup():
 
     run_finbert_pipeline_from_env()
     run_returns_pipeline()
+    run_sentiment_snapshot_pipeline_from_env()
 
 @app.get("/")
 def root():
