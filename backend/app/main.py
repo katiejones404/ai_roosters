@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, sentiment, news, stocks
 from app.services.prices_ingest import PriceIngestor
+from app.services.sentiment.article_sentiment.article_processing import run_finbert_pipeline_from_env
+from app.services.sentiment.stock_sentiment.stock_processing import run_returns_pipeline
 import os
 
 app = FastAPI(
@@ -41,6 +43,9 @@ def ingest_stock_prices_on_startup():
         period=None,
         update_existing=False,
     )
+
+    run_finbert_pipeline_from_env()
+    run_returns_pipeline()
 
 @app.get("/")
 def root():

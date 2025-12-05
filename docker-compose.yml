@@ -35,6 +35,7 @@ services:
       PG_USER: stock_user
       PG_PASS: stock_pass
       KAGGLE_CONFIG_DIR: /root/.kaggle
+      NEWS_CSV_PATH: /app/data/reliance_news_sentiment.csv
     depends_on:
       postgres:
         condition: service_healthy
