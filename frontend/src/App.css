@@ -274,8 +274,19 @@
   }
 
   .home-card {
-    padding: 2rem 1.5rem;
-  }
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 4rem 3rem;
+  max-width: 960px;        /* ← was 600px */
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  animation: slideUp 0.6s ease-out;
+}
+
 
   .home-content h1 {
     font-size: 1.75rem;
@@ -305,53 +316,77 @@
 
 /* Sentiment Stuff */
 
+/* Sentiment Stuff */
+
 .sentiment-section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 24px;
+  margin-top: 3rem;
+  text-align: left;
+}
+
+.sentiment-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 1rem;
+}
+
+.sentiment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
 }
 
 .sentiment-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px 16px;
-  min-width: 220px;
-  background: #fafafa;
+  border-radius: 16px;
+  padding: 16px 18px 20px;
+  background: #f9fafb;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
   font-family: system-ui, sans-serif;
 }
 
-.sentiment-card h3 {
-  margin: 0 0 8px 0;
+.sentiment-card-header h3 {
+  margin: 0;
   font-size: 1rem;
+  letter-spacing: 0.02em;
 }
 
-.indicator-row {
+.sentiment-meta {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #6b7280;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sentiment-price {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Pie layout */
+.sentiment-pies {
+  margin-top: 14px;
   display: flex;
   justify-content: space-between;
-  margin: 4px 0;
-  font-size: 0.9rem;
+  gap: 12px;
 }
 
-.indicator {
-  padding: 2px 8px;
-  border-radius: 999px;
-  text-transform: capitalize;
-  font-weight: 500;
+.sentiment-pie-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.sentiment-pie-label {
   font-size: 0.8rem;
+  color: #4b5563;
 }
 
-.indicator-bullish {
-  background-color: rgba(0, 200, 0, 0.12);
-  border: 1px solid rgba(0, 200, 0, 0.5);
-}
-
-.indicator-bearish {
-  background-color: rgba(220, 0, 0, 0.12);
-  border: 1px solid rgba(220, 0, 0, 0.5);
-}
-
-.indicator-neutral {
-  background-color: rgba(120, 120, 120, 0.12);
-  border: 1px solid rgba(120, 120, 120, 0.5);
+/* SVG size */
+.sentiment-pie {
+  width: 64px;
+  height: 64px;
 }
