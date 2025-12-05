@@ -22,7 +22,7 @@ export const register = async (
   email: string,
   password: string
 ): Promise<void> => {
-  const response = await axios.post(`${API_URL}/api/auth/register`, {
+  const response = await axios.post(`${API_URL}/api/api/auth/register`, {
     email,
     password,
   });
@@ -30,7 +30,7 @@ export const register = async (
 };
 
 export const login = async (email: string, password: string): Promise<void> => {
-  const response = await axios.post(`${API_URL}/api/auth/login`, {
+  const response = await axios.post(`${API_URL}/api/api/auth/login`, {
     email,
     password,
   });
@@ -48,7 +48,7 @@ export const getCurrentUser = async (): Promise<any> => {
   const token = getToken();
   if (!token) throw new Error("No token found");
 
-  const response = await axios.get(`${API_URL}/api/auth/me`, {
+  const response = await axios.get(`${API_URL}/api/api/auth/me`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
