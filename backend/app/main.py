@@ -16,7 +16,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-FRONTEND_ORIGINS = os.getenv("FRONTEND_ORIGINS", "https://your-frontend.vercel.app")
+FRONTEND_ORIGINS = os.getenv("FRONTEND_ORIGINS", "https://ai-roosters-pofj.vercel.app")
 
 # FRONTEND_ORIGINS may be a comma-separated list
 origins = [[o.strip() for o in FRONTEND_ORIGINS.split(",")], 
