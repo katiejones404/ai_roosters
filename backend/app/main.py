@@ -8,6 +8,8 @@ from app.services.sentiment.aggregator import run_sentiment_snapshot_pipeline_fr
 import logging
 import os
 
+logger = logging.getLogger("startup")
+
 app = FastAPI(
     title="Stock Portfolio API",
     description="API for stock portfolio management with authentication",
@@ -32,12 +34,15 @@ app.include_router(stocks.router)
 # Automates price ingestion on startup 
 @app.on_event("startup")
 def ingest_stock_prices_on_startup():
+    logger.info(" Backend startup initiated...")
+    # 1. Ingest prices
     db_url = os.getenv(
         "DATABASE_URL",
         "postgresql://stock_user:stock_pass@postgres:5432/stock_db"
     )
     ingestor = PriceIngestor(db_url)
     tickers = ["BP", "RELIANCE.NS"]
+    logger.info(f"Ingesting price data for {tickers} ...")
     ingestor.ingest_multiple_stocks(
         tickers=tickers,
         start_date="2021-10-01",
@@ -45,15 +50,29 @@ def ingest_stock_prices_on_startup():
         period=None,
         update_existing=False,
     )
-
+    logger.info("Finished price ingestion.")
+    # 2. FinBERT article sentiment
+    logger.info("Running FinBERT pipeline...")
     run_finbert_pipeline_from_env()
+    logger.info("FinBERT article processing complete.")
+    # 3.Calculate returns
+    logger.info("Running returns pipeline...")
     run_returns_pipeline()
+    logger.info("Returns pipeline complete.")
+    # 4. Aggregate sentiment snapshots
+    logger.info("Running sentiment snapshot pipeline...")
     run_sentiment_snapshot_pipeline_from_env()
+    logger.info("Sentiment snapshot pipeline complete.")
+    logger.info("Backend startup complete, all loaders finished.")
+
+
 
 @app.get("/")
 def root():
+    
     return {"message": "Backend is working!", "status": "healthy"}
 
 @app.get("/health")
 def health_check():
+
     return {"status": "healthy", "database": "connected"}
