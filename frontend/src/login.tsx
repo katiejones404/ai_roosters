@@ -23,7 +23,6 @@ const Login: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,7 +31,6 @@ const Login: React.FC = () => {
       [name]: value,
     }));
 
-    // Clear errors when user types
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({
         ...prev,
@@ -60,25 +58,22 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      setIsSubmitting(true);
+    if (!validateForm()) return;
 
-      try {
-        // Backend uses EMAIL not username, so we use username field as email
-        await login(formData.username, formData.password);
+    setIsSubmitting(true);
 
-        alert("Login successful! Welcome back!");
-        // Redirect to dashboard
-        window.location.href = "/dashboard";
-      } catch (error: any) {
-        setErrors({
-          general:
-            error.response?.data?.detail ||
-            "Invalid credentials. Please try again.",
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
+    try {
+      await login(formData.username, formData.password);
+      alert("Login successful! Welcome back!");
+      window.location.href = "/dashboard";
+    } catch (error: any) {
+      setErrors({
+        general:
+          error.response?.data?.detail ||
+          "Invalid credentials. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -91,7 +86,7 @@ const Login: React.FC = () => {
       </div>
 
       <div className="login-content">
-        {/* Left Side - Branding and Graphics */}
+        {/* Left Side - Branding */}
         <div className="login-left">
           <div className="login-branding">
             <h2 className="login-brand-name">
@@ -102,139 +97,51 @@ const Login: React.FC = () => {
           <div className="chart-container">
             <div className="chart-graphic">
               <svg viewBox="0 0 400 300" className="stock-chart">
-                {/* Chart grid lines */}
-                <line
-                  x1="0"
-                  y1="250"
-                  x2="400"
-                  y2="250"
-                  stroke="rgba(16, 185, 129, 0.2)"
-                  strokeWidth="1"
-                />
-                <line
-                  x1="0"
-                  y1="200"
-                  x2="400"
-                  y2="200"
-                  stroke="rgba(16, 185, 129, 0.2)"
-                  strokeWidth="1"
-                />
-                <line
-                  x1="0"
-                  y1="150"
-                  x2="400"
-                  y2="150"
-                  stroke="rgba(16, 185, 129, 0.2)"
-                  strokeWidth="1"
-                />
-                <line
-                  x1="0"
-                  y1="100"
-                  x2="400"
-                  y2="100"
-                  stroke="rgba(16, 185, 129, 0.2)"
-                  strokeWidth="1"
-                />
-                <line
-                  x1="0"
-                  y1="50"
-                  x2="400"
-                  y2="50"
-                  stroke="rgba(16, 185, 129, 0.2)"
-                  strokeWidth="1"
-                />
+                {/* Grid lines */}
+                {[250, 200, 150, 100, 50].map((y, i) => (
+                  <line
+                    key={i}
+                    x1="0"
+                    y1={y}
+                    x2="400"
+                    y2={y}
+                    stroke="rgba(16, 185, 129, 0.2)"
+                    strokeWidth="1"
+                  />
+                ))}
 
-                {/* Trend line */}
+                {/* Line chart */}
                 <path
                   d="M 0 250 L 50 240 L 100 220 L 150 200 L 200 170 L 250 140 L 300 100 L 350 70 L 400 50"
                   fill="none"
                   stroke="url(#gradient)"
                   strokeWidth="3"
                   strokeLinecap="round"
-                  className="chart-line"
                 />
 
-                {/* Gradient definition */}
                 <defs>
-                  <linearGradient
-                    id="gradient"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="0%"
-                  >
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#10b981" />
                     <stop offset="100%" stopColor="#34d399" />
                   </linearGradient>
-                  <linearGradient
-                    id="barGradient"
-                    x1="0%"
-                    y1="0%"
-                    x2="0%"
-                    y2="100%"
-                  >
+
+                  <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#10b981" stopOpacity="0.8" />
                     <stop offset="100%" stopColor="#10b981" stopOpacity="0.3" />
                   </linearGradient>
                 </defs>
 
-                {/* Bar chart elements */}
-                <rect
-                  x="30"
-                  y="200"
-                  width="30"
-                  height="50"
-                  fill="url(#barGradient)"
-                  className="bar bar-1"
-                />
-                <rect
-                  x="80"
-                  y="180"
-                  width="30"
-                  height="70"
-                  fill="url(#barGradient)"
-                  className="bar bar-2"
-                />
-                <rect
-                  x="130"
-                  y="160"
-                  width="30"
-                  height="90"
-                  fill="url(#barGradient)"
-                  className="bar bar-3"
-                />
-                <rect
-                  x="180"
-                  y="130"
-                  width="30"
-                  height="120"
-                  fill="url(#barGradient)"
-                  className="bar bar-4"
-                />
-                <rect
-                  x="230"
-                  y="100"
-                  width="30"
-                  height="150"
-                  fill="url(#barGradient)"
-                  className="bar bar-5"
-                />
-                <rect
-                  x="280"
-                  y="70"
-                  width="30"
-                  height="180"
-                  fill="url(#barGradient)"
-                  className="bar bar-6"
-                />
-                <rect
-                  x="330"
-                  y="50"
-                  width="30"
-                  height="200"
-                  fill="url(#barGradient)"
-                  className="bar bar-7"
-                />
+                {/* Bars */}
+                {[200, 180, 160, 130, 100, 70, 50].map((y, i) => (
+                  <rect
+                    key={i}
+                    x={30 + i * 50}
+                    y={y}
+                    width="30"
+                    height={250 - y}
+                    fill="url(#barGradient)"
+                  />
+                ))}
               </svg>
             </div>
 
@@ -246,6 +153,7 @@ const Login: React.FC = () => {
                   <div className="stat-label">Portfolio Growth</div>
                 </div>
               </div>
+
               <div className="stat-item">
                 <span className="stat-icon">💰</span>
                 <div>
@@ -310,7 +218,6 @@ const Login: React.FC = () => {
                     type="button"
                     className="toggle-password"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label="Toggle password visibility"
                   >
                     {showPassword ? "🙈" : "👁️"}
                   </button>
@@ -318,20 +225,6 @@ const Login: React.FC = () => {
                 {errors.password && (
                   <span className="error-message">{errors.password}</span>
                 )}
-              </div>
-
-              <div className="form-options">
-                <label className="remember-me">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                  />
-                  <span>Remember me</span>
-                </label>
-                <Link to="/forgot-password" className="forgot-link">
-                  Forgot password?
-                </Link>
               </div>
 
               <button
