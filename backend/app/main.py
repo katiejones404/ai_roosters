@@ -18,15 +18,15 @@ app = FastAPI(
 
 FRONTEND_ORIGINS = os.getenv("FRONTEND_ORIGINS", "https://ai-roosters-pofj.vercel.app")
 
-# FRONTEND_ORIGINS may be a comma-separated list
-origins = [[o.strip() for o in FRONTEND_ORIGINS.split(",")], 
-           "http://localhost:5173", 
-           "http://localhost:5174", 
-           "http://127.0.0.1:5173", 
-           "http://localhost:3000",
-           "https://sccapstone.github.io/ai_roosters/"]
+base_origins = [o.strip() for o in FRONTEND_ORIGINS.split(",") if o.strip()]
 
-
+origins = base_origins + [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "https://sccapstone.github.io/ai_roosters/"
+]
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
