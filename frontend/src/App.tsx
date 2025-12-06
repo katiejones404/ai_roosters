@@ -5,10 +5,12 @@ import CreateAccount from "./create_account";
 import Login from "./login";
 import Settings from "./settings";
 import Dashboard from "./Dashboard";
-import Layout from "./layout"; 
+import Layout from "./layout";
 import Navbar from "./components/Navbar";
 
-import "./App.css";
+import "./App.css";               // ← Keep this high so global CSS loads
+import "./index.css";            // ← If you have this, uncomment it
+// import "./styles.css";        // ← Add any missing CSS imports here
 
 import { fetchAllStockIndicators } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
@@ -26,7 +28,6 @@ function Home() {
       try {
         const data = await fetchAllStockIndicators();
 
-        // Show only BP + RELIANCE
         const filtered = data.filter((item) =>
           ["BP", "RELIANCE"].includes(item.ticker)
         );
@@ -60,12 +61,8 @@ function Home() {
           </p>
 
           <div className="nav-links">
-            <Link to="/signup" className="nav-link nav-link-primary">
-              🚀 Create Account
-            </Link>
-            <Link to="/login" className="nav-link nav-link-secondary">
-              🔐 Sign In
-            </Link>
+            <Link to="/signup" className="nav-link nav-link-primary">🚀 Create Account</Link>
+            <Link to="/login" className="nav-link nav-link-secondary">🔐 Sign In</Link>
           </div>
 
           <div className="features-section">
@@ -73,23 +70,19 @@ function Home() {
               <div className="feature-item">
                 <div className="feature-icon">📊</div>
                 <div className="feature-title">Live Analytics</div>
-                <div className="feature-description">
-                  Real-time market data and insights
-                </div>
+                <div className="feature-description">Real-time market insights</div>
               </div>
+
               <div className="feature-item">
                 <div className="feature-icon">🎯</div>
                 <div className="feature-title">Smart Tracking</div>
-                <div className="feature-description">
-                  Monitor your portfolio effortlessly
-                </div>
+                <div className="feature-description">Monitor your portfolio</div>
               </div>
+
               <div className="feature-item">
                 <div className="feature-icon">🤖</div>
                 <div className="feature-title">AI Powered</div>
-                <div className="feature-description">
-                  Intelligent recommendations
-                </div>
+                <div className="feature-description">Intelligent insights</div>
               </div>
             </div>
           </div>
@@ -122,7 +115,7 @@ function Home() {
 }
 
 
-// ---------------------- APP WRAPPER ----------------------
+// ---------------------- MAIN APP ----------------------
 function App() {
   return (
     <BrowserRouter>
@@ -132,11 +125,11 @@ function App() {
 }
 
 
-// ---------------------- CONDITIONAL NAVBAR + ROUTES ----------------------
+// ---------------------- NAVBAR + ROUTER ----------------------
 function AppContent() {
   const location = useLocation();
 
-  // Hide navbar ONLY on login/signup/home
+  // Hide navbar on auth pages + root page
   const hideNavbar =
     location.pathname === "/login" ||
     location.pathname === "/signup" ||
@@ -147,18 +140,18 @@ function AppContent() {
       {!hideNavbar && <Navbar />}
 
       <Routes>
-        {/* Public routes */}
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/signup" element={<CreateAccount />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Protected layout-based routes */}
+        {/* Authenticated Layout Routes */}
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
 
-        {/* Catch-all fallback (optional) */}
+        {/* Fallback */}
         <Route path="*" element={<Home />} />
       </Routes>
     </>
