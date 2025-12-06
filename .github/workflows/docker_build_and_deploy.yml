@@ -18,7 +18,7 @@ jobs:
         run: |
           docker build \
             --target frontend-builder \
-            --build-arg VITE_API_BASE_URL="https://ai-roosters.onrender.com/" \
+            --build-arg VITE_API_BASE_URL="https://ai-roosters.onrender-1.com/" \
             -t frontend-build:ci .
 
       - name: Extract build artifacts from container
