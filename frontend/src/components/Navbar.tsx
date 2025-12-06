@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getCurrentUser } from "../utils/auth";
-import "./navbar.css";
+import "./Navbar.css";
 
 const Navbar = () => {
   const location = useLocation();
