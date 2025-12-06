@@ -139,7 +139,7 @@ const CreateAccount: React.FC = () => {
 
       try {
         // Call real backend API
-        await register(formData.email, formData.password);
+        await register(formData.email, formData.username, formData.password);
 
         alert("Account created successfully! Please login.");
         // Redirect to login page

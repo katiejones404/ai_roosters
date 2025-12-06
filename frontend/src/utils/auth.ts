@@ -20,10 +20,12 @@ export const isAuthenticated = (): boolean => {
 
 export const register = async (
   email: string,
+  username: string,
   password: string
 ): Promise<void> => {
   const response = await axios.post(`${API_URL}/api/auth/register`, {
     email,
+    username,
     password,
   });
   return response.data;
