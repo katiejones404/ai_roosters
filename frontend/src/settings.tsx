@@ -5,10 +5,7 @@ import "./settings.css";
 
 type TabType =
   | "account"
-  | "security"
-  | "notifications"
-  | "support"
-  | "configuration";
+  | "security";
 
 interface AccountFormData {
   name: string;
@@ -138,10 +135,15 @@ useEffect(() => {
     }, 1000);
   };
 
+  const isActive = (path: string) =>
+    location.pathname === path ? "nav-link active" : "nav-link";
+
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       alert("Logging out...");
-      // Add logout logic here
+      <Link className={isActive("/logout")} to="/logout">
+        Logout
+      </Link>
     }
   };
 
@@ -177,31 +179,6 @@ useEffect(() => {
             >
               <span className="tab-icon">🔒</span>
               Security
-            </button>
-            <button
-              className={`nav-tab ${
-                activeTab === "notifications" ? "active" : ""
-              }`}
-              onClick={() => setActiveTab("notifications")}
-            >
-              <span className="tab-icon">🔔</span>
-              Notifications
-            </button>
-            <button
-              className={`nav-tab ${activeTab === "support" ? "active" : ""}`}
-              onClick={() => setActiveTab("support")}
-            >
-              <span className="tab-icon">💬</span>
-              Support
-            </button>
-            <button
-              className={`nav-tab ${
-                activeTab === "configuration" ? "active" : ""
-              }`}
-              onClick={() => setActiveTab("configuration")}
-            >
-              <span className="tab-icon">⚙️</span>
-              Configuration
             </button>
           </nav>
 
@@ -379,22 +356,6 @@ useEffect(() => {
                     </button>
                   </div>
                 </div>
-
-                <div className="security-option">
-                  <div className="option-info">
-                    <h4>Two-Factor Authentication</h4>
-                    <p>Add an extra layer of security to your account</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="twoFactorEnabled"
-                      checked={securityForm.twoFactorEnabled}
-                      onChange={handleSecurityChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
               </div>
 
               <button
@@ -408,228 +369,6 @@ useEffect(() => {
                   </>
                 ) : (
                   "Update Security Settings"
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Notifications Tab */}
-          {activeTab === "notifications" && (
-            <div className="tab-content">
-              <div className="content-header">
-                <h3>Notification Preferences</h3>
-                <p>Choose what updates you want to receive</p>
-              </div>
-
-              <div className="notifications-list">
-                <div className="notification-item">
-                  <div className="notification-info">
-                    <h4>📧 Email Notifications</h4>
-                    <p>Receive updates via email</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="emailNotifications"
-                      checked={notifications.emailNotifications}
-                      onChange={handleNotificationChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-
-                <div className="notification-item">
-                  <div className="notification-info">
-                    <h4>📱 Push Notifications</h4>
-                    <p>Get instant alerts on your device</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="pushNotifications"
-                      checked={notifications.pushNotifications}
-                      onChange={handleNotificationChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-
-                <div className="notification-item">
-                  <div className="notification-info">
-                    <h4>🔔 Market Alerts</h4>
-                    <p>Real-time alerts for significant market movements</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="marketAlerts"
-                      checked={notifications.marketAlerts}
-                      onChange={handleNotificationChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-
-                <div className="notification-item">
-                  <div className="notification-info">
-                    <h4>💼 Portfolio Updates</h4>
-                    <p>Daily summaries of your portfolio performance</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="portfolioUpdates"
-                      checked={notifications.portfolioUpdates}
-                      onChange={handleNotificationChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-
-                <div className="notification-item">
-                  <div className="notification-info">
-                    <h4>📊 Weekly Report</h4>
-                    <p>Comprehensive weekly analysis of your investments</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="weeklyReport"
-                      checked={notifications.weeklyReport}
-                      onChange={handleNotificationChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-              </div>
-
-              <button
-                onClick={handleSave}
-                className="save-button"
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <>
-                    <span className="spinner"></span> Saving...
-                  </>
-                ) : (
-                  "Save Preferences"
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Support Tab */}
-          {activeTab === "support" && (
-            <div className="tab-content">
-              <div className="content-header">
-                <h3>Support & Help</h3>
-                <p>Get help and access resources</p>
-              </div>
-
-              <div className="support-grid">
-                <div className="support-card">
-                  <div className="support-icon">📚</div>
-                  <h4>Documentation</h4>
-                  <p>Browse our comprehensive guides</p>
-                  <button className="support-action">View Docs</button>
-                </div>
-
-                <div className="support-card">
-                  <div className="support-icon">💬</div>
-                  <h4>Live Chat</h4>
-                  <p>Chat with our support team</p>
-                  <button className="support-action">Start Chat</button>
-                </div>
-
-                <div className="support-card">
-                  <div className="support-icon">📧</div>
-                  <h4>Email Support</h4>
-                  <p>Send us a detailed message</p>
-                  <button className="support-action">Send Email</button>
-                </div>
-
-                <div className="support-card">
-                  <div className="support-icon">❓</div>
-                  <h4>FAQ</h4>
-                  <p>Find answers to common questions</p>
-                  <button className="support-action">View FAQ</button>
-                </div>
-              </div>
-
-              <div className="contact-info">
-                <h4>Contact Information</h4>
-                <p>📞 Phone: 1-800-STOCKSENSE</p>
-                <p>📧 Email: support@stocksense.com</p>
-                <p>🕐 Hours: Monday - Friday, 9AM - 6PM EST</p>
-              </div>
-            </div>
-          )}
-
-          {/* Configuration Tab */}
-          {activeTab === "configuration" && (
-            <div className="tab-content">
-              <div className="content-header">
-                <h3>App Configuration</h3>
-                <p>Customize your StockSense experience</p>
-              </div>
-
-              <div className="config-section">
-                <h4>Appearance</h4>
-                <div className="config-options">
-                  <label className="radio-option">
-                    <input type="radio" name="theme" value="light" />
-                    <span>☀️ Light Mode</span>
-                  </label>
-                  <label className="radio-option">
-                    <input
-                      type="radio"
-                      name="theme"
-                      value="dark"
-                      defaultChecked
-                    />
-                    <span>🌙 Dark Mode</span>
-                  </label>
-                  <label className="radio-option">
-                    <input type="radio" name="theme" value="auto" />
-                    <span>🔄 Auto</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="config-section">
-                <h4>Language & Region</h4>
-                <div className="form-group">
-                  <label htmlFor="language">Language</label>
-                  <select id="language" name="language">
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
-                    <option value="de">Deutsch</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="currency">Currency</label>
-                  <select id="currency" name="currency">
-                    <option value="usd">USD ($)</option>
-                    <option value="eur">EUR (€)</option>
-                    <option value="gbp">GBP (£)</option>
-                    <option value="jpy">JPY (¥)</option>
-                  </select>
-                </div>
-              </div>
-
-              <button
-                onClick={handleSave}
-                className="save-button"
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <>
-                    <span className="spinner"></span> Saving...
-                  </>
-                ) : (
-                  "Save Configuration"
                 )}
               </button>
             </div>
