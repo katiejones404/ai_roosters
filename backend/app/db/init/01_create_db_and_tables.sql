@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS articles (
 );
 
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at);
--- CREATE INDEX IF NOT EXISTS idx_articles_source ON articles (source);
 CREATE INDEX IF NOT EXISTS idx_articles_url ON articles (url);
 CREATE INDEX IF NOT EXISTS idx_articles_sentiment ON articles (sentiment);
 

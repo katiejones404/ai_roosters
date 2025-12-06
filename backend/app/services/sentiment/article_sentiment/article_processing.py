@@ -353,7 +353,7 @@ def run_finbert_pipeline_from_env() -> Dict[str, Any]:
     Run the FinBERT ingest pipeline using NEWS_CSV_PATH env var.
     This is what you'll call from FastAPI startup.
     """
-    csv_path = os.getenv("NEWS_CSV_PATH", "NEWS_CSV_PATH=/app/data/reliance_news_sentiment.csv")
+    csv_path = os.getenv("NEWS_CSV_PATH", "/app/data/reliance_news_sentiment.csv")
     logger.info(f"Running FinBERT ingest pipeline with csv_path={csv_path!r} ...")
 
     result = finbert_ingest_pipeline.run({"csv_path": csv_path})
