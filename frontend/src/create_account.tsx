@@ -44,6 +44,7 @@ const CreateAccount: React.FC = () => {
   const validateDateOfBirth = (date: string): boolean => {
     const dateRegex =
       /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(19|20)\d{2}$/;
+
     if (!dateRegex.test(date)) return false;
 
     const [month, day, year] = date.split("/").map(Number);
@@ -117,8 +118,6 @@ const CreateAccount: React.FC = () => {
       await register(formData.email, formData.username, formData.password);
 
       alert("Account created successfully! Please login.");
-
-      // Use React Router navigation (IMPORTANT)
       navigate("/login");
     } catch (error: any) {
       setErrors({
@@ -175,7 +174,7 @@ const CreateAccount: React.FC = () => {
                 value={formData.username}
                 onChange={handleChange}
                 className={errors.username ? "error" : ""}
-                placeholder="Choose a unique username"
+                placeholder="Choose a username"
               />
               <span className="input-icon">👤</span>
             </div>
@@ -224,7 +223,9 @@ const CreateAccount: React.FC = () => {
               <button
                 type="button"
                 className="toggle-password"
-                onClick={() => setShowRetypePassword(!showRetypePassword)}
+                onClick={() =>
+                  setShowRetypePassword(!showRetypePassword)
+                }
               >
                 {showRetypePassword ? "🙈" : "👁️"}
               </button>
