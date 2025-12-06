@@ -1,7 +1,13 @@
 import axios from "axios";
 
-const API_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+let base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+// Remove trailing slash if present (prevents //api/... issues)
+if (base.endsWith("/")) {
+  base = base.slice(0, -1);
+}
+
+const API_URL = base;
 
 export const getToken = (): string | null => {
   return localStorage.getItem("token");
