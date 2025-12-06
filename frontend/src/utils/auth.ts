@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8000";
+const API_URL = "https://ai-roosters.onrender.com/";
 
 export const getToken = (): string | null => {
   return localStorage.getItem("token");
