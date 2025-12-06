@@ -1,6 +1,6 @@
 LINK TO WEB APP:
 backend: https://ai-roosters.onrender.com/
-
+frontend: https://ai-roosters-frontend.onrender.com/
 ## Stock Sense 
 
 StockSense is a full-stack web application that provides investors with an AI-driven platform to track stock performance, analyze sentiment trends, and manage personalized portfolios. It integrates both quantitative (price and performance) and qualitative (news sentiment) data using a modern, containerized architecture.
