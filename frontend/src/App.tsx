@@ -4,6 +4,7 @@ import Login from "./login.tsx";
 import Settings from "./settings.tsx"; 
 import "./App.css";
 import Dashboard from "./Dashboard";
+import Layout from "./layout.tsx";
 import Navbar from "./components/Navbar.tsx";
 
 import { useEffect, useState } from "react";
