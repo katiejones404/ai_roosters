@@ -1,0 +1,52 @@
+name: Build (Node) and deploy to github-deploy
+
+on:
+  push:
+    branches:
+      - github-deploy    # change if you want to trigger on another branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies (frontend)
+        # Adjust path if your frontend is in a subfolder (e.g., frontend/)
+        run: |
+          cd frontend || true
+          npm ci
+
+      - name: Build frontend (production)
+        run: |
+          #
+          cd frontend || true
+          export VITE_API_BASE_URL="https://ai-roosters.onrender.com/"
+          npm run build
+
+      - name: Prepare artifact folder
+        run: |
+          # Move the build output to ./site for deploy action
+          rm -rf site
+          mkdir -p site
+          cp -R frontend/dist/* site/
+
+      - name: Ensure .nojekyll (prevent Jekyll processing)
+        run: |
+          touch site/.nojekyll
+
+      - name: Deploy to github-deploy branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: github-deploy
+          folder: site
+          clean: true
+          commit-message: "GitHub Actions: deploy frontend build ${{ github.sha }}"

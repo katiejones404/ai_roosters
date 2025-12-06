@@ -1,0 +1,40 @@
+name: Docker build frontend and deploy
+
+on:
+  push:
+    branches:
+      - github-deploy
+
+jobs:
+  docker-build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build frontend docker stage
+        run: |
+          docker build \
+            --target frontend-builder \
+            --build-arg VITE_API_BASE_URL="https://ai-roosters.onrender.com/" \
+            -t frontend-build:ci .
+
+      - name: Extract build artifacts from container
+        run: |
+          CID=$(docker create frontend-build:ci)
+          # adjust the path below to where your Dockerfile places build output (dist or build)
+          docker cp $CID:/app/dist ./site
+          docker rm $CID
+
+      - name: Show extracted files
+        run: ls -la site || true
+
+      - name: Deploy to github-deploy branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: github-deploy
+          folder: site
+          clean: true
+          commit-message: "Docker CI deploy: ${{ github.sha }}"
