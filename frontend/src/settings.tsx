@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { getCurrentUser } from "./utils/auth";
 import { Link } from "react-router-dom";
 import "./settings.css";
 
@@ -36,8 +37,9 @@ const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("account");
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
   const [profileImage, setProfileImage] = useState<string>(
-    "https://api.dicebear.com/7.x/avataaars/svg?seed=John"
+    "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
   );
 
   // Account form state
@@ -72,6 +74,32 @@ const Settings: React.FC = () => {
     confirm: false,
   });
 
+  // Load user info on mount
+useEffect(() => {
+  const loadUser = async () => {
+    try {
+      const user = await getCurrentUser();
+
+      setAccountForm({
+        name: user.name || "",
+        username: user.username || "",
+        email: user.email,
+        bio: user.bio || "",
+        phone: user.phone || "",
+      });
+
+      if (user.profileImage) {
+        setProfileImage(user.profileImage);
+      }
+    } catch (err) {
+      console.error("Failed to load user info", err);
+    }
+  };
+
+  loadUser();
+}, []);
+
+
   const handleAccountChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -95,18 +123,7 @@ const Settings: React.FC = () => {
       [e.target.name]: e.target.checked,
     }));
   };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
+  
   const handleSave = () => {
     setIsSaving(true);
 
@@ -207,8 +224,8 @@ const Settings: React.FC = () => {
           {activeTab === "account" && (
             <div className="tab-content">
               <div className="content-header">
-                <h3>Account Settings</h3>
-                <p>Manage your personal information and profile</p>
+                <h3>Account Information</h3>
+                <p>Your profile details (read-only)</p>
               </div>
 
               <div className="profile-section">
@@ -218,23 +235,9 @@ const Settings: React.FC = () => {
                     alt="Profile"
                     className="profile-image"
                   />
-                  <label htmlFor="profile-upload" className="upload-button">
-                    📷 Change Photo
-                  </label>
-                  <input
-                    type="file"
-                    id="profile-upload"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    style={{ display: "none" }}
-                  />
                 </div>
 
                 <div className="profile-info">
-                  <div className="info-item">
-                    <span className="info-label">Member Since</span>
-                    <span className="info-value">January 2024</span>
-                  </div>
                   <div className="info-item">
                     <span className="info-label">Account Status</span>
                     <span className="info-value status-active">Active</span>
@@ -243,82 +246,50 @@ const Settings: React.FC = () => {
               </div>
 
               <div className="form-section">
+
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="name">Full Name</label>
+                    <label>Full Name</label>
                     <input
                       type="text"
-                      id="name"
-                      name="name"
                       value={accountForm.name}
-                      onChange={handleAccountChange}
-                      placeholder="Enter your full name"
+                      readOnly
+                      className="readonly-input"
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="username">Username</label>
+                    <label>Username</label>
                     <input
                       type="text"
-                      id="username"
-                      name="username"
                       value={accountForm.username}
-                      onChange={handleAccountChange}
-                      placeholder="Choose a username"
+                      readOnly
+                      className="readonly-input"
                     />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="email">Email Address</label>
+                    <label>Email Address</label>
                     <input
                       type="email"
-                      id="email"
-                      name="email"
                       value={accountForm.email}
-                      onChange={handleAccountChange}
-                      placeholder="your.email@example.com"
+                      readOnly
+                      className="readonly-input"
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="phone">Phone Number</label>
+                    <label>Phone Number</label>
                     <input
                       type="tel"
-                      id="phone"
-                      name="phone"
                       value={accountForm.phone}
-                      onChange={handleAccountChange}
-                      placeholder="+1 (555) 123-4567"
+                      readOnly
+                      className="readonly-input"
                     />
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="bio">Bio</label>
-                  <textarea
-                    id="bio"
-                    name="bio"
-                    value={accountForm.bio}
-                    onChange={handleAccountChange}
-                    placeholder="Tell us about yourself..."
-                    rows={4}
-                  />
-                </div>
               </div>
-
-              <button
-                onClick={handleSave}
-                className="save-button"
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <>
-                    <span className="spinner"></span> Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </button>
             </div>
           )}
 

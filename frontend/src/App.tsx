@@ -1,15 +1,15 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useLocation} from "react-router-dom";
 import CreateAccount from "./create_account.tsx";
 import Login from "./login.tsx";
 import Settings from "./settings.tsx"; 
 import "./App.css";
+import Dashboard from "./Dashboard";
+import Navbar from "./components/Navbar.tsx";
+
 import { useEffect, useState } from "react";
 import { fetchAllStockIndicators } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
 import { StockSentimentCard } from "./SentimentIndicators";
-import Dashboard from "./Dashboard";
-
-
 function Home() {
 
   const [indicators, setIndicators] = useState<StockIndicators[]>([]);
@@ -57,12 +57,8 @@ function Home() {
           </p>
 
           <div className="nav-links">
-            <Link to="/signup" className="nav-link nav-link-primary">
-              🚀 Create Account
-            </Link>
-            <Link to="/login" className="nav-link nav-link-secondary">
-              🔐 Sign In
-            </Link>
+            <a href="/signup" className="nav-link nav-link-primary">🚀 Create Account</a>
+            <a href="/login" className="nav-link nav-link-secondary">🔐 Sign In</a>
           </div>
 
           <div className="features-section">
@@ -91,7 +87,6 @@ function Home() {
             </div>
           </div>
         
-
         <div className="sentiment-section">
             <div className="sentiment-title">Current Market Sentiment</div>
 
@@ -122,6 +117,19 @@ function Home() {
 function App() {
   return (
     <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
+}
+
+function AppContent() {
+  const location = useLocation();
+  const hideNavbar =
+    location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/";
+  return (
+    <>
+      {!hideNavbar && <Navbar />}
+      
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
@@ -129,8 +137,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
-    </BrowserRouter>
+    </>
   );
 }
-
 export default App;
