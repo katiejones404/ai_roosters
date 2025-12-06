@@ -1,5 +1,0 @@
-#.gitignore
-
-data/kaggle.json
-*.pyc
-.env
