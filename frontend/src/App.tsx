@@ -1,18 +1,24 @@
-import { BrowserRouter, Routes, Route, Link, useLocation} from "react-router-dom";
-import CreateAccount from "./create_account.tsx";
-import Login from "./login.tsx";
-import Settings from "./settings.tsx"; 
-import "./App.css";
-import Dashboard from "./Dashboard";
-import Layout from "./layout.tsx";
-import Navbar from "./components/Navbar.tsx";
-
+import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+
+import CreateAccount from "./create_account";
+import Login from "./login";
+import Settings from "./settings";
+import Dashboard from "./Dashboard";
+import Layout from "./layout";
+import Navbar from "./components/Navbar";
+
+import "./App.css";               // ← Keep this high so global CSS loads
+import "./index.css";            // ← If you have this, uncomment it
+// import "./styles.css";        // ← Add any missing CSS imports here
+
 import { fetchAllStockIndicators } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
 import { StockSentimentCard } from "./SentimentIndicators";
-function Home() {
 
+
+// ---------------------- HOME PAGE ----------------------
+function Home() {
   const [indicators, setIndicators] = useState<StockIndicators[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +28,6 @@ function Home() {
       try {
         const data = await fetchAllStockIndicators();
 
-        // If you only want specific stocks, filter here, e.g. BP + RELIANCE:
         const filtered = data.filter((item) =>
           ["BP", "RELIANCE"].includes(item.ticker)
         );
@@ -39,7 +44,6 @@ function Home() {
     loadIndicators();
   }, []);
 
-
   return (
     <div className="app-container">
       <div className="home-background-shapes">
@@ -53,13 +57,12 @@ function Home() {
           <h1>Welcome to StockSense</h1>
           <p>
             Make smarter investment decisions with real-time market insights,
-            portfolio tracking, and AI-powered analytics. Join thousands of
-            investors who trust StockSense.
+            portfolio tracking, and AI-powered analytics.
           </p>
 
           <div className="nav-links">
-            <a href="/signup" className="nav-link nav-link-primary">🚀 Create Account</a>
-            <a href="/login" className="nav-link nav-link-secondary">🔐 Sign In</a>
+            <Link to="/signup" className="nav-link nav-link-primary">🚀 Create Account</Link>
+            <Link to="/login" className="nav-link nav-link-secondary">🔐 Sign In</Link>
           </div>
 
           <div className="features-section">
@@ -67,28 +70,24 @@ function Home() {
               <div className="feature-item">
                 <div className="feature-icon">📊</div>
                 <div className="feature-title">Live Analytics</div>
-                <div className="feature-description">
-                  Real-time market data and insights
-                </div>
+                <div className="feature-description">Real-time market insights</div>
               </div>
+
               <div className="feature-item">
                 <div className="feature-icon">🎯</div>
                 <div className="feature-title">Smart Tracking</div>
-                <div className="feature-description">
-                  Monitor your portfolio effortlessly
-                </div>
+                <div className="feature-description">Monitor your portfolio</div>
               </div>
+
               <div className="feature-item">
                 <div className="feature-icon">🤖</div>
                 <div className="feature-title">AI Powered</div>
-                <div className="feature-description">
-                  Intelligent recommendations
-                </div>
+                <div className="feature-description">Intelligent insights</div>
               </div>
             </div>
           </div>
-        
-        <div className="sentiment-section">
+
+          <div className="sentiment-section">
             <div className="sentiment-title">Current Market Sentiment</div>
 
             {loading && <p>Loading sentiment...</p>}
@@ -115,6 +114,8 @@ function Home() {
   );
 }
 
+
+// ---------------------- MAIN APP ----------------------
 function App() {
   return (
     <BrowserRouter>
@@ -123,28 +124,38 @@ function App() {
   );
 }
 
+
+// ---------------------- NAVBAR + ROUTER ----------------------
 function AppContent() {
   const location = useLocation();
+
+  // Hide navbar on auth pages + root page
   const hideNavbar =
-    location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/";
+    location.pathname === "/login" ||
+    location.pathname === "/signup" ||
+    location.pathname === "/";
+
   return (
     <>
       {!hideNavbar && <Navbar />}
-      
+
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/signup" element={<CreateAccount />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Routes that use the header layout */}
-        <Route element={<Layout/>}>
+        {/* Authenticated Layout Routes */}
+        <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
-          
         </Route>
 
+        {/* Fallback */}
+        <Route path="*" element={<Home />} />
       </Routes>
     </>
   );
 }
+
 export default App;
