@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { register } from "./utils/auth";
 import "./create_account.css";
 
@@ -20,6 +20,8 @@ interface FormErrors {
 }
 
 const CreateAccount: React.FC = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState<FormData>({
     email: "",
     username: "",
@@ -33,18 +35,16 @@ const CreateAccount: React.FC = () => {
   const [showRetypePassword, setShowRetypePassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  const validateEmail = (email: string): boolean =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const validatePassword = (password: string): boolean => {
-    return password.length >= 8;
-  };
+  const validatePassword = (password: string): boolean =>
+    password.length >= 8;
 
   const validateDateOfBirth = (date: string): boolean => {
     const dateRegex =
       /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(19|20)\d{2}$/;
+
     if (!dateRegex.test(date)) return false;
 
     const [month, day, year] = date.split("/").map(Number);
@@ -57,75 +57,51 @@ const CreateAccount: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
 
-    // Clear error when user starts typing
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
 
-    if (value.length >= 2) {
-      value = value.slice(0, 2) + "/" + value.slice(2);
-    }
-    if (value.length >= 5) {
-      value = value.slice(0, 5) + "/" + value.slice(5, 9);
-    }
+    if (value.length >= 2) value = value.slice(0, 2) + "/" + value.slice(2);
+    if (value.length >= 5) value = value.slice(0, 5) + "/" + value.slice(5, 9);
 
-    setFormData((prev) => ({
-      ...prev,
-      dateOfBirth: value,
-    }));
+    setFormData((prev) => ({ ...prev, dateOfBirth: value }));
 
     if (errors.dateOfBirth) {
-      setErrors((prev) => ({
-        ...prev,
-        dateOfBirth: undefined,
-      }));
+      setErrors((prev) => ({ ...prev, dateOfBirth: undefined }));
     }
   };
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!validateEmail(formData.email)) {
+    if (!formData.email) newErrors.email = "Email is required";
+    else if (!validateEmail(formData.email))
       newErrors.email = "Please enter a valid email address";
-    }
 
-    if (!formData.username) {
-      newErrors.username = "Username is required";
-    } else if (formData.username.length < 3) {
+    if (!formData.username) newErrors.username = "Username is required";
+    else if (formData.username.length < 3)
       newErrors.username = "Username must be at least 3 characters";
-    }
 
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (!validatePassword(formData.password)) {
+    if (!formData.password) newErrors.password = "Password is required";
+    else if (!validatePassword(formData.password))
       newErrors.password = "Password must be at least 8 characters";
-    }
 
-    if (!formData.retypePassword) {
+    if (!formData.retypePassword)
       newErrors.retypePassword = "Please confirm your password";
-    } else if (formData.password !== formData.retypePassword) {
+    else if (formData.password !== formData.retypePassword)
       newErrors.retypePassword = "Passwords do not match";
-    }
 
-    if (!formData.dateOfBirth) {
+    if (!formData.dateOfBirth)
       newErrors.dateOfBirth = "Date of birth is required";
-    } else if (!validateDateOfBirth(formData.dateOfBirth)) {
+    else if (!validateDateOfBirth(formData.dateOfBirth))
       newErrors.dateOfBirth = "You must be at least 18 years old";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -134,26 +110,23 @@ const CreateAccount: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      setIsSubmitting(true);
+    if (!validateForm()) return;
 
-      try {
-        // Call real backend API
-        await register(formData.email, formData.username, formData.password);
+    setIsSubmitting(true);
 
-        alert("Account created successfully! Please login.");
-        // Redirect to login page
-        window.location.href = "/login";
-      } catch (error: any) {
-        // Show error from backend
-        setErrors({
-          email:
-            error.response?.data?.detail ||
-            "Registration failed. Please try again.",
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
+    try {
+      await register(formData.email, formData.username, formData.password);
+
+      alert("Account created successfully! Please login.");
+      navigate("/login");
+    } catch (error: any) {
+      setErrors({
+        email:
+          error.response?.data?.detail ||
+          "Registration failed. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -172,6 +145,7 @@ const CreateAccount: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="account-form" noValidate>
+          {/* EMAIL */}
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <div className="input-wrapper">
@@ -186,11 +160,10 @@ const CreateAccount: React.FC = () => {
               />
               <span className="input-icon">📧</span>
             </div>
-            {errors.email && (
-              <span className="error-message">{errors.email}</span>
-            )}
+            {errors.email && <span className="error-message">{errors.email}</span>}
           </div>
 
+          {/* USERNAME */}
           <div className="form-group">
             <label htmlFor="username">Username</label>
             <div className="input-wrapper">
@@ -201,15 +174,14 @@ const CreateAccount: React.FC = () => {
                 value={formData.username}
                 onChange={handleChange}
                 className={errors.username ? "error" : ""}
-                placeholder="Choose a unique username"
+                placeholder="Choose a username"
               />
               <span className="input-icon">👤</span>
             </div>
-            {errors.username && (
-              <span className="error-message">{errors.username}</span>
-            )}
+            {errors.username && <span className="error-message">{errors.username}</span>}
           </div>
 
+          {/* PASSWORD */}
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <div className="input-wrapper">
@@ -226,7 +198,6 @@ const CreateAccount: React.FC = () => {
                 type="button"
                 className="toggle-password"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label="Toggle password visibility"
               >
                 {showPassword ? "🙈" : "👁️"}
               </button>
@@ -236,6 +207,7 @@ const CreateAccount: React.FC = () => {
             )}
           </div>
 
+          {/* RETYPE PASSWORD */}
           <div className="form-group">
             <label htmlFor="retypePassword">Retype Password</label>
             <div className="input-wrapper">
@@ -251,8 +223,9 @@ const CreateAccount: React.FC = () => {
               <button
                 type="button"
                 className="toggle-password"
-                onClick={() => setShowRetypePassword(!showRetypePassword)}
-                aria-label="Toggle password visibility"
+                onClick={() =>
+                  setShowRetypePassword(!showRetypePassword)
+                }
               >
                 {showRetypePassword ? "🙈" : "👁️"}
               </button>
@@ -262,6 +235,7 @@ const CreateAccount: React.FC = () => {
             )}
           </div>
 
+          {/* DATE OF BIRTH */}
           <div className="form-group">
             <label htmlFor="dateOfBirth">Date of Birth</label>
             <div className="input-wrapper">
@@ -299,8 +273,8 @@ const CreateAccount: React.FC = () => {
 
           <p className="terms-text">
             By creating an account, you agree to our{" "}
-            <a href="#terms">Terms of Service</a> and{" "}
-            <a href="#privacy">Privacy Policy</a>
+            <Link to="/terms">Terms of Service</Link> and{" "}
+            <Link to="/privacy">Privacy Policy</Link>
           </p>
         </form>
 
