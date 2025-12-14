@@ -20,12 +20,60 @@ logger.setLevel(logging.INFO)
 
 
 # ---------------------------------------------------------------------------
-# Device selection (CPU for now)
+# Device selection (prefer CUDA; fallback to CPU)
 # ---------------------------------------------------------------------------
 
 def select_device() -> int:
-    # returning -1 means Hugging Face uses CPU
-    return -1
+    """Return a Hugging Face `pipeline(..., device=...)` id.
+
+    - `0` means CUDA GPU device 0
+    - `-1` means CPU
+
+    Prefers CUDA when available (e.g., NVIDIA Jetson Orin), but falls back to CPU
+    if CUDA isn't available or can't be initialized.
+    """
+
+    force_cpu = os.getenv("FINBERT_FORCE_CPU", "").strip().lower() in {"1", "true", "yes"}
+    if force_cpu:
+        return -1
+
+    try:
+        import torch
+    except Exception as e:
+        logger.warning(f"Torch import failed; using CPU. error={e!r}")
+        return -1
+
+    if not getattr(torch, "cuda", None) or not torch.cuda.is_available():
+        return -1
+
+    # Some environments report cuda available but fail when actually creating tensors.
+    try:
+        _ = torch.zeros(1, device="cuda")
+        return 0
+    except Exception as e:
+        logger.warning(f"CUDA appears unavailable at runtime; using CPU. error={e!r}")
+        return -1
+
+
+def _is_cuda_related_error(exc: BaseException) -> bool:
+    msg = (str(exc) or "").lower()
+    return any(
+        k in msg
+        for k in (
+            "cuda",
+            "cudnn",
+            "cublas",
+            "device-side assert",
+            "out of memory",
+            "not compiled with cuda",
+            "no kernel image is available",
+        )
+    )
+
+
+def _clear_finbert_pipeline_cache() -> None:
+    if hasattr(get_finbert_pipeline, "finbert"):
+        delattr(get_finbert_pipeline, "finbert")
 
 
 # ---------------------------------------------------------------------------
@@ -146,26 +194,49 @@ LoadStage = Stage(
 _FINBERT_MODEL_ID = "ProsusAI/finbert"
 
 
-def get_finbert_pipeline():
+def get_finbert_pipeline(*, force_cpu: bool = False):
     """
     Lazily load the FinBERT model. Keeps it in a function attribute so we only load once.
     """
     if not hasattr(get_finbert_pipeline, "finbert"):
-        logger.info("Loading FinBERT model...")
-        model = AutoModelForSequenceClassification.from_pretrained(_FINBERT_MODEL_ID)
-        tokenizer = AutoTokenizer.from_pretrained(_FINBERT_MODEL_ID)
-        device_id = select_device()
+        requested_device_id = -1 if force_cpu else select_device()
 
-        get_finbert_pipeline.finbert = hf_pipeline(
-            task="sentiment-analysis",
-            model=model,
-            tokenizer=tokenizer,
-            device=device_id,
-            top_k=None,
-            truncation=True,
-            max_length=512,
-        )
-        logger.info(f"FinBERT model loaded on device_id={device_id}")
+        def _build(device_id: int):
+            logger.info(f"Loading FinBERT model (device_id={device_id})...")
+            if device_id != -1:
+                # On Jetson / constrained GPUs, fp16 greatly reduces memory pressure.
+                try:
+                    import torch
+
+                    model = AutoModelForSequenceClassification.from_pretrained(
+                        _FINBERT_MODEL_ID,
+                        dtype=torch.float16,
+                    )
+                except Exception:
+                    model = AutoModelForSequenceClassification.from_pretrained(_FINBERT_MODEL_ID)
+            else:
+                model = AutoModelForSequenceClassification.from_pretrained(_FINBERT_MODEL_ID)
+            tokenizer = AutoTokenizer.from_pretrained(_FINBERT_MODEL_ID)
+            return hf_pipeline(
+                task="sentiment-analysis",
+                model=model,
+                tokenizer=tokenizer,
+                device=device_id,
+                top_k=None,
+                truncation=True,
+                max_length=512,
+            )
+
+        try:
+            get_finbert_pipeline.finbert = _build(requested_device_id)
+            logger.info(f"FinBERT model loaded on device_id={requested_device_id}")
+        except Exception as e:
+            if requested_device_id != -1 and _is_cuda_related_error(e):
+                logger.warning(f"FinBERT CUDA init failed; retrying on CPU. error={e!r}")
+                get_finbert_pipeline.finbert = _build(-1)
+                logger.info("FinBERT model loaded on device_id=-1")
+            else:
+                raise
     return get_finbert_pipeline.finbert
 
 
@@ -194,7 +265,31 @@ def finbert_articles(artifact: IngestArtifact) -> SentimentArtifact:
         )
 
     pipe = get_finbert_pipeline()
-    results = pipe(artifact.description)
+
+    # Default to conservative batching to avoid GPU OOM on Jetson.
+    try:
+        batch_size = int(os.getenv("FINBERT_BATCH_SIZE", "1"))
+    except Exception:
+        batch_size = 1
+
+    try:
+        results = pipe(artifact.description, batch_size=batch_size)
+    except Exception as e:
+        # If CUDA runtime fails (OOM, driver mismatch, etc.), retry once on CPU.
+        if _is_cuda_related_error(e):
+            logger.warning(f"FinBERT inference failed on CUDA; retrying on CPU. error={e!r}")
+            try:
+                import torch
+
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            except Exception:
+                pass
+            _clear_finbert_pipeline_cache()
+            pipe = get_finbert_pipeline(force_cpu=True)
+            results = pipe(artifact.description, batch_size=batch_size)
+        else:
+            raise
 
     sentiments: List[str] = []
     scores: List[float] = []

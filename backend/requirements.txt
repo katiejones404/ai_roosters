@@ -7,16 +7,17 @@ sqlalchemy==1.4.41
 psycopg2-binary==2.9.6
 pydantic==1.10.9
 python-dotenv
-#run notebooks from the backend container:
+
+# run notebooks from the backend container:
 papermill
 yfinance
 
-# For sentiment analysis 
-transformers 
-torch 
+# For sentiment analysis
+transformers
+# Jetson (arm64/aarch64) should use the CUDA-enabled PyTorch that comes from the
+# NVIDIA L4T PyTorch base image. On non-aarch64 platforms, install torch via pip.
+torch; platform_machine != "aarch64"
 xgboost
-# Manages postgreSQL database connections 
-psycopg2-binary 
 
 # Authentication packages (Connor - Auth system)
 python-jose[cryptography]
