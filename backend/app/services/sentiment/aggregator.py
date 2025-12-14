@@ -7,8 +7,9 @@ from datetime import date, datetime
 
 import psycopg2
 import numpy as np
-from xgboost import XGBRegressor
 import math
+
+from xgboost import XGBRegressor
 
 # --------------------------------------------------------------------------------------
 # Logging

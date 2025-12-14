@@ -1,0 +1,40 @@
+# backend/Backend.Dockerfile.jetson
+# CUDA-enabled backend image for NVIDIA Jetson (JetPack 6.x / L4T r36.x).
+# Use with: sudo docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
+#
+# NOTE: This base image matches JetPack 6.1 / L4T r36.4.0 and includes CUDA-enabled PyTorch.
+FROM dustynv/pytorch:2.7-r36.4.0
+
+WORKDIR /app
+
+# Some Jetson images configure pip to use a Jetson-specific index that can time out.
+# Force official PyPI to make builds reliable.
+ENV PIP_INDEX_URL=https://pypi.org/simple \
+    PIP_EXTRA_INDEX_URL= \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libgomp1 \
+    libpq-dev \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+# requirements.txt skips installing pip torch on aarch64, so we keep the CUDA-enabled
+# torch that comes with the base image.
+# Use `python3 -m pip` to guarantee packages land in the same interpreter used at runtime.
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip install --no-cache-dir --retries 5 -r requirements.txt && \
+    python3 -c "import xgboost; print('xgboost-ok', xgboost.__version__)"
+
+COPY . .
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
+
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
