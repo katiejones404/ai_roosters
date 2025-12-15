@@ -581,6 +581,33 @@ AggregateStage = Stage(
 # Stage 3: XGBoost on returns using sentiment features
 # --------------------------------------------------------------------------------------
 
+def _truthy_env(name: str, default: str = "0") -> bool:
+    val = os.getenv(name, default).strip().lower()
+    return val in {"1", "true", "t", "yes", "y", "on"}
+
+
+def _xgb_has_cuda_build() -> bool:
+    """Return True if the installed XGBoost was compiled with CUDA support."""
+    try:
+        import xgboost as xgb  # local import to avoid import-time failures elsewhere
+
+        bi = getattr(xgb, "build_info", None)
+        if not callable(bi):
+            return False
+
+        info = bi()
+        if not isinstance(info, dict):
+            return False
+
+        use_cuda = info.get("USE_CUDA", info.get("use_cuda"))
+        if isinstance(use_cuda, bool):
+            return use_cuda
+        if isinstance(use_cuda, str):
+            return use_cuda.strip().lower() in {"1", "true", "yes", "y", "on"}
+        return False
+    except Exception:
+        return False
+
 def _safe_num(x: Optional[float]) -> float:
     
     if x is None: 
@@ -655,7 +682,20 @@ def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArt
 
     logger.info(f"[XGBoost] Base training matrix: {X.shape[0]} rows x {X.shape[1]} features")
 
-    def make_model() -> XGBRegressor:
+    force_cpu = _truthy_env("XGB_FORCE_CPU", "0")
+    cuda_build = _xgb_has_cuda_build()
+    prefer_gpu = (not force_cpu) and cuda_build
+
+    if force_cpu:
+        logger.info("[XGBoost] XGB_FORCE_CPU=1 -> forcing CPU")
+    elif cuda_build:
+        logger.info("[XGBoost] CUDA-enabled XGBoost build detected; will try GPU first")
+    else:
+        logger.info("[XGBoost] XGBoost CUDA not available; using CPU")
+
+    def make_model(device: str) -> XGBRegressor:
+        # XGBoost 2.x+ prefers `device` with `tree_method=hist`.
+        # If GPU is unavailable at runtime, we catch the error and fall back to CPU.
         return XGBRegressor(
             n_estimators=200,
             max_depth=4,
@@ -665,6 +705,7 @@ def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArt
             objective="reg:squarederror",
             n_jobs=4,
             tree_method="hist",
+            device=device,
         )
 
     # We built X only on “usable” rows; idxs holds the mapping from rows in X
@@ -704,10 +745,35 @@ def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArt
             f"(dropped {m - num_used} rows with NaN/inf labels)."
         )
 
-        model = make_model()
-        model.fit(X_clean, y_clean)
+        model: Optional[XGBRegressor] = None
+        trained_device = "cpu"
+        if prefer_gpu:
+            try:
+                model = make_model("cuda")
+                model.fit(X_clean, y_clean)
+                logger.info(f"[XGBoost] Trained {horizon_name} model on GPU (cuda)")
+                trained_device = "cuda"
+            except Exception as e:
+                logger.warning(
+                    f"[XGBoost] GPU training failed for {horizon_name}; retrying on CPU: {e}"
+                )
+                model = None
 
-        preds_clean = model.predict(X_clean)
+        if model is None:
+            model = make_model("cpu")
+            model.fit(X_clean, y_clean)
+            logger.info(f"[XGBoost] Trained {horizon_name} model on CPU")
+            trained_device = "cpu"
+
+        # Avoid XGBoost warning about mismatched devices (GPU booster + CPU NumPy input)
+        # by explicitly predicting via DMatrix when the booster is on CUDA.
+        if trained_device == "cuda":
+            import xgboost as xgb
+
+            dmat = xgb.DMatrix(X_clean)
+            preds_clean = model.get_booster().predict(dmat)
+        else:
+            preds_clean = model.predict(X_clean)
 
         # Scatter predictions back to full-length array. We need to map from
         # “row index in X” -> “global index in agg.* lists” using idxs.
