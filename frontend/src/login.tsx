@@ -1,22 +1,23 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { login } from "./utils/auth.ts";
 import "./login.css";
 
 interface LoginFormData {
-  username: string;
+  email: string;
   password: string;
 }
 
 interface FormErrors {
-  username?: string;
+  email?: string;
   password?: string;
   general?: string;
 }
 
 const Login: React.FC = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<LoginFormData>({
-    username: "",
+    email: "",
     password: "",
   });
 
@@ -43,8 +44,9 @@ const Login: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.username.trim()) {
-      newErrors.username = "Email is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
     }
 
     if (!formData.password) {
@@ -63,13 +65,15 @@ const Login: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await login(formData.username, formData.password);
+      await login(formData.email, formData.password);
       alert("Login successful! Welcome back!");
-      window.location.href = "/dashboard";
+      navigate("/dashboard", { replace: true });
     } catch (error: any) {
+      const detail = error?.response?.data?.detail;
+
       setErrors({
         general:
-          error.response?.data?.detail ||
+          (Array.isArray(detail) ? detail[0]?.msg : detail) ||
           "Invalid credentials. Please try again.",
       });
     } finally {
@@ -182,22 +186,22 @@ const Login: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="login-form" noValidate>
               <div className="form-group">
-                <label htmlFor="username">Email Address</label>
+                <label htmlFor="email">Email Address</label>
                 <div className="input-wrapper">
                   <input
                     type="text"
-                    id="username"
-                    name="username"
-                    value={formData.username}
+                    id="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
-                    className={errors.username ? "error" : ""}
+                    className={errors.email ? "error" : ""}
                     placeholder="Enter your email"
-                    autoComplete="username"
+                    autoComplete="email"
                   />
                   <span className="input-icon">📧</span>
                 </div>
-                {errors.username && (
-                  <span className="error-message">{errors.username}</span>
+                {errors.email && (
+                  <span className="error-message">{errors.email}</span>
                 )}
               </div>
 
