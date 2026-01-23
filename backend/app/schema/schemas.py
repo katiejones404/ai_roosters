@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime, date
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 from uuid import UUID
 
 
@@ -37,7 +37,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     """Schema for token payload data"""
-    email: str | None = None
+    email: Optional[str] = None
 
 
 # ============ PORTFOLIO SCHEMAS ============
@@ -79,6 +79,6 @@ class TimeRangeIndicators(BaseModel):
 
 class StockIndicatorsOut(BaseModel):
     ticker: str
-    snapshot_date: date | datetime
+    snapshot_date: Union[date, datetime]
     close_price: Optional[float]  # may be null if not present
     indicators: TimeRangeIndicators
