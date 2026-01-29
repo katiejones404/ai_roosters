@@ -29,3 +29,8 @@ httpx==0.24.1
 # Testing (unit + behavioral)
 pytest
 behave
+
+#Article ingestion
+requests
+beautifulsoup4
+tqdm
