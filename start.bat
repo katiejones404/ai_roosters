@@ -75,16 +75,16 @@ echo Docker is ready!
 
 REM Start all services
 echo Starting all services...
-docker-compose up -d
+docker compose up --build -d
 
 REM Wait for services to be ready
 echo Waiting for services to start...
 timeout /t 15 /nobreak >nul
 
 REM Check if services are running
-docker-compose ps | findstr "Up" >nul
+docker compose ps | findstr "Up" >nul
 if errorlevel 1 (
-    echo Services failed to start. Check logs with: docker-compose logs
+    echo Services failed to start. Check logs with: docker compose logs
     pause
     exit /b 1
 ) else (
@@ -96,8 +96,8 @@ if errorlevel 1 (
     echo    Database:    localhost:5433
     echo.
     echo Development mode: Changes to code will auto-reload!
-    echo To view logs: docker-compose logs -f
-    echo To stop:      docker-compose down
+    echo To view logs: docker compose logs -f
+    echo To stop:      docker compose down
 )
 
 pause

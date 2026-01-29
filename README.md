@@ -26,7 +26,21 @@ docker-compose down
 ## Install Requirements
 
 From ai_roosters folder:
-pip install -r ./backend/requirements.txt
+pip install -r ./Backend/requirements.txt
+
+
+## Testing
+
+All sentiment-related tests live under `Testing/Sentiment/`.
+
+- Install test dependencies (included in requirements):
+	- `pip install -r ./Backend/requirements.txt`
+
+- Run sentiment unit tests (pytest):
+	- `pytest Testing/Sentiment/unit`
+
+- Run sentiment behavioral tests (behave):
+	- `behave Testing/Sentiment/behavioral`
 
 
 
