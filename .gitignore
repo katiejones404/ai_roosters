@@ -8,3 +8,10 @@ backend/data/kaggle.json
 .venv/
 
 ./backend/data/masterfilelist.txt
+venv1
+./venv1
+.pyc
+__pycache__
+.pytest_cache
+./__pycache__
+./pytest_cache
