@@ -1,7 +1,7 @@
 import os
 import sys
 import logging
-from datetime import datetime
+from datetime import date
 from typing import List, Optional
 
 import yfinance as yf
@@ -218,7 +218,7 @@ class PriceIngestor:
             else:
                 logger.warning(f"Skipping {ticker} - no data retrieved")
 
-    def get_latest_date(self, ticker: str) -> Optional[datetime]:
+    def get_latest_date(self, ticker: str) -> Optional[date]:
         """
         Return the most recent date stored for a given ticker.
         """
@@ -265,12 +265,12 @@ class PriceIngestor:
 if __name__ == "__main__":
     # Optional CLI usage, doesn't affect FastAPI integration
     ingestor = PriceIngestor()
-    stocks = ["BP", "RELIANCE.NS"]
+    stocks = ["BP", "RELIANCE.NS", "AAPL", "NVDA", "AMD", "AMZN", "GOOGL"]
     ingestor.ingest_multiple_stocks(
         tickers=stocks,
-        start_date="2021-10-01",
-        end_date="2022-02-28",
-        period=None,
-        update_existing=False,
+        start_date= None,
+        end_date= None,
+        period="5y",
+        update_existing=True,
     )
     logger.info("Manual price ingestion complete.")
