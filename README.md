@@ -31,17 +31,56 @@ pip install -r ./Backend/requirements.txt
 
 ## Testing
 
-All sentiment-related tests live under `Testing/Sentiment/`.
+### Where the tests are
 
-- Install test dependencies (included in requirements):
-	- `pip install -r ./Backend/requirements.txt`
+- Pytest tests (unit + API/behavior-style) live under `Testing/`.
+- Sentiment behavioral (BDD) tests live under `Testing/Sentiment/behavioral/` and run with `behave`.
 
-- Run sentiment unit tests (pytest):
-	- `pytest Testing/Sentiment/unit`
+### Install test dependencies
 
-- Run sentiment behavioral tests (behave):
-	- `behave Testing/Sentiment/behavioral`
+From the repo root:
 
+```bash
+pip install -r ./Backend/requirements.txt
+```
+
+### Run ALL tests (pytest + sentiment behave)
+
+From the repo root:
+
+```bash
+python ./run_testing.py
+```
+
+Common options:
+
+- Quiet pytest output (still runs behave):
+
+```bash
+python ./run_testing.py -q
+```
+
+- Skip behave (pytest only):
+
+```bash
+python ./run_testing.py --no-behave
+```
+
+- Behave only:
+
+```bash
+python ./run_testing.py --behave-only
+```
+
+### Run just a subset (pytest)
+
+Examples:
+
+```bash
+python ./run_testing.py Testing/Articles -v
+python ./run_testing.py Testing/User -v
+python ./run_testing.py Testing/Sentiment/unit -v
+```
 
 
 
