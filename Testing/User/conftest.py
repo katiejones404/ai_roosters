@@ -3,16 +3,28 @@ Test configuration and fixtures
 """
 import sys
 import os
+from pathlib import Path
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-# Add backend directory to Python path
-backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'backend'))
-if backend_path not in sys.path:
-    sys.path.insert(0, backend_path)
+# Add Backend directory (which contains the `app/` package) to Python path
+# This test suite lives under Testing/User/, so project root is two levels up.
+project_root = Path(__file__).resolve().parents[2]
+
+backend_dir_candidates = [
+    project_root / "Backend",  # local repo layout
+    project_root,              # docker-compose layout (code mounted at /app)
+]
+
+for candidate in backend_dir_candidates:
+    if (candidate / "app").exists():
+        candidate_str = str(candidate)
+        if candidate_str not in sys.path:
+            sys.path.insert(0, candidate_str)
+        break
 
 from app.db.base import Base
 from app.db.main import get_db
