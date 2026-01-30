@@ -265,12 +265,12 @@ class PriceIngestor:
 if __name__ == "__main__":
     # Optional CLI usage, doesn't affect FastAPI integration
     ingestor = PriceIngestor()
-    stocks = ["BP", "RELIANCE.NS"]
+    stocks = ["BP", "RELIANCE.NS", "AAPL", "NVDA", "AMD", "AMZN", "GOOGL"]
     ingestor.ingest_multiple_stocks(
         tickers=stocks,
-        start_date="2021-10-01",
-        end_date="2022-02-28",
-        period=None,
-        update_existing=False,
+        start_date= None,
+        end_date= None,
+        period="5y",
+        update_existing=True,
     )
     logger.info("Manual price ingestion complete.")
