@@ -1,16 +1,12 @@
-"""
-Security utilities - Password hashing and JWT token management
-"""
+"""Security utilities - password hashing and JWT token management."""
 import os
+import hashlib
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 scheme for token authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -23,18 +19,38 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # ============ PASSWORD FUNCTIONS ============
 
+def _bcrypt_input(password: str) -> bytes:
+    """Prepare password bytes for bcrypt.
+
+    Some bcrypt backends enforce a strict 72-byte limit and raise errors.
+    To keep hashing reliable, we pre-hash with SHA-256 only when necessary.
+    """
+
+    password_bytes = password.encode("utf-8")
+    if len(password_bytes) > 72:
+        return hashlib.sha256(password_bytes).digest()
+    return password_bytes
+
 def hash_password(password: str) -> str:
     """
     Hash a plain text password
     """
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(_bcrypt_input(password), salt).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify a plain password against a hashed password
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(
+            _bcrypt_input(plain_password),
+            hashed_password.encode("utf-8"),
+        )
+    except ValueError:
+        # Covers malformed hashes
+        return False
 
 
 # ============ TOKEN FUNCTIONS ============

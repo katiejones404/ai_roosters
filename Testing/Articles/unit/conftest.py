@@ -7,14 +7,17 @@ from pathlib import Path
 THIS_DIR = Path(__file__).resolve().parent      # .../~/Testing
 REPO_ROOT = THIS_DIR.parent                     
 
-# Path to the folder that contains `app` or `backend` packages
-BACKEND_DIR = REPO_ROOT / "backend"
+# Path to the folder that contains the `app` package.
+# Support both layouts:
+# - Local dev repo:   <repo>/Backend/app
+# - docker-compose:   /app/app  (Backend is mounted directly at /app)
+BACKEND_DIR = REPO_ROOT / "Backend" if (REPO_ROOT / "Backend" / "app").exists() else REPO_ROOT
 
 # Make repo root importable (so `import backend...` works)
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-# Also add back end dir so `import app...` works just in cas
+# Also add backend dir so `import app...` works
 if BACKEND_DIR.exists() and str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 

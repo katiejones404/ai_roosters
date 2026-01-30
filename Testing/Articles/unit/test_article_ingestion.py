@@ -8,7 +8,7 @@ from decimal import Decimal
 import pytest
 
 # import module
-from backend.app.services import news_ingest as ni
+from app.services import news_ingest as ni
 
 
 @pytest.mark.parametrize(

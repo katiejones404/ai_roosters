@@ -3,9 +3,9 @@ Database models
 """
 import uuid
 from sqlalchemy import Column, String, DateTime, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.db.base import Base
+from app.db.types import GUID
 
 
 class User(Base):
@@ -14,7 +14,7 @@ class User(Base):
     """
     __tablename__ = "users"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=func.gen_random_uuid())
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     username = Column(String, unique=True, nullable=False)
     email = Column(Text, unique=True, index=True, nullable=False)
     password_hash = Column(Text, nullable=False)
