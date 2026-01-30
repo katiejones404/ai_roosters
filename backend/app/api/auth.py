@@ -85,7 +85,8 @@ async def get_current_user(
     db: Session = Depends(get_db)
 ) -> User:
     """Get current user from JWT token"""
-    email = verify_token(token)
+    payload = verify_token(token)
+    email = payload.get("sub")
     if email is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
