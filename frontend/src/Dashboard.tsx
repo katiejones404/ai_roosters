@@ -7,7 +7,7 @@ import {
   deleteStockIndicator,
 } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
-import { StockSentimentCard } from "./SentimentIndicators";
+//import { StockSentimentCard } from "./SentimentIndicators";
 
 const Dashboard: React.FC = () => {
   const [indicators, setIndicators] = useState<StockIndicators[]>([]);
@@ -67,7 +67,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="app-container">
-   
       <div className="home-background-shapes">
         <div className="home-shape home-shape-1"></div>
         <div className="home-shape home-shape-2"></div>
