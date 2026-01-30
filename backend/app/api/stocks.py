@@ -6,7 +6,6 @@ from datetime import date
 from pydantic import BaseModel
 
 import sys
-sys.path.insert(0, "/app")
 
 from app.db.main import get_db
 
@@ -78,7 +77,7 @@ def list_stocks(
         ORDER BY ticker
         """
     )
-    rows = db.execute(sql).fetchall()
+    rows = db.execute(sql).mappings().all()
     return [StockSummary(ticker=row["ticker"]) for row in rows]
 
 
@@ -129,7 +128,7 @@ def get_stock_prices(
         date_clause = ""
 
     sql = text(base_sql.format(date_clause=date_clause))
-    rows = db.execute(sql, params).fetchall()
+    rows = db.execute(sql, params).mappings().all()
 
     if not rows:
         raise HTTPException(status_code=404, detail="No price data found for this ticker")
@@ -195,7 +194,7 @@ def list_sentiment_snapshots(
         ORDER BY snapshot_date DESC
         """
     )
-    rows = db.execute(sql, {"ticker": ticker}).fetchall()
+    rows = db.execute(sql, {"ticker": ticker}).mappings().all()
 
     return [
         SentimentSnapshotOut(
@@ -375,7 +374,7 @@ def upsert_sentiment_snapshot(
             "prob_pos_max": payload.prob_pos_max,
             "prob_neg_max": payload.prob_neg_max,
         },
-    ).fetchone()
+    ).mappings().first()
     db.commit()
 
     if not row:
