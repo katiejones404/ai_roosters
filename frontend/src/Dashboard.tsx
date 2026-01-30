@@ -67,7 +67,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="app-container">
-   
       <div className="home-background-shapes">
         <div className="home-shape home-shape-1"></div>
         <div className="home-shape home-shape-2"></div>
