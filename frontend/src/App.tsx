@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  useLocation,
+} from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import CreateAccount from "./create_account";
@@ -8,14 +14,13 @@ import Dashboard from "./Dashboard";
 import Layout from "./layout";
 import Navbar from "./components/Navbar";
 
-import "./App.css";               // ← Keep this high so global CSS loads
-import "./index.css";            // ← If you have this, uncomment it
+import "./App.css"; // ← Keep this high so global CSS loads
+import "./index.css"; // ← If you have this, uncomment it
 // import "./styles.css";        // ← Add any missing CSS imports here
 
 import { fetchAllStockIndicators } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
-import { StockSentimentCard } from "./SentimentIndicators";
-
+//import { StockSentimentCard } from "./SentimentIndicators";
 
 // ---------------------- HOME PAGE ----------------------
 function Home() {
@@ -29,7 +34,7 @@ function Home() {
         const data = await fetchAllStockIndicators();
 
         const filtered = data.filter((item) =>
-          ["BP", "RELIANCE"].includes(item.ticker)
+          ["BP", "RELIANCE"].includes(item.ticker),
         );
 
         setIndicators(filtered);
@@ -61,8 +66,12 @@ function Home() {
           </p>
 
           <div className="nav-links">
-            <Link to="/signup" className="nav-link nav-link-primary">🚀 Create Account</Link>
-            <Link to="/login" className="nav-link nav-link-secondary">🔐 Sign In</Link>
+            <Link to="/signup" className="nav-link nav-link-primary">
+              🚀 Create Account
+            </Link>
+            <Link to="/login" className="nav-link nav-link-secondary">
+              🔐 Sign In
+            </Link>
           </div>
 
           <div className="features-section">
@@ -70,13 +79,17 @@ function Home() {
               <div className="feature-item">
                 <div className="feature-icon">📊</div>
                 <div className="feature-title">Live Analytics</div>
-                <div className="feature-description">Real-time market insights</div>
+                <div className="feature-description">
+                  Real-time market insights
+                </div>
               </div>
 
               <div className="feature-item">
                 <div className="feature-icon">🎯</div>
                 <div className="feature-title">Smart Tracking</div>
-                <div className="feature-description">Monitor your portfolio</div>
+                <div className="feature-description">
+                  Monitor your portfolio
+                </div>
               </div>
 
               <div className="feature-item">
@@ -114,7 +127,6 @@ function Home() {
   );
 }
 
-
 // ---------------------- MAIN APP ----------------------
 function App() {
   return (
@@ -123,7 +135,6 @@ function App() {
     </BrowserRouter>
   );
 }
-
 
 // ---------------------- NAVBAR + ROUTER ----------------------
 function AppContent() {
