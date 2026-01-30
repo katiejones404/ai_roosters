@@ -12,6 +12,7 @@ appropriate directory to PYTHONPATH/sys.path.
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -41,6 +42,21 @@ def _ensure_import_paths() -> None:
 def main(argv: list[str]) -> int:
     _ensure_import_paths()
 
+    # Runner flags (handled by this script, not forwarded to pytest)
+    run_behave = True
+    behave_only = False
+
+    raw_args = argv[1:]
+    pytest_args: list[str] = []
+
+    for arg in raw_args:
+        if arg == "--no-behave":
+            run_behave = False
+        elif arg == "--behave-only":
+            behave_only = True
+        else:
+            pytest_args.append(arg)
+
     try:
         import pytest  # type: ignore
     except ModuleNotFoundError:
@@ -52,11 +68,25 @@ def main(argv: list[str]) -> int:
         )
         return 1
 
-    args = argv[1:]
-    if not args:
-        args = ["Testing", "-v", "--tb=short"]
+    exit_code = 0
 
-    return pytest.main(args)
+    if not behave_only:
+        if not pytest_args:
+            pytest_args = ["Testing", "-v", "--tb=short"]
+        exit_code = pytest.main(pytest_args)
+
+    if run_behave:
+        sentiment_behavioral_dir = Path("Testing") / "Sentiment" / "behavioral"
+        if sentiment_behavioral_dir.exists():
+            print("\n=== behave: Testing/Sentiment/behavioral ===")
+            behave_rc = subprocess.call(
+                [sys.executable, "-m", "behave", str(sentiment_behavioral_dir)]
+            )
+            exit_code = max(exit_code, behave_rc)
+        else:
+            print("\n(skipping behave: Testing/Sentiment/behavioral not found)")
+
+    return exit_code
 
 
 if __name__ == "__main__":
