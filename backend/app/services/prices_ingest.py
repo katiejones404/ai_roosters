@@ -1,7 +1,7 @@
 import os
 import sys
 import logging
-from datetime import date
+from datetime import datetime
 from typing import List, Optional
 
 import yfinance as yf
@@ -218,7 +218,7 @@ class PriceIngestor:
             else:
                 logger.warning(f"Skipping {ticker} - no data retrieved")
 
-    def get_latest_date(self, ticker: str) -> Optional[date]:
+    def get_latest_date(self, ticker: str) -> Optional[datetime]:
         """
         Return the most recent date stored for a given ticker.
         """
