@@ -83,10 +83,6 @@ python ./run_testing.py Testing/Sentiment/unit -v
 ```
 
 
-
-##
-To get the JSON files from Kaggle, you will need...
-
 # Authors
 Sofia Bacha - sofbacha01@gmail.com
 
