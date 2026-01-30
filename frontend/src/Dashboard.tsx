@@ -7,7 +7,7 @@ import {
   deleteStockIndicator,
 } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
-import { StockSentimentCard } from "./SentimentIndicators";
+//import { StockSentimentCard } from "./SentimentIndicators";
 
 const Dashboard: React.FC = () => {
   const [indicators, setIndicators] = useState<StockIndicators[]>([]);
