@@ -113,3 +113,51 @@
   .header-logo { font-size: 0.95rem; padding: 6px 10px; }
   .nav-btn { padding: 6px 8px; font-size: 0.85rem; }
 }
+
+/* Add to Portfolio Button - Add this to your existing CSS file */
+
+.add-portfolio-btn {
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 16px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.add-portfolio-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.add-portfolio-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.add-portfolio-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Ensure card has proper spacing */
+.sentiment-card {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 20px;
+}
+
+.sentiment-pies {
+  margin-bottom: 8px; /* Reduced to make room for button */
+}

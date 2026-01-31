@@ -65,6 +65,33 @@ class PortfolioItem(PortfolioBaseItem):
     class Config:
         orm_mode = True
 
+class PortfolioItemWithMetrics(PortfolioBaseItem):
+    id: str
+    ticker: str
+    quantity: float
+    avg_price: float
+    current_price: Optional[float]
+    cost_basis: float
+    current_value: float
+    total_gain_loss: float
+    gain_loss_pct: float
+    return_1d: Optional[float]
+    return_30d: Optional[float]
+    return_120d: Optional[float]
+    return_360d: Optional[float]
+    added_at: Optional[str]
+
+class PortfolioSummary(BaseModel):
+    total_cost_basis: float
+    total_current_value: float
+    total_gain_loss: float
+    total_gain_loss_pct: float
+    num_positions: int
+
+class PortfolioSummaryResponse(BaseModel):
+    portfolio_items: list[PortfolioItemWithMetrics]
+    summary: PortfolioSummary
+
 
 # ============ SENTIMENT SCHEMAS ============
 
