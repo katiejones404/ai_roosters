@@ -7,7 +7,11 @@ import {
   deleteStockIndicator,
 } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
-//import { StockSentimentCard } from "./SentimentIndicators";
+import { StockSentimentCard } from "./SentimentIndicators";
+import axios from "axios";
+import { apiGet } from "./api/clients";
+
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
 const Dashboard: React.FC = () => {
   const [indicators, setIndicators] = useState<StockIndicators[]>([]);
@@ -65,6 +69,44 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleAddToPortfolio = async (ticker: string, currentPrice: number) => {
+    const quantityStr = prompt(`Add ${ticker} to portfolio\n\Enter quantity (number of shares):`);
+    if (!quantityStr) return;
+
+    const quantity = parseFloat(quantityStr);
+
+    if (isNaN(quantity) || quantity <= 0) {
+      alert("Please enter a valid positive number");
+      return;
+    }
+
+    const priceStr = prompt(
+      `Average purchase price per share?\n\nCurrent price:
+      $${currentPrice.toFixed(2)}`,
+        currentPrice.toString()
+    );
+
+    if (!priceStr) return;
+
+    const avgPrice = parseFloat(priceStr);
+
+    if (isNaN(avgPrice) || avgPrice <= 0) {
+      alert("Please enter a valid positive price");
+      return;
+    }
+    try {
+      await axios.post(`${API_BASE}/api/portfolio`, {
+        ticker: ticker,
+        quantity: quantity,
+        avg_price: avgPrice
+      });
+      alert(`Successfully added ${quantity} shares of ${ticker} to your potfolio!`);
+    } catch (err: any) {
+      console.error("Error adding to portfolio:", err);
+      alert(`Failed to add to portfolio: ${err.response?.data?.detail || err.message}`);
+    }
+  };
+
   return (
     <div className="app-container">
       <div className="home-background-shapes">
@@ -110,6 +152,7 @@ const Dashboard: React.FC = () => {
                   key={stock.ticker}
                   data={stock}
                   onDelete={handleDelete}
+                  onAddToPortfolio={handleAddToPortfolio}
                 />
               ))}
             </div>

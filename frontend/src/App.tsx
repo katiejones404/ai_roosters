@@ -11,6 +11,7 @@ import CreateAccount from "./create_account";
 import Login from "./login";
 import Settings from "./settings";
 import Dashboard from "./Dashboard";
+import Portfolio from "./portfolio";
 import Layout from "./layout";
 import Navbar from "./components/Navbar";
 
@@ -20,7 +21,7 @@ import "./index.css"; // ← If you have this, uncomment it
 
 import { fetchAllStockIndicators } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
-//import { StockSentimentCard } from "./SentimentIndicators";
+import { StockSentimentCard } from "./SentimentIndicators";
 
 // ---------------------- HOME PAGE ----------------------
 function Home() {
@@ -99,7 +100,7 @@ function Home() {
               </div>
             </div>
           </div>
-
+          
           <div className="sentiment-section">
             <div className="sentiment-title">Current Market Sentiment</div>
 
@@ -114,6 +115,7 @@ function Home() {
               </div>
             )}
           </div>
+          
         </div>
 
         <div className="home-branding">
@@ -158,6 +160,7 @@ function AppContent() {
 
         {/* Authenticated Layout Routes */}
         <Route element={<Layout />}>
+          <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
