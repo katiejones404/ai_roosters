@@ -285,6 +285,17 @@ def get_portfolio_summary(
     portfolio_items = []
     total_cost_basis = 0.0
     total_current_value = 0.0
+
+    def safe_float(value, default=0.0):
+        if value is None:
+            return None
+        try:
+            f = float(value)
+            if not (f != f or f == float('inf') or f == float('-inf')):
+                return f
+            return default
+        except (ValueError, TypeError):
+            return default
     
     for row in rows:
         cost_basis = float(row["cost_basis"]) if row["cost_basis"] else 0.0
