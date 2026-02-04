@@ -80,27 +80,24 @@ const Dashboard: React.FC = () => {
       return;
     }
 
-    const priceStr = prompt(
-      `Average purchase price per share?\n\nCurrent price:
-      $${currentPrice.toFixed(2)}`,
-        currentPrice.toString()
+    //Calculate total cost
+    const totalCost = quantity * currentPrice;
+
+    const confirmed = window.confirm(
+      `Add ${quantity} shares of ${ticker}\n\n` +
+      `Price per share: $${currentPrice.toFixed(2)}\n` +
+      `Total cost: $${totalCost.toFixed(2)}`
     );
 
-    if (!priceStr) return;
+    if (!confirmed) return;
 
-    const avgPrice = parseFloat(priceStr);
-
-    if (isNaN(avgPrice) || avgPrice <= 0) {
-      alert("Please enter a valid positive price");
-      return;
-    }
     try {
       await axios.post(`${API_BASE}/api/portfolio`, {
         ticker: ticker,
         quantity: quantity,
-        avg_price: avgPrice
+        avg_price: currentPrice
       });
-      alert(`Successfully added ${quantity} shares of ${ticker} to your potfolio!`);
+      alert(`Successfully added ${quantity} shares of ${ticker} to your potfolio!\n\n Total investment: $${totalCost.toFixed(2)}`);
     } catch (err: any) {
       console.error("Error adding to portfolio:", err);
       alert(`Failed to add to portfolio: ${err.response?.data?.detail || err.message}`);
