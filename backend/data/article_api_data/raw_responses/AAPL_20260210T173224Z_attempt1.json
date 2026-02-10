@@ -1,0 +1,2678 @@
+{
+  "items": "50",
+  "sentiment_score_definition": "x <= -0.35: Bearish; -0.35 < x <= -0.15: Somewhat-Bearish; -0.15 < x < 0.15: Neutral; 0.15 <= x < 0.35: Somewhat_Bullish; x >= 0.35: Bullish",
+  "relevance_score_definition": "0 < x <= 1, with a higher score indicating higher relevance.",
+  "feed": [
+    {
+      "title": "Apple and Google pledge to improve app fairness",
+      "url": "https://www.computerweekly.com/news/366638907/Apple-and-Google-pledge-to-improve-app-fairness",
+      "time_published": "20260210T170625",
+      "authors": [
+        "Brian McKenna"
+      ],
+      "summary": "The UK Competition and Markets Authority (CMA) is seeking views on commitments from Apple and Google to improve app store practices. These commitments aim to deliver greater certainty, transparency, and fairness for UK businesses dependent on app stores, boosting the UK's app economy and fintech sector. The proposals follow the designation of Apple and Google's mobile platforms as having strategic market status in October 2025, which subjects them to pro-competition rules.",
+      "banner_image": "https://www.computerweekly.com/visuals/ComputerWeekly/HeroImages/Apple-Store-Hong-Kong-hanohiki-1-adobe_searchsitetablet_520X173.jpg",
+      "source": "Computer Weekly",
+      "category_within_source": "General",
+      "source_domain": "Computer Weekly",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.912838"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.720629"
+        },
+        {
+          "topic": "economy_fiscal",
+          "relevance_score": "0.611708"
+        }
+      ],
+      "overall_sentiment_score": 0.246285,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.212107",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.936181",
+          "ticker_sentiment_score": "0.249080",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "GOOG",
+          "relevance_score": "0.900909",
+          "ticker_sentiment_score": "0.203880",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Apple and Google Agree to App Store Changes After U.K. Scrutiny",
+      "url": "https://www.tradingview.com/news/gurufocus:b778c5de2094b:0-apple-and-google-agree-to-app-store-changes-after-u-k-scrutiny/",
+      "time_published": "20260210T152651",
+      "authors": [],
+      "summary": "Apple and Alphabet have agreed to implement changes to their app stores to enhance transparency and competition, following scrutiny from the U.K.'s Competition and Markets Authority (CMA). The CMA stated that these commitments will ensure fairer app reviews and provide developers with greater access to tools for creating competing products. This decision addresses concerns over the dominant control exerted by Apple's App Store and Google's Play Store within the mobile ecosystem.",
+      "banner_image": null,
+      "source": "TradingView",
+      "category_within_source": "General",
+      "source_domain": "TradingView",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.913486"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.612005"
+        }
+      ],
+      "overall_sentiment_score": 0.002702,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.314933",
+          "ticker_sentiment_score": "0.010759",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "5 Blue-Chip Stocks to Buy as Dow Hits a New Milestone",
+      "url": "https://finviz.com/news/305701/5-blue-chip-stocks-to-buy-as-dow-hits-a-new-milestone",
+      "time_published": "20260210T150428",
+      "authors": [
+        "Nalak Das"
+      ],
+      "summary": "The Dow Index recently crossed the 50,000 mark for the first time, signaling a shift in market participant interest from technology to cyclical stocks. This article recommends five blue-chip stocks with a Zacks Rank #2 (Buy) that are poised for continued growth. These include Apple Inc., NVIDIA Corp., The Goldman Sachs Group Inc., Salesforce Inc., and Walmart Inc., each highlighted for their strong performance, strategic initiatives, and favorable growth prospects.",
+      "banner_image": "https://staticx-tuner.zacks.com/images/articles/charts/ea/145465.jpg?v=819776895",
+      "source": "Finviz",
+      "category_within_source": "General",
+      "source_domain": "Finviz",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.906845"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.830551"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.718234"
+        },
+        {
+          "topic": "retail_wholesale",
+          "relevance_score": "0.639178"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.636696"
+        }
+      ],
+      "overall_sentiment_score": 0.404732,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "GS",
+          "relevance_score": "0.989683",
+          "ticker_sentiment_score": "0.405801",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.957468",
+          "ticker_sentiment_score": "0.457794",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.971616",
+          "ticker_sentiment_score": "0.474000",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "CRM",
+          "relevance_score": "0.932725",
+          "ticker_sentiment_score": "0.435636",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "WMT",
+          "relevance_score": "0.949532",
+          "ticker_sentiment_score": "0.405818",
+          "ticker_sentiment_label": "Bullish"
+        }
+      ]
+    },
+    {
+      "title": "The Glass Architecture of AI: A Comprehensive Research Feature on Corning Inc. (GLW)",
+      "url": "https://markets.financialcontent.com/stocks/article/finterra-2026-2-10-the-glass-architecture-of-ai-a-comprehensive-research-feature-on-corning-inc-glw",
+      "time_published": "20260210T150127",
+      "authors": [
+        "Finterra"
+      ],
+      "summary": "Corning Inc. (GLW) has transformed from a traditional glass and ceramics manufacturer into a critical enabler of the generative AI revolution, leveraging its fiber-optic solutions and glass substrates for next-generation semiconductors. The company's strategic \"Springboard\" growth plan, coupled with significant partnerships with tech giants like Meta and Apple, has led to substantial financial growth and a re-rating by the market. Despite risks such as valuation and geopolitical exposure, Corning is well-positioned to benefit from the increasing demand for high-bandwidth connectivity and advanced chip packaging, supported by U.S. industrial policy.",
+      "banner_image": "https://news.finterra.ai/wp-content/uploads/2026/02/59492e8e-ffd2-42a8-9d70-e032d5efa73-1024x683.png",
+      "source": "FinancialContent",
+      "category_within_source": "General",
+      "source_domain": "FinancialContent",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.936547"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.800983"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.709724"
+        },
+        {
+          "topic": "manufacturing",
+          "relevance_score": "0.638848"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.618361"
+        }
+      ],
+      "overall_sentiment_score": 0.517015,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "GLW",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.856409",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.748406",
+          "ticker_sentiment_score": "0.430092",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.641271",
+          "ticker_sentiment_score": "0.304575",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Apple Inc. (AAPL) Bernstein Raises Valuation Forecast",
+      "url": "https://www.theglobeandmail.com/investing/markets/stocks/AAPL/pressreleases/130701/apple-inc-aapl-bernstein-raises-valuation-forecast/",
+      "time_published": "20260210T140300",
+      "authors": [],
+      "summary": "Bernstein analyst Toni Sacconaghi has increased the 12-month price target for Apple Inc. (AAPL) to $340.00 from $325.00, maintaining an \"Outperform\" rating. This upward revision is due to improved visibility into Apple's high-margin and consistent services growth, along with its strong capital return strategy. Despite potential near-term share price volatility and mixed hardware demand, Bernstein believes Apple's ecosystem strength, services mix, and disciplined capital allocation position it for market outperformance.",
+      "banner_image": "https://www.stocktargetadvisor.com/blog/wp-content/uploads/2025/12/Apple-stock-1.jpg",
+      "source": "The Globe and Mail",
+      "category_within_source": "General",
+      "source_domain": "The Globe and Mail",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.948489"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.821638"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.715942"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.635182"
+        }
+      ],
+      "overall_sentiment_score": 0.646128,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.629496",
+          "ticker_sentiment_label": "Bullish"
+        }
+      ]
+    },
+    {
+      "title": "The making of MX Master 4: How Logitech designed a premium wireless mouse with haptic vibrations",
+      "url": "https://indianexpress.com/article/technology/tech-news-technology/the-making-of-mx-master-4-how-logitech-designed-a-premium-wireless-mouse-with-haptic-vibrations-10524437/",
+      "time_published": "20260210T132831",
+      "authors": [
+        "Anuj Bhatia"
+      ],
+      "summary": "Logitech's VP Anatoliy Polyanker discussed the design of the MX Master 4, a premium wireless mouse featuring haptic feedback. Inspired by smartphones and PCs, the mouse aims to provide an immersive, multisensory experience for creative professionals, enhancing productivity through features like the Action Ring and seamless device transitions. The design prioritizes desirability, durability, and sustainability, with a focus on software-driven customization and integration of AI tools.",
+      "banner_image": "https://images.indianexpress.com/2026/02/IE-2026-02-10T174546.261.jpg?w=1600",
+      "source": "The Indian Express",
+      "category_within_source": "General",
+      "source_domain": "The Indian Express",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.934940"
+        }
+      ],
+      "overall_sentiment_score": 0.346581,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "LOGI",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.400489",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.705495",
+          "ticker_sentiment_score": "0.321947",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.621721",
+          "ticker_sentiment_score": "0.322342",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Tech Views and Takeaways From 4Q25 Earnings - Raymond James - Commentaries",
+      "url": "https://www.advisorperspectives.com/commentaries/2026/02/10/tech-views-takeaways-4q25-earnings",
+      "time_published": "20260210T125754",
+      "authors": [
+        "Larry Adam"
+      ],
+      "summary": "Raymond James' Larry Adam provides an analysis of 4Q25 earnings, highlighting robust double-digit growth for the S&P 500 and strong performance from mega-cap tech (MAGMAN) despite recent tech stock sell-offs. The report emphasizes the accelerating impact of AI across various industries, driving significant capital expenditure increases and broadening market performance beyond just the tech sector. Furthermore, emerging markets are showing strong momentum, particularly in chip-heavy economies, driven by impressive earnings growth.",
+      "banner_image": null,
+      "source": "Advisor Perspectives",
+      "category_within_source": "General",
+      "source_domain": "Advisor Perspectives",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.933598"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.844644"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.821930"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.700465"
+        }
+      ],
+      "overall_sentiment_score": 0.266406,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "RJF",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.133266",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.901856",
+          "ticker_sentiment_score": "0.348583",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.831290",
+          "ticker_sentiment_score": "0.347867",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.845230",
+          "ticker_sentiment_score": "0.340013",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.814222",
+          "ticker_sentiment_score": "0.333300",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Qualcomm (QCOM) Beats Estimates as Piper Sandler Reiterates Overweight Rating",
+      "url": "https://finviz.com/news/305292/qualcomm-qcom-beats-estimates-as-piper-sandler-reiterates-overweight-rating",
+      "time_published": "20260210T114817",
+      "authors": [
+        "Ghazal Ahmed"
+      ],
+      "summary": "Qualcomm (QCOM) reported stronger-than-expected earnings and revenue for Q1 fiscal 2026, with EPS of $3.50 and revenue of $12.25 billion, beating analyst forecasts. Despite the beat, Piper Sandler reiterated an Overweight rating with a $200 price target, noting tempered March guidance due to memory constraints at OEMs, particularly in China, which will impact the handset business, though Automotive and IoT segments show strong growth. The firm anticipates a longer-term impact from memory conditions and the Apple agreement, with potential boosts from clarity on Qualcomm's data center strategy.",
+      "banner_image": "https://d2gr5kl7dt2z3t.cloudfront.net/blog/wp-content/uploads/2015/07/mother-board-581597_1280.jpg",
+      "source": "Finviz",
+      "category_within_source": "General",
+      "source_domain": "Finviz",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.902574"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.734071"
+        }
+      ],
+      "overall_sentiment_score": 0.053735,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "QCOM",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.261601",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.738119",
+          "ticker_sentiment_score": "-0.111479",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "MU",
+          "relevance_score": "0.626901",
+          "ticker_sentiment_score": "-0.118603",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Ragnarok: Twilight Official Launching in Vietnam on February 10, 2026",
+      "url": "https://www.manilatimes.net/2026/02/10/tmt-newswire/globenewswire/ragnarok-twilight-official-launching-in-vietnam-on-february-10-2026/2275032/amp",
+      "time_published": "20260210T112858",
+      "authors": [
+        "GlobeNewswire"
+      ],
+      "summary": "GRAVITY Co., Ltd. has officially launched its MMORPG mobile game, Ragnarok: Twilight, in Vietnam on February 10, 2026. This launch follows successful performances in other regions, including China, Taiwan, Hong Kong, Macau, and various Southeast Asian countries where the game achieved high rankings in downloads and grossing charts. Gravity aims to continue its good service in Vietnam and encourages users to enjoy the game's features and celebratory events.",
+      "banner_image": null,
+      "source": "The Manila Times",
+      "category_within_source": "General",
+      "source_domain": "The Manila Times",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.905778"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.724085"
+        }
+      ],
+      "overall_sentiment_score": 0.326559,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "GRVY",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.483233",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.691364",
+          "ticker_sentiment_score": "0.295405",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.647044",
+          "ticker_sentiment_score": "0.288002",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Top-ranked mobile RPG Ragnarok: Twilight debuts in Vietnam",
+      "url": "https://www.stocktitan.net/news/GRVY/ragnarok-twilight-official-launching-in-vietnam-on-february-10-2v93unkwm4d2.html",
+      "time_published": "20260210T112858",
+      "authors": [],
+      "summary": "GRAVITY (NasdaqGM: GRVY) has officially launched its MMORPG mobile game, Ragnarok: Twilight, in Vietnam on February 10, 2026. This launch follows the game's significant success in other Asian markets, where it achieved high rankings in both free downloads and top-grossing lists on Google Play and Apple App Store. The game offers features like a hero transformation system, 100% rare-equipment/card MVP drops, and solo-friendly exclusive MVP dungeons.",
+      "banner_image": "https://ml.globenewswire.com/media/Y2FkZTRmYmEtZjA2OS00YTY2LWFlNDItMWViNjc0OTA3Zjk0LTEyNjgzNzYtMjAyNi0wMi0xMC1lbg==/tiny/GRAVITY-Co-Ltd-.png",
+      "source": "Stock Titan",
+      "category_within_source": "General",
+      "source_domain": "Stock Titan",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.900743"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.813947"
+        }
+      ],
+      "overall_sentiment_score": 0.288007,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "GRVY",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.499750",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.615272",
+          "ticker_sentiment_score": "0.204761",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.601753",
+          "ticker_sentiment_score": "0.234490",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Apple and Google agree app store changes to appease UK regulator",
+      "url": "https://www.reuters.com/world/apple-google-agree-app-store-changes-appease-uk-regulator-2026-02-10/",
+      "time_published": "20260210T110600",
+      "authors": [
+        "Reuters"
+      ],
+      "summary": "Apple and Google have agreed to implement changes to their app stores to address concerns raised by the UK's antitrust regulator, the Competition and Markets Authority (CMA). These changes aim to make app stores fairer and more transparent for developers. Both companies stated their continued commitment to user experience and developer opportunities while collaborating with the CMA.",
+      "banner_image": "https://www.reuters.com/resizer/v2/DN4J7CHWZRMLTKYE6EOLEONUTE.jpg?auth=56c4d9f68aa25cc1875903a4ae5b190434bc30d9273b70259f005c3c118373ae&width=1920&quality=80",
+      "source": "Reuters",
+      "category_within_source": "General",
+      "source_domain": "Reuters",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.926087"
+        }
+      ],
+      "overall_sentiment_score": 0.108347,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.972418",
+          "ticker_sentiment_score": "0.100441",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.911621",
+          "ticker_sentiment_score": "0.147884",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "GOOG",
+          "relevance_score": "0.899985",
+          "ticker_sentiment_score": "0.144499",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Bull of the Day: Broadcom (AVGO)",
+      "url": "https://finviz.com/news/305224/bull-of-the-day-broadcom-avgo",
+      "time_published": "20260210T100856",
+      "authors": [
+        "Andrew Rocco"
+      ],
+      "summary": "Broadcom (AVGO) is highlighted as a \"Strong Buy\" due to its dominant positions in the semiconductor and software industries, particularly benefiting from the AI data center buildout. The company offers an alternative to Nvidia with its custom AI accelerators and has high-margin recurring revenue from its software segment, including VMware. Broadcom boasts a robust growth outlook, consistently beating earnings estimates, and strong technical performance.",
+      "banner_image": null,
+      "source": "Finviz",
+      "category_within_source": "General",
+      "source_domain": "Finviz",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.927810"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.826470"
+        },
+        {
+          "topic": "mergers_and_acquisitions",
+          "relevance_score": "0.627970"
+        }
+      ],
+      "overall_sentiment_score": 0.609831,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AVGO",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.887772",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.846075",
+          "ticker_sentiment_score": "0.298795",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.737138",
+          "ticker_sentiment_score": "0.747499",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.720002",
+          "ticker_sentiment_score": "0.716288",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.620409",
+          "ticker_sentiment_score": "0.321136",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Jim Cramer on Apple (AAPL): \"Doesn't Hurt That They've Avoided Spending Hundreds of Billions of Dollars on Data Centers\"",
+      "url": "https://finviz.com/news/305686/jim-cramer-on-apple-aapl-doesnt-hurt-that-theyve-avoided-spending-hundreds-of-billions-of-dollars-on-data-centers",
+      "time_published": "20260210T095300",
+      "authors": [
+        "Syeda Seirut Javed"
+      ],
+      "summary": "Jim Cramer recently discussed Apple's strong financial performance, particularly its blowout iPhone sales and robust numbers from China. He highlighted Apple's strategic advantage in avoiding massive expenditures on data centers by partnering with Google's Gemini for AI, a move Cramer believes has contributed to its recent stock rally. Cramer advises investors to \"own Apple, don't trade it.\"",
+      "banner_image": "https://d2gr5kl7dt2z3t.cloudfront.net/blog/wp-content/uploads/2026/01/19065128/amal-saikrishna-yprNBnHEPEY-unsplash-768x507.jpg",
+      "source": "Finviz",
+      "category_within_source": "General",
+      "source_domain": "Finviz",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.948779"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.940840"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.848595"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.608924"
+        },
+        {
+          "topic": "retail_wholesale",
+          "relevance_score": "0.622484"
+        }
+      ],
+      "overall_sentiment_score": 0.241318,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.903888",
+          "ticker_sentiment_score": "0.320677",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.621894",
+          "ticker_sentiment_score": "0.234344",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "GOOG",
+          "relevance_score": "0.638264",
+          "ticker_sentiment_score": "0.212696",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Jim Cramer on Apple (AAPL): \u201cDoesn\u2019t Hurt That They\u2019ve Avoided Spending Hundreds of Billions of Dollars on Data Centers\u201d",
+      "url": "https://www.insidermonkey.com/blog/jim-cramer-on-apple-aapl-doesnt-hurt-that-theyve-avoided-spending-hundreds-of-billions-of-dollars-on-data-centers-1692622/",
+      "time_published": "20260210T095300",
+      "authors": [
+        "Syeda Seirut Javed"
+      ],
+      "summary": "Jim Cramer highlighted Apple's strong financial quarter, marked by excellent iPhone sales and robust performance in China, which was previously a weaker market for the company. He noted that Apple's strategy of partnering with Google's Gemini on AI has allowed it to avoid massive expenditures on data centers, contributing to its financial health. Cramer reiterated his long-standing advice to \"own Apple, don\u2019t trade it,\" emphasizing its investment stability.",
+      "banner_image": "https://imonkey-blog.imgix.net/blog/wp-content/uploads/2026/01/19065128/amal-saikrishna-yprNBnHEPEY-unsplash-768x507.jpg?auto=format&fit=clip&expires=1802217600&width=480&height=316",
+      "source": "Insider Monkey",
+      "category_within_source": "General",
+      "source_domain": "Insider Monkey",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.921354"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.839767"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.821852"
+        },
+        {
+          "topic": "retail_wholesale",
+          "relevance_score": "0.619471"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.639850"
+        }
+      ],
+      "overall_sentiment_score": 0.351648,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.993044",
+          "ticker_sentiment_score": "0.463064",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.658527",
+          "ticker_sentiment_score": "0.271869",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "GOOG",
+          "relevance_score": "0.675922",
+          "ticker_sentiment_score": "0.259425",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Stifel initiates coverage on CEVA stock with Buy rating, $30 target By Investing.com",
+      "url": "https://m.za.investing.com/news/analyst-ratings/stifel-initiates-coverage-on-ceva-stock-with-buy-rating-30-target-93CH-4105342?ampMode=1",
+      "time_published": "20260210T093001",
+      "authors": [
+        "Investing.com"
+      ],
+      "summary": "Stifel has initiated coverage on CEVA Inc. (NASDAQ:CEVA) with a Buy rating and a $30 price target, citing the company's strong position in wireless connectivity IP for power-efficient on-device sensing and inference applications. The firm believes CEVA's low power NPU and DSP IP portfolios are well-placed to benefit from AI infrastructure growth towards the network edge, despite recognizing near-term challenges such as mobile handset demand and uncertainty regarding Apple's modem efforts. CEVA's high gross profit margins (87.17%) and recent strategic partnerships, including a NPU deal with Microchip Technology, validate its long-term strategy in the edge-AI market.",
+      "banner_image": "https://i-invdn-com.investing.com/msite/img/install_apps/mobile-icon-banner.svg",
+      "source": "Investing.com South Africa",
+      "category_within_source": "General",
+      "source_domain": "Investing.com South Africa",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.916998"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.833201"
+        }
+      ],
+      "overall_sentiment_score": 0.212036,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "CEVA",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.441977",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MCHP",
+          "relevance_score": "0.740061",
+          "ticker_sentiment_score": "0.136308",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.714773",
+          "ticker_sentiment_score": "-0.113722",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "NXPI",
+          "relevance_score": "0.633351",
+          "ticker_sentiment_score": "0.335152",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Apple Inc. $AAPL Holdings Decreased by TLW Wealth Management LLC",
+      "url": "https://www.marketbeat.com/instant-alerts/filing-apple-inc-aapl-holdings-decreased-by-tlw-wealth-management-llc-2026-02-10/",
+      "time_published": "20260210T085749",
+      "authors": [
+        "MarketBeat"
+      ],
+      "summary": "TLW Wealth Management LLC reduced its stake in Apple Inc. ($AAPL) by 6.5% during the third quarter, reducing its holdings to 50,473 shares valued at $12.85 million. Despite this, Apple remains the firm's sixth-largest holding. Meanwhile, other institutional investors like Vanguard Group Inc., State Street Corp, Geode Capital Management LLC, Norges Bank, and Northern Trust Corp significantly increased their positions in Apple.",
+      "banner_image": "https://www.marketbeat.com/logos/apple-inc-logo-1200x675.png",
+      "source": "MarketBeat",
+      "category_within_source": "General",
+      "source_domain": "MarketBeat",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.932279"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.842266"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.732032"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.639126"
+        }
+      ],
+      "overall_sentiment_score": 0.149163,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.218443",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.643946",
+          "ticker_sentiment_score": "0.146311",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.620637",
+          "ticker_sentiment_score": "0.145462",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "TSLA",
+          "relevance_score": "0.613493",
+          "ticker_sentiment_score": "0.138690",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.606264",
+          "ticker_sentiment_score": "0.139234",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Montis Financial LLC Has $19.84 Million Stake in Apple Inc. $AAPL",
+      "url": "https://www.marketbeat.com/instant-alerts/filing-montis-financial-llc-has-1984-million-stake-in-apple-inc-aapl-2026-02-10/",
+      "time_published": "20260210T084053",
+      "authors": [
+        "MarketBeat"
+      ],
+      "summary": "Montis Financial LLC increased its stake in Apple Inc. by 15.8% to 77,919 shares, valued at $19.84 million, making Apple its seventh-largest holding. This comes as Apple surpassed quarterly expectations with robust EPS and revenue figures, revenue growth, and a declared dividend. Analyst sentiment toward Apple remains largely positive, with a consensus \"Moderate Buy\" rating and upward adjustments to price targets from several brokerages.",
+      "banner_image": "https://www.marketbeat.com/logos/apple-inc-logo-1200x675.png",
+      "source": "MarketBeat",
+      "category_within_source": "General",
+      "source_domain": "MarketBeat",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.908840"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.928570"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.838763"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.746001"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.617076"
+        }
+      ],
+      "overall_sentiment_score": 0.208195,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.480874",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.622588",
+          "ticker_sentiment_score": "0.130217",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.629838",
+          "ticker_sentiment_score": "0.149333",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "TSLA",
+          "relevance_score": "0.613536",
+          "ticker_sentiment_score": "0.117214",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.603930",
+          "ticker_sentiment_score": "0.096740",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "EdgeRock Capital LLC Sells 4,794 Shares of Apple Inc. $AAPL",
+      "url": "https://www.marketbeat.com/instant-alerts/filing-edgerock-capital-llc-sells-4794-shares-of-apple-inc-aapl-2026-02-10/",
+      "time_published": "20260210T083654",
+      "authors": [
+        "MarketBeat"
+      ],
+      "summary": "EdgeRock Capital LLC reduced its stake in Apple Inc. (NASDAQ:AAPL) by 15.1% in the third quarter, selling 4,794 shares and now owning 26,971 shares valued at $6.87 million. Despite this sale, Apple remains the 17th largest holding for EdgeRock Capital LLC, making up 1.9% of its portfolio. Other institutional investors have varied their positions, while analyst sentiment towards Apple remains \"Moderate Buy\" with a consensus price target of $291.70.",
+      "banner_image": "https://www.marketbeat.com/logos/apple-inc-logo-1200x675.png",
+      "source": "MarketBeat",
+      "category_within_source": "General",
+      "source_domain": "MarketBeat",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.928401"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.849473"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.739127"
+        }
+      ],
+      "overall_sentiment_score": 0.122578,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.093436",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.632389",
+          "ticker_sentiment_score": "0.109587",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.636010",
+          "ticker_sentiment_score": "0.102664",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.640894",
+          "ticker_sentiment_score": "0.118160",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "TSLA",
+          "relevance_score": "0.605615",
+          "ticker_sentiment_score": "0.131058",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Davis Rea LTD. Sells 40,173 Shares of Apple Inc. $AAPL",
+      "url": "https://www.marketbeat.com/instant-alerts/filing-davis-rea-ltd-sells-40173-shares-of-apple-inc-aapl-2026-02-10/",
+      "time_published": "20260210T083253",
+      "authors": [
+        "MarketBeat"
+      ],
+      "summary": "Davis Rea LTD. has significantly reduced its stake in Apple Inc. (NASDAQ:AAPL) by selling 40,173 shares, decreasing its position by 64.9%. Despite this, Apple remains a major holding for the fund, making up 1.3% of its portfolio. The article also details other institutional investor activity, analyst ratings, and recent financial performance of Apple.",
+      "banner_image": "https://www.marketbeat.com/logos/apple-inc-logo-1200x675.png",
+      "source": "MarketBeat",
+      "category_within_source": "General",
+      "source_domain": "MarketBeat",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.931136"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.810231"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.624587"
+        }
+      ],
+      "overall_sentiment_score": 0.145981,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.193433",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.561764",
+          "ticker_sentiment_score": "0.131180",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.577059",
+          "ticker_sentiment_score": "0.128012",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "TSLA",
+          "relevance_score": "0.604704",
+          "ticker_sentiment_score": "0.147286",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.621526",
+          "ticker_sentiment_score": "0.022028",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "TSMC Stock Is on a Roll. Rising Sales and Trump Tariff News Could Keep It Going.",
+      "url": "https://www.barrons.com/articles/tsmc-stock-taiwan-semi-ai-chips-tariffs-27928539?gaa_at=eafs&gaa_n=AWEtsqeWRaW-8bmB_RbtHaJS-ncxy6GfKbV1leqkcHL983QxgqPGfLOxW_OX&gaa_ts=698afd35&gaa_sig=xS85K5giNTjvRz8V-ni3vtYZtXjyv2AnD0pi6nJJ6dF1QpOvacxSoykdsQFZ8o2ZHArfPnHqm6Wie8aIqEfXQw%3D%3D",
+      "time_published": "20260210T082910",
+      "authors": [
+        "Adam Clark"
+      ],
+      "summary": "Taiwan Semiconductor Manufacturing (TSMC) reported a 20% increase in January revenue from the previous quarter, signaling its strong position in the semiconductor industry. This growth, coupled with potential U.S. tariff relief, could further boost the company's performance. The article suggests that TSMC's stock momentum is likely to continue.",
+      "banner_image": "https://images.barrons.com/im-391103?width=700&height=466",
+      "source": "Barron's",
+      "category_within_source": "General",
+      "source_domain": "Barron's",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.916919"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.800032"
+        },
+        {
+          "topic": "economy_fiscal",
+          "relevance_score": "0.606919"
+        },
+        {
+          "topic": "manufacturing",
+          "relevance_score": "0.715895"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.841483"
+        }
+      ],
+      "overall_sentiment_score": 0.332111,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "TSM",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.445941",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.634966",
+          "ticker_sentiment_score": "0.334755",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.613806",
+          "ticker_sentiment_score": "0.324046",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "QCOM",
+          "relevance_score": "0.600970",
+          "ticker_sentiment_score": "0.329967",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AMD",
+          "relevance_score": "0.625109",
+          "ticker_sentiment_score": "0.342961",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Apple Inc. $AAPL is Ritholtz Wealth Management's 6th Largest Position",
+      "url": "https://www.marketbeat.com/instant-alerts/filing-apple-inc-aapl-is-ritholtz-wealth-managements-6th-largest-position-2026-02-10/",
+      "time_published": "20260210T082258",
+      "authors": [
+        "MarketBeat"
+      ],
+      "summary": "Ritholtz Wealth Management increased its stake in Apple (NASDAQ:AAPL) by 4.7% during the third quarter, making it their 6th largest position and accounting for 2.8% of their holdings. This comes as Apple faces neutral to positive sentiment from analysts, with upcoming product cycles and AI integration initiatives balancing out concerns about competition from pure-play AI companies. The company recently reported strong earnings, exceeding analyst estimates, and announced a quarterly dividend.",
+      "banner_image": "https://www.marketbeat.com/logos/apple-inc-logo-1200x675.png",
+      "source": "MarketBeat",
+      "category_within_source": "General",
+      "source_domain": "MarketBeat",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.949615"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.822948"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.711803"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.610170"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.619320"
+        }
+      ],
+      "overall_sentiment_score": 0.142832,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.346954",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.642977",
+          "ticker_sentiment_score": "-0.144866",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Keysight Technologies stock hits all-time high at 233.16 USD By Investing.com",
+      "url": "https://ca.investing.com/news/company-news/keysight-technologies-stock-hits-alltime-high-at-23316-usd-93CH-4447161",
+      "time_published": "20260210T063637",
+      "authors": [
+        "Investing.com"
+      ],
+      "summary": "Keysight Technologies (KEYS) stock reached an all-time high of $233.16 USD, reflecting strong investor confidence and market performance with a 32.49% increase over the past year. The company maintains a robust financial position and has recently unveiled new electric vehicle charging test solutions and partnerships, including collaborations with Point2 Technology for AI data centers and Airbus UpNext for 5G non-terrestrial networks. These advancements highlight Keysight's strategic initiatives and operational excellence across various technological sectors.",
+      "banner_image": "https://i-invdn-com.investing.com/news/world_news_2_69x52._800x533_L_1419494365.jpg",
+      "source": "Investing.com Canada",
+      "category_within_source": "General",
+      "source_domain": "Investing.com Canada",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.913563"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.840220"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.709808"
+        }
+      ],
+      "overall_sentiment_score": 0.245076,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "KEYS",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.882980",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "ON",
+          "relevance_score": "0.618106",
+          "ticker_sentiment_score": "0.106004",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "AVGO",
+          "relevance_score": "0.577652",
+          "ticker_sentiment_score": "0.129384",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.554727",
+          "ticker_sentiment_score": "-0.141700",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "TSLA",
+          "relevance_score": "0.556443",
+          "ticker_sentiment_score": "0.139735",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Taiwan Rejects U.S. Demand for 40% Chip Supply Chain Shift",
+      "url": "https://www.techbuzz.ai/articles/taiwan-rejects-u-s-demand-for-40-chip-supply-chain-shift",
+      "time_published": "20260210T052910",
+      "authors": [
+        "The Tech Buzz"
+      ],
+      "summary": "Taiwan has rejected a U.S. proposal to relocate 40% of its semiconductor supply chain, deeming it \"impossible.\" This decision highlights Taiwan's intent to maintain its strategic chip dominance and the geopolitical tensions surrounding the global tech hardware ecosystem. Major U.S. tech companies like Apple, Nvidia, and AMD rely heavily on Taiwan Semiconductor Manufacturing Company (TSMC) for advanced chip production, making any significant disruption problematic.",
+      "banner_image": "https://www.techbuzz.ai/_next/image?url=https%3A%2F%2Fcharming-card-d91ad3487b.media.strapiapp.com%2Flarge_file_7f769faf24.png&w=3840&q=75",
+      "source": "The Tech Buzz",
+      "category_within_source": "General",
+      "source_domain": "The Tech Buzz",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.948244"
+        },
+        {
+          "topic": "manufacturing",
+          "relevance_score": "0.841978"
+        }
+      ],
+      "overall_sentiment_score": 0.251025,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "TSM",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.248471",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.849934",
+          "ticker_sentiment_score": "0.257769",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.832033",
+          "ticker_sentiment_score": "0.257245",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AMD",
+          "relevance_score": "0.737119",
+          "ticker_sentiment_score": "0.256268",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "QCOM",
+          "relevance_score": "0.593608",
+          "ticker_sentiment_score": "0.138183",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Apple Just Won 2026? The Brutal Truth About Apple Inc. And Its Stock",
+      "url": "https://www.ad-hoc-news.de/boerse/news/ueberblick/apple-just-won-2026-the-brutal-truth-about-apple-inc-and-its-stock/68568360",
+      "time_published": "20260210T045817",
+      "authors": [],
+      "summary": "The article discusses whether Apple Inc. stock is a worthwhile investment, given its strong brand power, ecosystem lock-in, and growing services revenue. It differentiates between Apple's image as a consumer tech status symbol and its financial performance as a \"must-have\" core holding for long-term investors. The piece advises a cautious approach, distinguishing between hype and fundamental business strength.",
+      "banner_image": null,
+      "source": "AD HOC NEWS",
+      "category_within_source": "General",
+      "source_domain": "AD HOC NEWS",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.949013"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.922096"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.804250"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.616016"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.641956"
+        }
+      ],
+      "overall_sentiment_score": 0.365055,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.449136",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.637447",
+          "ticker_sentiment_score": "0.324207",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Ferrari Officially Announces Luce EV with Teaser Images",
+      "url": "https://mlq.ai/news/ferrari-officially-announces-luce-ev-with-teaser-images/",
+      "time_published": "20260209T235923",
+      "authors": [
+        "MLQ Editorial"
+      ],
+      "summary": "Ferrari has officially announced its first all-electric vehicle, the Luce, revealing interior details and specifications. The four-door, four-seat GT will feature over 1,000 horsepower, a 122 kWh battery, and an interior co-designed with LoveFrom, emphasizing physical controls over touchscreens. The full exterior reveal is scheduled for May 2026, with an expected price upwards of \u20ac500,000.",
+      "banner_image": "https://mlqpdf.s3.amazonaws.com/news_images/ferarri-luce.png",
+      "source": "MLQ.ai",
+      "category_within_source": "General",
+      "source_domain": "MLQ.ai",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.907946"
+        },
+        {
+          "topic": "energy_transportation",
+          "relevance_score": "0.802174"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.610456"
+        },
+        {
+          "topic": "manufacturing",
+          "relevance_score": "0.633942"
+        }
+      ],
+      "overall_sentiment_score": 0.358821,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "RACE",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.416636",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.727362",
+          "ticker_sentiment_score": "0.313408",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Apple Stock Price Today: Market Trends and Investor Focus",
+      "url": "https://www.macobserver.com/news/apple-stock-price-today-market-trends-and-investor-focus/",
+      "time_published": "20260209T195817",
+      "authors": [
+        "Rajat Saini"
+      ],
+      "summary": "Apple Inc.'s stock (AAPL) is currently trading between $272 and $278 per share, with market attention drawn to its services and brand strategy. The article highlights Apple Music's role in the Super Bowl LX halftime show as a recent driver of sentiment, alongside strong hardware sales and a growing services ecosystem. With a market capitalization over $4 trillion, analysts largely maintain \"buy\" ratings, reinforcing confidence in the company's long-term outlook.",
+      "banner_image": "https://www.macobserver.com/wp-content/uploads/2025/10/Bank-of-America-boosts-Apple-Stock-Price-Target-to-320-before-Q4-report.jpg",
+      "source": "The Mac Observer",
+      "category_within_source": "General",
+      "source_domain": "The Mac Observer",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.901518"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.814730"
+        }
+      ],
+      "overall_sentiment_score": 0.308069,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.300703",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "GM hires new head of strategy from Lucid Motors",
+      "url": "https://www.detroitnews.com/story/business/autos/general-motors/2026/02/09/gm-hires-new-head-of-strategy-from-lucid-motors/88592618007/",
+      "time_published": "20260209T185712",
+      "authors": [
+        "Kalea Hall",
+        "Reuters"
+      ],
+      "summary": "General Motors has appointed Claudia Gast, formerly of Lucid Motors, as its deputy CFO and VP of strategy, corporate development, and technology partnerships. She will begin on March 1 and will focus on scouting partnerships with technology companies, reporting to CEO Mary Barra and CFO Paul Jacobson. Gast replaces former Tesla executive Zach Kirkman, who is leaving GM for other opportunities.",
+      "banner_image": "https://www.detroitnews.com/gciaf/prod/p?a=pageview&p=PDTN-TEALIUM-TANGENT&m=web&k=f14ebdd6-0569-4c64-af73-99937bc06379&s=noscript",
+      "source": "The Detroit News",
+      "category_within_source": "General",
+      "source_domain": "The Detroit News",
+      "topics": [
+        {
+          "topic": "mergers_and_acquisitions",
+          "relevance_score": "0.801347"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.738285"
+        },
+        {
+          "topic": "energy_transportation",
+          "relevance_score": "0.620734"
+        }
+      ],
+      "overall_sentiment_score": 0.086588,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "GM",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.259921",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "TSLA",
+          "relevance_score": "0.673150",
+          "ticker_sentiment_score": "-0.117418",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "F",
+          "relevance_score": "0.618495",
+          "ticker_sentiment_score": "0.131206",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.590315",
+          "ticker_sentiment_score": "0.095817",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "AMZN",
+          "relevance_score": "0.579878",
+          "ticker_sentiment_score": "0.085461",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Software Poses \u2018All-Time\u2019 Risk to Speculative Credit, Deutsche Bank Warns",
+      "url": "https://www.bloomberg.com/news/articles/2026-02-09/software-among-all-time-concentration-risks-to-junk-deutsche",
+      "time_published": "20260209T183200",
+      "authors": [
+        "Rainier Harris"
+      ],
+      "summary": "Deutsche Bank analysts have warned that the software and technology sectors represent one of the greatest concentration risks ever seen in the speculative-grade credit market. These sectors together account for a substantial portion of speculative debt, including high-yield debt, leveraged loans, and US private credit. The analysts, led by Steve Caprio, highlighted the significant financial figures involved, with software comprising $597 billion and technology $681 billion of this credit universe.",
+      "banner_image": null,
+      "source": "Bloomberg",
+      "category_within_source": "General",
+      "source_domain": "Bloomberg",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.930854"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.813882"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.703286"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.626245"
+        }
+      ],
+      "overall_sentiment_score": -0.338376,
+      "overall_sentiment_label": "Somewhat-Bearish",
+      "ticker_sentiment": [
+        {
+          "ticker": "DB",
+          "relevance_score": "0.854226",
+          "ticker_sentiment_score": "-0.377950",
+          "ticker_sentiment_label": "Bearish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.620863",
+          "ticker_sentiment_score": "-0.302346",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.637353",
+          "ticker_sentiment_score": "-0.306854",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "ADBE",
+          "relevance_score": "0.624501",
+          "ticker_sentiment_score": "-0.328850",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "INTC",
+          "relevance_score": "0.600227",
+          "ticker_sentiment_score": "-0.308055",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        }
+      ]
+    },
+    {
+      "title": "Consumers are receiving payments from the Lopez vs. Apple settlement, which is not a scam",
+      "url": "https://www.wgal.com/article/lopez-apple-settlement-payments-legitimate/70291041",
+      "time_published": "20260209T183100",
+      "authors": [
+        "Brian Roche"
+      ],
+      "summary": "The article confirms that payments from the Lopez vs. Apple settlement are legitimate, dispelling fears that they might be a scam. This class-action lawsuit against Apple involved allegations that its Siri voice assistant illegally obtained and sold consumers' confidential communications, leading to a $95 million settlement. Recipients have been getting payments via email, direct deposit, or paper checks, with individual payments capped at $20 per Apple device.",
+      "banner_image": null,
+      "source": "WGAL",
+      "category_within_source": "General",
+      "source_domain": "WGAL",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.823071"
+        }
+      ],
+      "overall_sentiment_score": -0.274795,
+      "overall_sentiment_label": "Somewhat-Bearish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.975141",
+          "ticker_sentiment_score": "-0.293359",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        }
+      ]
+    },
+    {
+      "title": "Sandisk and Micron slip as Samsung rushes new product into production",
+      "url": "https://sherwood.news/markets/sandisk-and-micron-slip-as-samsung-rushes-new-product-into-production/",
+      "time_published": "20260209T175949",
+      "authors": [
+        "Matt Phillips"
+      ],
+      "summary": "Sandisk and Micron shares are falling after reports that Samsung will begin mass production of its HBM4 memory product earlier than expected. While Micron already produces HBM, Sandisk is developing a high-bandwidth flash NAND memory product for AI data centers. This move by Samsung indicates that the high prices for memory chips, which have recently boosted profits for companies like Sandisk, may not continue indefinitely as supply increases.",
+      "banner_image": null,
+      "source": "Sherwood News",
+      "category_within_source": "General",
+      "source_domain": "Sherwood News",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.800127"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.722325"
+        }
+      ],
+      "overall_sentiment_score": 0.09457,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "SNDKV",
+          "relevance_score": "0.340663",
+          "ticker_sentiment_score": "0.029417",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "MU",
+          "relevance_score": "0.923273",
+          "ticker_sentiment_score": "-0.214782",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "ORCL",
+          "relevance_score": "0.747427",
+          "ticker_sentiment_score": "0.322487",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "NOW",
+          "relevance_score": "0.638640",
+          "ticker_sentiment_score": "0.224710",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.555049",
+          "ticker_sentiment_score": "0.104464",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Abrdn Total Dynamic Dividend Fund stock hits 52-week high at 10.18 USD",
+      "url": "https://www.investing.com/news/company-news/abrdn-total-dynamic-dividend-fund-stock-hits-52week-high-at-1018-usd-93CH-4494502",
+      "time_published": "20260209T162849",
+      "authors": [
+        "Investing.com"
+      ],
+      "summary": "The Abrdn Total Dynamic Dividend Fund (AOD)",
+      "banner_image": "https://i-invdn-com.investing.com/news/world_news_2_69x52._800x533_L_1419494365.jpg",
+      "source": "Investing.com",
+      "category_within_source": "General",
+      "source_domain": "Investing.com",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.932946"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.736816"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.612768"
+        }
+      ],
+      "overall_sentiment_score": 0.620883,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AOD",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.801169",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.638544",
+          "ticker_sentiment_score": "0.631868",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "ORCL",
+          "relevance_score": "0.626621",
+          "ticker_sentiment_score": "0.593697",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.567835",
+          "ticker_sentiment_score": "0.323388",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.600150",
+          "ticker_sentiment_score": "0.608808",
+          "ticker_sentiment_label": "Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Apple class action lawsuit over Siri BIPA violations certified",
+      "url": "https://topclassactions.com/lawsuit-settlements/lawsuit-news/apple-class-action-lawsuit-over-siri-bipa-violations-certified/",
+      "time_published": "20260209T160644",
+      "authors": [
+        "Top Class Actions"
+      ],
+      "summary": "An Illinois state judge has certified a class action lawsuit against Apple Inc. concerning its Siri feature, alleging violations of the Illinois Biometric Information Privacy Act (BIPA). The lawsuit claims Apple failed to obtain informed consent before collecting, storing, and using voiceprints from Siri users. This ruling allows approximately 3 million Apple users in Illinois to proceed collectively with the legal challenge.",
+      "banner_image": "https://topclassactions.com/wp-content/uploads/2026/02/shutterstock_2230821047-1024x576.jpg",
+      "source": "Class Action Lawsuits",
+      "category_within_source": "General",
+      "source_domain": "Class Action Lawsuits",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.846139"
+        }
+      ],
+      "overall_sentiment_score": -0.422051,
+      "overall_sentiment_label": "Bearish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "-0.411031",
+          "ticker_sentiment_label": "Bearish"
+        }
+      ]
+    },
+    {
+      "title": "Brighthouse Financial stock hits 52-week high at 12.08 USD",
+      "url": "https://www.investing.com/news/company-news/brighthouse-financial-stock-hits-52week-high-at-1208-usd-93CH-4494151",
+      "time_published": "20260209T152925",
+      "authors": [
+        "Investing.com"
+      ],
+      "summary": "Brighthouse Financial Inc. (BHFAM) stock reached a 52-week high of $12.08, despite a significant 19.47% decrease over the past year. The company's stock currently offers a 9.57% dividend yield and trades at a P/E ratio of 4.44. InvestingPro analysis suggests the stock is undervalued, boasting strong fundamentals, including a healthy 1.55 current ratio.",
+      "banner_image": "https://i-invdn-com.investing.com/news/world_news_2_69x52._800x533_L_1419494365.jpg",
+      "source": "Investing.com",
+      "category_within_source": "General",
+      "source_domain": "Investing.com",
+      "topics": [
+        {
+          "topic": "finance",
+          "relevance_score": "0.929158"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.846708"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.701391"
+        }
+      ],
+      "overall_sentiment_score": 0.205563,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "BHFAM",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.329456",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.551806",
+          "ticker_sentiment_score": "0.263468",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "ORCL",
+          "relevance_score": "0.584109",
+          "ticker_sentiment_score": "0.274992",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AVGO",
+          "relevance_score": "0.556531",
+          "ticker_sentiment_score": "0.295461",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.579434",
+          "ticker_sentiment_score": "-0.251541",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        }
+      ]
+    },
+    {
+      "title": "Are Wall Street Analysts Bullish on Goldman Sachs Stock?",
+      "url": "https://www.palmettograin.com/news/story/107316/are-wall-street-analysts-bullish-on-goldman-sachs-stock",
+      "time_published": "20260209T143342",
+      "authors": [
+        "Neha Panjwani"
+      ],
+      "summary": "Goldman Sachs Group, Inc. (GS) has demonstrated strong financial performance, outperforming the S&P 500 and iShares U.S. Broker-Dealers & Securities Exchanges ETF over the past year and year-to-date. Its success is attributed to robust investment banking, significant asset and wealth management inflows, and strategic focus. Analysts maintain a \"Moderate Buy\" consensus, with a mean price target suggesting a slight premium to current levels and a high target indicating significant upside potential.",
+      "banner_image": "https://s3.amazonaws.com/media.agricharts.com/sites/1900/Logos/pgbLogo.png",
+      "source": "Palmetto Grain Brokerage",
+      "category_within_source": "General",
+      "source_domain": "Palmetto Grain Brokerage",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.927861"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.907329"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.838372"
+        },
+        {
+          "topic": "mergers_and_acquisitions",
+          "relevance_score": "0.731139"
+        }
+      ],
+      "overall_sentiment_score": 0.39657,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "GS",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.605633",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.585036",
+          "ticker_sentiment_score": "0.143222",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Are Wall Street Analysts Bullish on Goldman Sachs Stock?",
+      "url": "https://www.barchart.com/story/news/107312/are-wall-street-analysts-bullish-on-goldman-sachs-stock",
+      "time_published": "20260209T143306",
+      "authors": [
+        "Neha Panjwani"
+      ],
+      "summary": "Goldman Sachs (GS) has demonstrated strong performance, outperforming the S&P 500 and the iShares U.S. Broker-Dealers & Securities Exchanges ETF over the past year and year-to-date. This success is attributed to robust investment banking, significant asset and wealth management inflows, and a refined strategic focus. Analysts generally hold a \"Moderate Buy\" consensus on GS stock, anticipating continued growth in EPS for the current fiscal year.",
+      "banner_image": "https://media.barchart.com/contributors-admin/common-images/images/S%26P%20500%20Companies/Financial%20(names%20A%20-%20I)/Goldman%20Sachs%20Group%2C%20Inc_%20logo%20sign-by%20Poetra_RH%20via%20Shutterstock.jpg",
+      "source": "Barchart.com",
+      "category_within_source": "General",
+      "source_domain": "Barchart.com",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.945629"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.842555"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.729632"
+        },
+        {
+          "topic": "mergers_and_acquisitions",
+          "relevance_score": "0.624581"
+        }
+      ],
+      "overall_sentiment_score": 0.343213,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "GS",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.632212",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "SPGI",
+          "relevance_score": "0.739255",
+          "ticker_sentiment_score": "0.413563",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.613017",
+          "ticker_sentiment_score": "0.143098",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "JPM",
+          "relevance_score": "0.578945",
+          "ticker_sentiment_score": "0.301285",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MS",
+          "relevance_score": "0.589824",
+          "ticker_sentiment_score": "0.305559",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "TCS, Infosys, HCL Tech, Wipro: Lessons for IT investors from AI\u2019s iPhone",
+      "url": "https://www.thehindubusinessline.com/portfolio/tcs-infosys-hcl-tech-wipro-lessons-for-it-investors-from-ais-iphone-moment/article70603396.ece",
+      "time_published": "20260209T135833",
+      "authors": [
+        "Hari Viswanath"
+      ],
+      "summary": "The article discusses the significant disruption caused by AI in the software industry, drawing parallels to how the iPhone transformed the mobile phone industry in 2007. It highlights how incumbents like Nokia and BlackBerry failed to adapt, leading to their downfall, and warns Indian IT services investors (TCS, Infosys, Wipro, HCL Tech) that their current high valuations might not account for the profound disruption AI could bring, advising caution over a \"buy the dip\" mentality.",
+      "banner_image": "https://www.thehindubusinessline.com/economy/macro-economy/z7s004/article65944872.ece/alternates/LANDSCAPE_320/filler784",
+      "source": "BusinessLine",
+      "category_within_source": "General",
+      "source_domain": "BusinessLine",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.915382"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.840757"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.708450"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.634866"
+        }
+      ],
+      "overall_sentiment_score": 0.086595,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "INFY",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "-0.205857",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "ADBE",
+          "relevance_score": "0.638503",
+          "ticker_sentiment_score": "0.149923",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.740404",
+          "ticker_sentiment_score": "0.447304",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.638281",
+          "ticker_sentiment_score": "-0.129357",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "GOOG",
+          "relevance_score": "0.646151",
+          "ticker_sentiment_score": "0.245442",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Micron Stock Can\u2019t Stop Going Up and Goldman Sachs Knows Exactly Why",
+      "url": "https://247wallst.com/investing/2026/02/09/micron-stock-cant-stop-going-up-and-goldman-sachs-knows-exactly-why/",
+      "time_published": "20260209T130501",
+      "authors": [
+        "John Seetoo"
+      ],
+      "summary": "The technology sector is experiencing a significant shortage of high-bandwidth memory (HBM) chips, largely due to the high demand from AI data centers. This \"great memory crunch,\" identified by Goldman Sachs, is driving up prices and reducing production for device manufacturers. However, it's greatly benefiting HBM producers like Micron Technology, whose stock has surged due to its crucial role in supplying HBM for AI and other electronics.",
+      "banner_image": "https://247wallst.com/wp-content/uploads/2018/09/chips_with_micron_logo.jpg",
+      "source": "24/7 Wall St.",
+      "category_within_source": "General",
+      "source_domain": "24/7 Wall St.",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.948765"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.822621"
+        }
+      ],
+      "overall_sentiment_score": 0.128166,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "MU",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.702721",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.825863",
+          "ticker_sentiment_score": "0.328321",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.631565",
+          "ticker_sentiment_score": "0.212296",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.617219",
+          "ticker_sentiment_score": "-0.332668",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "QCOM",
+          "relevance_score": "0.600401",
+          "ticker_sentiment_score": "-0.337251",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        }
+      ]
+    },
+    {
+      "title": "Thiel Bypasses Palantir and Nvidia for Meta, Tesla, Apple in Contrarian AI Play",
+      "url": "https://247wallst.com/investing/2026/02/09/thiel-bypasses-palantir-and-nvidia-for-meta-tesla-apple-in-contrarian-ai-play/",
+      "time_published": "20260209T115817",
+      "authors": [
+        "Trey Thoelcke"
+      ],
+      "summary": "Peter Thiel's hedge fund is focusing its AI investments on companies that use artificial intelligence for applications rather than those that build the infrastructure. His fund holds significant positions in Meta Platforms, Tesla, and Apple, while notably avoiding Palantir (which he co-founded) and Nvidia. This strategy highlights a contrarian bet on AI application plays, with Apple now making up a substantial portion of his portfolio after liquidating Nvidia holdings.",
+      "banner_image": "https://247wallst.com/wp-content/uploads/2025/12/shutterstock-2655961293-huge-licensed-scaled.jpg",
+      "source": "24/7 Wall St.",
+      "category_within_source": "General",
+      "source_domain": "24/7 Wall St.",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.920264"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.819440"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.743775"
+        }
+      ],
+      "overall_sentiment_score": 0.185433,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.926415",
+          "ticker_sentiment_score": "0.223803",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.857251",
+          "ticker_sentiment_score": "0.338961",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "TSLA",
+          "relevance_score": "0.801585",
+          "ticker_sentiment_score": "0.068200",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.700950",
+          "ticker_sentiment_score": "0.103594",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "PLTR",
+          "relevance_score": "0.638625",
+          "ticker_sentiment_score": "0.118623",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Goldman Named The Issue That\u2019s Pushing SanDisk Stock to the Moon",
+      "url": "https://247wallst.com/investing/2026/02/09/goldman-named-the-issue-thats-pushing-sandisk-stock-to-the-moon/",
+      "time_published": "20260209T112910",
+      "authors": [
+        "John Seetoo"
+      ],
+      "summary": "SanDisk Corp. (NASDAQ: SNDK) stock has seen an extraordinary 1,561% increase in 12 months, driven by the severe global shortage of high-bandwidth memory (HBM) chips crucial for AI infrastructure. Goldman Sachs identified this \"great memory crunch\" as a significant factor, with HBM supply not expected to ease until 2028 at the earliest. SanDisk's Q2 revenues hit $3 billion (up 61% YoY) and earnings surged to $6.20 per share (a 5x increase), forecasting continued growth due to insatiable AI demand.",
+      "banner_image": "https://247wallst.com/wp-content/uploads/2017/12/sandisk-64gb-memory-card.jpg",
+      "source": "24/7 Wall St.",
+      "category_within_source": "General",
+      "source_domain": "24/7 Wall St.",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.947635"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.801417"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.716588"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.602355"
+        }
+      ],
+      "overall_sentiment_score": 0.379058,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "SNDK",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.842552",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MU",
+          "relevance_score": "0.720023",
+          "ticker_sentiment_score": "0.329662",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AMAT",
+          "relevance_score": "0.629266",
+          "ticker_sentiment_score": "0.332927",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.629636",
+          "ticker_sentiment_score": "0.200634",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "STX",
+          "relevance_score": "0.607190",
+          "ticker_sentiment_score": "0.237769",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Campbell & Co Slashes Apple Stake by More Than 70%",
+      "url": "https://eand.co/campbell-co-slashes-apple-stake-by-more-than-70",
+      "time_published": "20260209T105734",
+      "authors": [
+        "John Ondercin"
+      ],
+      "summary": "Campbell & Co Investment Adviser LLC significantly reduced its stake in Apple Inc. by over 70% in the third quarter, selling 11,529 shares. Despite this divestment, Apple remains a strong performer with increasing revenue and a growing installed base, indicating that Campbell & Co's move is likely part of a broader portfolio rebalancing rather than a bearish outlook on Apple specifically. The article also notes Apple's upcoming ex-dividend date of February 9, 2026, for a $0.26 per share payout.",
+      "banner_image": "https://eand.co/wp-content/uploads/2026/02/Campbell-Co-Cuts-Apple-Exposure-Over-70-in-Major-Portfolio-Shift.webp",
+      "source": "Eudaimonia and Co",
+      "category_within_source": "General",
+      "source_domain": "Eudaimonia and Co",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.932366"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.832865"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.748185"
+        }
+      ],
+      "overall_sentiment_score": 0.12713,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.137348",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.613492",
+          "ticker_sentiment_score": "0.139295",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.635744",
+          "ticker_sentiment_score": "0.102301",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Thrivent Financial for Lutherans Has $3.64 Million Stock Holdings in Xylem Inc. $XYL",
+      "url": "https://www.marketbeat.com/instant-alerts/filing-thrivent-financial-for-lutherans-has-364-million-stock-holdings-in-xylem-inc-xyl-2026-02-09/",
+      "time_published": "20260209T102153",
+      "authors": [
+        "MarketBeat"
+      ],
+      "summary": "Thrivent Financial for Lutherans significantly reduced its stake in Xylem Inc. (NYSE:XYL) by 48.3% during the third quarter, now holding 24,650 shares valued at $3.64 million. Despite this reduction, institutional investors collectively own 87.96% of Xylem's stock, with major new positions opened by Norges Bank and ABN AMRO. Analysts maintain a \"Moderate Buy\" consensus for XYL, with an average price target of $165.80, against its current trading price near $142.",
+      "banner_image": "https://www.marketbeat.com/logos/xylem-logo-1200x675.jpg",
+      "source": "MarketBeat",
+      "category_within_source": "General",
+      "source_domain": "MarketBeat",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.935062"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.816494"
+        },
+        {
+          "topic": "manufacturing",
+          "relevance_score": "0.703165"
+        }
+      ],
+      "overall_sentiment_score": 0.321419,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "XYL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.193702",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AMD",
+          "relevance_score": "0.590344",
+          "ticker_sentiment_score": "0.337626",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "TSN",
+          "relevance_score": "0.581454",
+          "ticker_sentiment_score": "0.327597",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.623345",
+          "ticker_sentiment_score": "0.326727",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.618131",
+          "ticker_sentiment_score": "0.300117",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Apple Inc. $AAPL Position Lowered by Gerber LLC",
+      "url": "https://www.marketbeat.com/instant-alerts/filing-apple-inc-aapl-position-lowered-by-gerber-llc-2026-02-09/",
+      "time_published": "20260209T085844",
+      "authors": [
+        "MarketBeat"
+      ],
+      "summary": "Gerber LLC significantly reduced its stake in Apple Inc. by 37.2% in the third quarter, decreasing its holdings to 21,825 shares valued at $5.56 million, now representing 3.5% of its portfolio. Despite this, Apple reported strong Q1 earnings, beating estimates with $2.84 EPS and $143.76 billion in revenue, and declared a $0.26 quarterly dividend. Analysts maintain a \"Moderate Buy\" rating with an average price target of $291.70, viewing strategic moves like allowing third-party AI in CarPlay as potential growth drivers.",
+      "banner_image": "https://www.marketbeat.com/logos/apple-inc-logo-1200x675.png",
+      "source": "MarketBeat",
+      "category_within_source": "General",
+      "source_domain": "MarketBeat",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.930965"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.911370"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.841163"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.728913"
+        }
+      ],
+      "overall_sentiment_score": 0.331002,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.974482",
+          "ticker_sentiment_score": "0.317680",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.560536",
+          "ticker_sentiment_score": "0.343384",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.590453",
+          "ticker_sentiment_score": "0.346172",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "GOOG",
+          "relevance_score": "0.560520",
+          "ticker_sentiment_score": "0.324133",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.575199",
+          "ticker_sentiment_score": "0.303555",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Apple Inc. $AAPL is Blue Square Asset Management LLC's 8th Largest Position",
+      "url": "https://www.marketbeat.com/instant-alerts/filing-apple-inc-aapl-is-blue-square-asset-management-llcs-8th-largest-position-2026-02-09/",
+      "time_published": "20260209T081509",
+      "authors": [
+        "MarketBeat"
+      ],
+      "summary": "Blue Square Asset Management LLC has increased its stake in Apple Inc. (AAPL), making it their 8th largest holding. The article details Apple's strong Q3 earnings, positive sentiment surrounding its AI integrations in CarPlay, and continued institutional interest, while also acknowledging potential headwinds like scaled-back AI health projects and insider selling. Analyst ratings maintain a \"Moderate Buy\" consensus for the stock.",
+      "banner_image": "https://www.marketbeat.com/logos/apple-inc-logo-1200x675.png",
+      "source": "MarketBeat",
+      "category_within_source": "General",
+      "source_domain": "MarketBeat",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.924844"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.848752"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.711908"
+        }
+      ],
+      "overall_sentiment_score": 0.333343,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.325066",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Stocks Showing Rising Market Leadership: GlobalFoundries Earns 81 RS Rating",
+      "url": "https://www.investors.com/ibd-data-stories/stocks-showing-rising-market-leadership-globalfoundries-earns-81-rs-rating/?src=A00444A&refcode=aflGoogleNews",
+      "time_published": "20260209T075848",
+      "authors": [],
+      "summary": "GlobalFoundries (GFS) has seen its Relative Strength (RS) Rating increase from 77 to 81, indicating strong price performance. This proprietary rating from Investor's Business Daily assesses a stock's price leadership on a scale from 1 to 99, with higher scores denoting better performance. The chipmaker has recently shown significant market leadership with its RS Rating reaching the 80-plus level multiple times, even as it expands into AI chipmaking.",
+      "banner_image": "https://www.queryly.com/images/whitesearchicon.png",
+      "source": "Investor's Business Daily",
+      "category_within_source": "General",
+      "source_domain": "Investor's Business Daily",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.909474"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.818260"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.718254"
+        },
+        {
+          "topic": "manufacturing",
+          "relevance_score": "0.612321"
+        }
+      ],
+      "overall_sentiment_score": 0.224322,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "GFS",
+          "relevance_score": "0.950057",
+          "ticker_sentiment_score": "0.407224",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "INTC",
+          "relevance_score": "0.643373",
+          "ticker_sentiment_score": "0.106267",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.700438",
+          "ticker_sentiment_score": "0.119647",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Tech Hits a Wall\u2014Energy Breaks Out",
+      "url": "https://daily.fattail.com.au/tech-hits-a-wall-energy-breaks-out/20260209/",
+      "time_published": "20260209T035911",
+      "authors": [
+        "James Cooper"
+      ],
+      "summary": "As tech stocks falter and the broader market corrects, energy stocks have surged, indicating a significant sector rotation. The article highlights that traditional energy companies have been top performers this year, with the iShares Global Energy ETF up almost 15%, while tech remains flat. This shift suggests that investors should focus on sectors demonstrating clear strength, particularly energy.",
+      "banner_image": "https://daily.fattail.com.au/wp-content/uploads/2026/02/JCM20260209_IMG_1_752.jpg",
+      "source": "Fat Tail Daily",
+      "category_within_source": "General",
+      "source_domain": "Fat Tail Daily",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "energy_transportation",
+          "relevance_score": "0.907610"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.836157"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.721942"
+        }
+      ],
+      "overall_sentiment_score": 0.130877,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "IXC",
+          "relevance_score": "0.934091",
+          "ticker_sentiment_score": "0.440308",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "XOM",
+          "relevance_score": "0.723424",
+          "ticker_sentiment_score": "0.512955",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "CVX",
+          "relevance_score": "0.704642",
+          "ticker_sentiment_score": "0.537229",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.627173",
+          "ticker_sentiment_score": "-0.410558",
+          "ticker_sentiment_label": "Bearish"
+        },
+        {
+          "ticker": "AMZN",
+          "relevance_score": "0.645676",
+          "ticker_sentiment_score": "-0.409865",
+          "ticker_sentiment_label": "Bearish"
+        }
+      ]
+    },
+    {
+      "title": "Apple (AAPL) Should Be Up Again, Says Jim Cramer",
+      "url": "https://finviz.com/news/303832/apple-aapl-should-be-up-again-says-jim-cramer",
+      "time_published": "20260208T184709",
+      "authors": [
+        "Ramish Cheema"
+      ],
+      "summary": "Jim Cramer remains optimistic about Apple (AAPL), advising investors to own rather than trade the stock. Goldman Sachs and Bernstein both reiterated \"Buy\" and \"Outperform\" ratings respectively, citing improving App Store trends and strong iPhone revenue. Cramer believes Apple is well-positioned for further growth, especially in the context of its memory industry navigation and increasing market share in China.",
+      "banner_image": "https://d2gr5kl7dt2z3t.cloudfront.net/blog/wp-content/uploads/2015/08/ipad-600642_1280.jpg",
+      "source": "Finviz",
+      "category_within_source": "General",
+      "source_domain": "Finviz",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.916965"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.806703"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.700346"
+        }
+      ],
+      "overall_sentiment_score": 0.241124,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.517401",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "GS",
+          "relevance_score": "0.645057",
+          "ticker_sentiment_score": "0.318543",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "QCOM",
+          "relevance_score": "0.633925",
+          "ticker_sentiment_score": "-0.144040",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Qualcomm's (QCOM) Hurt By Memory, Says Jim Cramer",
+      "url": "https://finviz.com/news/303829/qualcomms-qcom-hurt-by-memory-says-jim-cramer",
+      "time_published": "20260208T184342",
+      "authors": [
+        "Ramish Cheema"
+      ],
+      "summary": "Jim Cramer commented on Qualcomm (QCOM) following its earnings report, stating that the company is \"hurt by memory.\" This comes as Cantor Fitzgerald suggested Qualcomm might issue weaker-than-expected guidance due to concerns about Apple's products and challenges in the Chinese smartphone market. Despite acknowledging QCOM's investment potential, the article highlights a focus on AI stocks for higher returns and limited downside risk.",
+      "banner_image": "https://d2gr5kl7dt2z3t.cloudfront.net/blog/wp-content/uploads/2017/01/18071722/46657474_ml.jpg",
+      "source": "Finviz",
+      "category_within_source": "General",
+      "source_domain": "Finviz",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.902052"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.827810"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.739113"
+        }
+      ],
+      "overall_sentiment_score": -0.248729,
+      "overall_sentiment_label": "Somewhat-Bearish",
+      "ticker_sentiment": [
+        {
+          "ticker": "QCOM",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "-0.311187",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.721726",
+          "ticker_sentiment_score": "-0.103557",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Qualcomm\u2019s (QCOM) Hurt By Memory, Says Jim Cramer",
+      "url": "https://ca.finance.yahoo.com/news/qualcomm-qcom-hurt-memory-says-182935774.html",
+      "time_published": "20260208T183508",
+      "authors": [
+        "Ramish Cheema"
+      ],
+      "summary": "Jim Cramer commented on Qualcomm's recent earnings report, suggesting that the company is being hurt by a lack of memory, comparing it to Sony. Qualcomm's shares have fallen significantly, and analysts anticipate weaker-than-expected guidance due to concerns about Apple's products and challenges in the Chinese smartphone market. Cramer noted that Apple, despite some complaints, is performing well due to its memory capabilities.",
+      "banner_image": "https://s.yimg.com/ny/api/res/1.2/nptDRVtVcw7Tgw3Xj0_r_g--/YXBwaWQ9aGlnaGhsYW5kZXJ;wPTk2MDtoPTc1Nw--/https://media.zenfs.com/en/insidermonkey.com/5004952c3ca0c0719b438747c4545335",
+      "source": "Yahoo! Finance Canada",
+      "category_within_source": "General",
+      "source_domain": "Yahoo! Finance Canada",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.907322"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.835014"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.718347"
+        }
+      ],
+      "overall_sentiment_score": -0.184744,
+      "overall_sentiment_label": "Somewhat-Bearish",
+      "ticker_sentiment": [
+        {
+          "ticker": "QCOM",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "-0.380381",
+          "ticker_sentiment_label": "Bearish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.731434",
+          "ticker_sentiment_score": "0.111364",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Apple (AAPL) Should Be Up Again, Says Jim Cramer",
+      "url": "https://www.insidermonkey.com/blog/apple-aapl-should-be-up-again-says-jim-cramer-1691498/",
+      "time_published": "20260208T183148",
+      "authors": [
+        "Ramish Cheema"
+      ],
+      "summary": "Jim Cramer continues to recommend holding Apple (AAPL) shares, believing the company should see further gains. Major investment banks, Goldman Sachs and Bernstein, have reiterated \"Buy\" and \"Outperform\" ratings, respectively, citing strong App Store performance, record iPhone revenue, and effective navigation of the memory industry. Cramer highlights Apple's potential for a lower-cost phone and increasing market share in China as factors for its continued upward trajectory.",
+      "banner_image": "https://imonkey-blog.imgix.net/blog/wp-content/uploads/2015/08/ipad-600642_1280.jpg?auto=format&fit=clip&expires=1802044800&width=480&height=319",
+      "source": "Insider Monkey",
+      "category_within_source": "General",
+      "source_domain": "Insider Monkey",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.917729"
+        }
+      ],
+      "overall_sentiment_score": 0.350046,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "AAPL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.446432",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "GS",
+          "relevance_score": "0.602949",
+          "ticker_sentiment_score": "0.337971",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Alibaba stock ends skid after Friday jump as Qwen giveaway hits glitches and earnings near",
+      "url": "https://ts2.tech/en/alibaba-stock-ends-skid-after-friday-jump-as-qwen-giveaway-hits-glitches-and-earnings-near/",
+      "time_published": "20260208T165915",
+      "authors": [
+        "Khadija Saeed"
+      ],
+      "summary": "Alibaba's U.S.-listed shares climbed roughly 3% on Friday, recovering after a volatile period, partly due to investor re-entry into tech stocks. The company's AI ambitions gained attention as its Qwen app experienced a surge in users following a 3 billion yuan Lunar New Year giveaway, briefly knocking the app offline and facing restrictions on WeChat for sharing campaign links. Despite these glitches and privacy concerns, Qwen rapidly rose in the App Store, and Alibaba is now looking ahead to its quarterly earnings release on February 19th, with investors particularly interested in the sustained momentum of the Qwen rollout and spending patterns.",
+      "banner_image": "https://ts2.tech/wp-content/uploads/2026/02/alibaba-stock-ends-skid-after-friday-jump-as-qwen-giveaway-hits-glitches-and-earnings-near-featured.jpg.webp",
+      "source": "TechStock\u00b2",
+      "category_within_source": "General",
+      "source_domain": "TechStock\u00b2",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.902521"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.931499"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.813163"
+        },
+        {
+          "topic": "retail_wholesale",
+          "relevance_score": "0.639635"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.617288"
+        }
+      ],
+      "overall_sentiment_score": 0.181291,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "BABA",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.281538",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.637253",
+          "ticker_sentiment_score": "0.139336",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    }
+  ]
+}
