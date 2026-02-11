@@ -1,0 +1,1164 @@
+{
+  "items": "22",
+  "sentiment_score_definition": "x <= -0.35: Bearish; -0.35 < x <= -0.15: Somewhat-Bearish; -0.15 < x < 0.15: Neutral; 0.15 <= x < 0.35: Somewhat_Bullish; x >= 0.35: Bullish",
+  "relevance_score_definition": "0 < x <= 1, with a higher score indicating higher relevance.",
+  "feed": [
+    {
+      "title": "No Jitter Roll: Kore.ai Adds AI Agents, Intermedia Debuts Contact Center for Teams",
+      "url": "https://www.nojitter.com/ai-automation/no-jitter-roll-kore-ai-adds-ai-agents-intermedia-debuts-contact-center-for-teams",
+      "time_published": "20250130T035328",
+      "authors": [
+        "Matt Vartabedian"
+      ],
+      "summary": "This \"No Jitter Roll\" roundup details product news in enterprise communication. It highlights Kore.ai's new AI for Process platform with custom AI agents and Intermedia's Contact Center for Microsoft Teams. Other updates include Twilio's RCS features, RingCentral's Studio and AI Clips, and NUWAVE's Teleport migration product, alongside reports on AI agents, business service automation, and contact center technology dissatisfaction.",
+      "banner_image": "https://eu-images.contentstack.com/v3/assets/blt2db30e0332fda6df/blt3b3f0f97c2e126ef/67473e8ebdae755e93c61c64/AI-GEARS.jpg?width=1280&auto=webp&quality=80&format=jpg&disable=upscale",
+      "source": "No Jitter",
+      "category_within_source": "General",
+      "source_domain": "No Jitter",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "mergers_and_acquisitions",
+          "relevance_score": "0.808092"
+        }
+      ],
+      "overall_sentiment_score": 0.344002,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "INTM",
+          "relevance_score": "0.907315",
+          "ticker_sentiment_score": "0.414807",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.705377",
+          "ticker_sentiment_score": "0.348536",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "CRM",
+          "relevance_score": "0.647856",
+          "ticker_sentiment_score": "0.241992",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "DeepSeek Panic Live Updates: Nvidia Stock Drops 4% As Trump Reportedly Targets China Exports",
+      "url": "https://www.forbes.com/sites/dereksaul/2025/01/29/deepseek-panic-live-updates-nvidia-stock-drops-4-as-trump-reportedly-mulls-china-chip-sale-restrictions/",
+      "time_published": "20250129T160700",
+      "authors": [
+        "Derek Saul",
+        "Mary Whitfill Roeloffs"
+      ],
+      "summary": "Nvidia's stock experienced a turbulent week, dropping 4% on Wednesday, amid concerns over a less capital-intensive AI model from China's DeepSeek and reports that Donald Trump is considering stricter export controls on semiconductor chip sales to China. The market volatility, driven by DeepSeek's competitive AI model and potential geopolitical shifts, prompted analysts to reassess the AI investment landscape, though many still view Nvidia's selloff as an overreaction. DeepSeek's emergence has led to significant shifts in market values for major tech companies and ignited debates about the future of AI development and U.S. competitiveness.",
+      "banner_image": null,
+      "source": "Forbes",
+      "category_within_source": "General",
+      "source_domain": "Forbes",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.931249"
+        },
+        {
+          "topic": "economy_fiscal",
+          "relevance_score": "0.845138"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.720001"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.645007"
+        }
+      ],
+      "overall_sentiment_score": -0.057693,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "GTEK",
+          "relevance_score": "0.333311",
+          "ticker_sentiment_score": "0.019800",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "-0.293857",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.715916",
+          "ticker_sentiment_score": "-0.077755",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.613142",
+          "ticker_sentiment_score": "0.286853",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "ORCL",
+          "relevance_score": "0.618231",
+          "ticker_sentiment_score": "-0.235060",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        }
+      ]
+    },
+    {
+      "title": "Intermedia intros contact centre for Microsoft Teams",
+      "url": "https://www.computerweekly.com/news/366618535/Intermedia-intros-contact-centre-for-Microsoft-Teams",
+      "time_published": "20250129T140000",
+      "authors": [
+        "Joe O\u2019Halloran"
+      ],
+      "summary": "Intermedia Cloud Communications has launched a new service that fully embeds unified communications (UC) and customer experience (CX) capabilities directly into Microsoft Teams, claiming it to be an industry first. This offering, Intermedia Contact Centre, enhances Teams with advanced contact centre functionalities like omnichannel support, enterprise-grade calling features, and AI functionality. The company, a Microsoft Gold Certified Partner, aims to transform Teams into a comprehensive platform for both UC and CX, elevating employee productivity and customer engagement.",
+      "banner_image": null,
+      "source": "Computer Weekly",
+      "category_within_source": "General",
+      "source_domain": "Computer Weekly",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        }
+      ],
+      "overall_sentiment_score": 0.355353,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "INTM",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.403499",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.938953",
+          "ticker_sentiment_score": "0.308437",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "FY25 Q2 - Press Releases - Investor Relations",
+      "url": "https://www.microsoft.com/en-us/investor/earnings/fy-2025-q2/press-release-webcast",
+      "time_published": "20250129T000000",
+      "authors": [],
+      "summary": "Microsoft announced strong second-quarter fiscal year 2025 results, driven by significant growth in Microsoft Cloud and AI. The company reported $69.6 billion in revenue, a 12% increase, and a 17% increase in operating income to $31.7 billion. Microsoft's AI business alone surpassed an annual revenue run rate of $13 billion, marking a 175% year-over-year increase.",
+      "banner_image": null,
+      "source": "Microsoft",
+      "category_within_source": "General",
+      "source_domain": "Microsoft",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.936817"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.837547"
+        }
+      ],
+      "overall_sentiment_score": 0.27179,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "MSFT",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.479465",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.592057",
+          "ticker_sentiment_score": "0.148429",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "GOOG",
+          "relevance_score": "0.581090",
+          "ticker_sentiment_score": "0.136349",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "CRM",
+          "relevance_score": "0.596014",
+          "ticker_sentiment_score": "0.316466",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AMZN",
+          "relevance_score": "0.599215",
+          "ticker_sentiment_score": "0.317818",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Nvidia calls China\u2019s DeepSeek R1 model \u2018an excellent AI advancement\u2019",
+      "url": "https://www.cnbc.com/2025/01/27/nvidia-calls-chinas-deepseek-r1-model-an-excellent-ai-advancement.html",
+      "time_published": "20250127T152800",
+      "authors": [
+        "Kif Leswing"
+      ],
+      "summary": "Nvidia praised China's DeepSeek R1 model as \"an excellent AI advancement\" despite concerns that it contributed to a 17% drop in Nvidia's stock. DeepSeek's open-source reasoning model reportedly outperformed leading U.S. models like OpenAI's, with significantly lower training costs. Nvidia views this breakthrough as a driver for more work for its GPUs, emphasizing \"Test Time Scaling\" as a new form of scaling law in AI development.",
+      "banner_image": null,
+      "source": "CNBC",
+      "category_within_source": "General",
+      "source_domain": "CNBC",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.826411"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.608461"
+        }
+      ],
+      "overall_sentiment_score": -0.091653,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "NVDA",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "-0.298091",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.656699",
+          "ticker_sentiment_score": "-0.104578",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.646620",
+          "ticker_sentiment_score": "0.101938",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.646489",
+          "ticker_sentiment_score": "-0.115280",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "GOOG",
+          "relevance_score": "0.642114",
+          "ticker_sentiment_score": "-0.102738",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "How Ciena keeps the internet online, with CEO Gary Smith",
+      "url": "https://www.theverge.com/24351247/ciena-fiber-optic-internet-subsea-cables-wdm-ai-hyperscale-data-decoder-podcast-interview",
+      "time_published": "20250127T150000",
+      "authors": [
+        "Nilay Patel"
+      ],
+      "summary": "This article features an interview with Ciena CEO Gary Smith, discussing how the company's Wavelength Division Multiplexing (WDM) technology underpins the global internet by enabling massive data transmission over fiber optic cables. Smith details Ciena's evolution from serving telecom providers to becoming a critical partner for hyperscalers like Google and Meta, especially with the rise of AI. He also touches on the geopolitical considerations in network building and the company's long-term strategy for growth.",
+      "banner_image": "https://cdn.vox-cdn.com/thumbor/mQ248y8aP6q2XoG_6Nl1jQz-o4g=/0x0:2040x1360/1200x675/filters:focal(1020x680:1021x681)/cdn.vox-cdn.com/uploads/chorus_asset/file/25134707/VPY2O7_Eells_Ciena_Patel_2040.jpg",
+      "source": "The Verge",
+      "category_within_source": "General",
+      "source_domain": "The Verge",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.934055"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.730851"
+        },
+        {
+          "topic": "ipo",
+          "relevance_score": "0.632970"
+        },
+        {
+          "topic": "mergers_and_acquisitions",
+          "relevance_score": "0.608568"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.603384"
+        }
+      ],
+      "overall_sentiment_score": 0.372067,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "CIEN",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.533921",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "GOOG",
+          "relevance_score": "0.733776",
+          "ticker_sentiment_score": "0.307068",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.623317",
+          "ticker_sentiment_score": "0.327323",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.630597",
+          "ticker_sentiment_score": "0.344964",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AMZN",
+          "relevance_score": "0.573167",
+          "ticker_sentiment_score": "0.282973",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Aurora Mobile Partners With China's DeepSeek To Boost AI Capabilities",
+      "url": "https://www.benzinga.com/25/01/43223106/aurora-mobile-partners-with-deepseek-to-boost-ai-capabilities",
+      "time_published": "20250127T061100",
+      "authors": [
+        "Shivani Kumaresan"
+      ],
+      "summary": "Aurora Mobile's enterprise AI platform, GPTBots.ai, has integrated China's DeepSeek R1 large language model (LLM), enhancing its capabilities alongside existing models like OpenAI, Meta Llama, and Google Gemini. This integration aims to provide businesses with more efficient, adaptable, and cost-effective advanced AI solutions, leveraging DeepSeek R1's strong reasoning tasks performance and affordability. The partnership positions GPTBots.ai as a comprehensive platform for diverse LLMs, allowing businesses to select models catering to specific operational, customer service, or marketing needs.",
+      "banner_image": null,
+      "source": "Benzinga",
+      "category_within_source": "General",
+      "source_domain": "Benzinga",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.901797"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.705583"
+        }
+      ],
+      "overall_sentiment_score": 0.184087,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "JG",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.411793",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.706640",
+          "ticker_sentiment_score": "0.146554",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.713245",
+          "ticker_sentiment_score": "0.110853",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.748605",
+          "ticker_sentiment_score": "0.125115",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "ETF of the Week: DGRW",
+      "url": "https://www.etftrends.com/etf-of-the-week/video-etf-week-dgrw-1/",
+      "time_published": "20250127T011145",
+      "authors": [
+        "Karrie Gordon"
+      ],
+      "summary": "This article highlights the WisdomTree US Quality Dividend Growth Fund (DGRW) as the ETF of the Week, discussed by VettaFi\u2019s Head of Research Todd Rosenbluth and Chuck Jaffe. DGRW focuses on high-quality companies with a forward-looking approach to dividend growth, suitable as a core or complementary holding in a portfolio. Despite a modest 2% yield, it offers capital appreciation potential and has received strong ratings from Lipper and Morningstar.",
+      "banner_image": "https://www.etftrends.com/wp-content/uploads/2024/02/EOTW_Header_WOName.png",
+      "source": "ETF Trends",
+      "category_within_source": "General",
+      "source_domain": "ETF Trends",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.916145"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.831173"
+        }
+      ],
+      "overall_sentiment_score": 0.473985,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "DGRW",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.609586",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.640185",
+          "ticker_sentiment_score": "0.537474",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.605818",
+          "ticker_sentiment_score": "0.513905",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.560850",
+          "ticker_sentiment_score": "0.435708",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "CRM",
+          "relevance_score": "0.560590",
+          "ticker_sentiment_score": "0.447881",
+          "ticker_sentiment_label": "Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Meta at ATH after Announcing Massive $65B CapEx Plan for AI Push \ud83d\udcc8",
+      "url": "https://www.xtb.com/int/market-analysis/news-and-research/meta-at-ath-after-announcing-massive-65b-capex-plan-for-ai-push",
+      "time_published": "20250124T171300",
+      "authors": [],
+      "summary": "Meta Platforms has announced a massive $60-65 billion capital expenditure plan for 2025, a significant increase aimed at bolstering its AI infrastructure and becoming a leader in the AI landscape. This aggressive investment includes building a new data center and acquiring 1.3 million GPUs, with the goal of developing Meta AI into a leading assistant serving over a billion users. Despite the substantial spending, market reaction has been largely positive, pushing Meta's stock to an all-time high as investors support the company's strategic AI focus.",
+      "banner_image": null,
+      "source": "XTB.com",
+      "category_within_source": "General",
+      "source_domain": "XTB.com",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.940183"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.801533"
+        }
+      ],
+      "overall_sentiment_score": 0.19319,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "META",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.491163",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "ORCL",
+          "relevance_score": "0.646153",
+          "ticker_sentiment_score": "0.141597",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.552075",
+          "ticker_sentiment_score": "0.123048",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.592197",
+          "ticker_sentiment_score": "0.105000",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "IUSV: A Cost-Effective Value ETF With Strong Downside Protection And Growth Potential",
+      "url": "https://seekingalpha.com/article/4751301-iusv-cost-effective-value-etf-strong-downside-protection-growth-potential",
+      "time_published": "20250122T231800",
+      "authors": [
+        "Ploutos Investing"
+      ],
+      "summary": "The iShares Core S&P U.S. Value ETF (IUSV) offers cost-efficient value investing with a portfolio of 700 U.S. large-cap and mid-cap value stocks and a low expense ratio of 0.04%. Its significant allocation to large-cap stocks and a 23% exposure to the technology sector, including Apple, Microsoft, and Amazon, contribute to strong downside protection and growth potential. IUSV has demonstrated superior performance, outperforming its peer IWD with a 167.2% total return over the past decade and 597.5% since inception.",
+      "banner_image": null,
+      "source": "Seeking Alpha",
+      "category_within_source": "General",
+      "source_domain": "Seeking Alpha",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.918466"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.730334"
+        }
+      ],
+      "overall_sentiment_score": 0.445521,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "IUSV",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.476108",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.744312",
+          "ticker_sentiment_score": "0.442960",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.727083",
+          "ticker_sentiment_score": "0.423177",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "AMZN",
+          "relevance_score": "0.714695",
+          "ticker_sentiment_score": "0.418362",
+          "ticker_sentiment_label": "Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Should Invesco Dividend Achievers ETF (PFM) Be on Your Investing Radar?",
+      "url": "https://es.tradingview.com/news/zacks:db65c299e094b:0-should-invesco-dividend-achievers-etf-pfm-be-on-your-investing-radar/",
+      "time_published": "20250122T130859",
+      "authors": [],
+      "summary": "The Invesco Dividend Achievers ETF (PFM) is a passively managed large-cap value ETF with $719.98 million in assets, sponsored by Invesco. Launched in 2005, it focuses on dividend-paying companies that have increased dividends for over 10 consecutive years, with top holdings including Broadcom, Apple, and Microsoft. PFM has a Zacks ETF Rank of 3 (Hold) and an expense ratio of 0.52%, and its performance has shown year-to-date gains of 2.90% and a 19.34% increase over the last year as of January 22, 2025.",
+      "banner_image": null,
+      "source": "TradingView: siga todos los mercados",
+      "category_within_source": "General",
+      "source_domain": "TradingView: siga todos los mercados",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.939955"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.844106"
+        }
+      ],
+      "overall_sentiment_score": 0.219732,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "PFM",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.314718",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AVGO",
+          "relevance_score": "0.747688",
+          "ticker_sentiment_score": "0.214241",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.739845",
+          "ticker_sentiment_score": "0.245440",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.709607",
+          "ticker_sentiment_score": "0.209540",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "SCHW",
+          "relevance_score": "0.620616",
+          "ticker_sentiment_score": "0.125265",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Oracle surges, chip stocks rise as Trump unveils $500 bln AI plan",
+      "url": "https://www.reuters.com/technology/oracle-shares-rise-9-after-trump-unveils-500-bln-ai-plan-2025-01-22/",
+      "time_published": "20250122T121900",
+      "authors": [
+        "Medha Singh"
+      ],
+      "summary": "Oracle's shares jumped nearly 9% after former President Donald Trump announced a $500 billion AI infrastructure investment plan, \"Stargate,\" involving Oracle, OpenAI, and SoftBank to keep the U.S. competitive in the global AI race. Other technology partners and AI-related companies, including Nvidia, Microsoft, Arm, Vistra, Dell Technologies, Super Micro Computer, and Palantir Technologies, also saw their stock prices increase following the news. The plan includes an immediate $100 billion investment, with the remaining over the next four years, and construction of data centers already underway in Texas.",
+      "banner_image": "https://www.reuters.com/resizer/v2/L42EANEQ3ZLM7O23P7QJ46I6BY.JPG?auth=292f7d9c66ccbb93c3bf81d113c233dd317079b76c8cff410d70929219ea2aa4&width=1200&height=628&q=80&unsharp=1&focal=546%2C281",
+      "source": "Reuters",
+      "category_within_source": "General",
+      "source_domain": "Reuters",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.919816"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.832505"
+        },
+        {
+          "topic": "economy_fiscal",
+          "relevance_score": "0.613610"
+        }
+      ],
+      "overall_sentiment_score": 0.310908,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "ORCL",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.446926",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.815414",
+          "ticker_sentiment_score": "0.336299",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.640805",
+          "ticker_sentiment_score": "0.235334",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "VST",
+          "relevance_score": "0.642184",
+          "ticker_sentiment_score": "0.311885",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "DELL",
+          "relevance_score": "0.632523",
+          "ticker_sentiment_score": "0.329680",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Microsoft and OpenAI evolve partnership to drive the next phase of AI",
+      "url": "https://blogs.microsoft.com/blog/2025/01/21/microsoft-and-openai-evolve-partnership-to-drive-the-next-phase-of-ai/",
+      "time_published": "20250121T000000",
+      "authors": [],
+      "summary": "Microsoft and OpenAI are continuing their strategic partnership, focusing on future AI developments and Stargate. The agreement, valid through 2030, maintains Microsoft's access to OpenAI's IP, revenue sharing, and exclusivity on OpenAI's APIs. Microsoft remains a major investor, while OpenAI has made a new, significant Azure commitment, and the exclusivity on new capacity has shifted to a right of first refusal for Microsoft.",
+      "banner_image": null,
+      "source": "The Official Microsoft Blog",
+      "category_within_source": "General",
+      "source_domain": "The Official Microsoft Blog",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "finance",
+          "relevance_score": "0.723995"
+        },
+        {
+          "topic": "mergers_and_acquisitions",
+          "relevance_score": "0.617816"
+        }
+      ],
+      "overall_sentiment_score": 0.486569,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "MSFT",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.468434",
+          "ticker_sentiment_label": "Bullish"
+        }
+      ]
+    },
+    {
+      "title": "CHAT: Generative AI Stocks Still Look Relatively Attractive",
+      "url": "https://seekingalpha.com/article/4750671-chat-etf-generative-ai-stocks-still-look-relatively-attractive",
+      "time_published": "20250120T114200",
+      "authors": [
+        "Hedge Insider"
+      ],
+      "summary": "The Roundhill Generative AI & Technology ETF (CHAT) has seen a significant rise of +13.60% since October 2024, outperforming the S&P 500. The ETF maintains a diversified portfolio with key holdings in NVIDIA, Alphabet, Microsoft, and Meta Platforms. While previously rated a \"Strong Buy,\" the rating has been revised to \"Buy\" due to macroeconomic uncertainties, even as it appears between fair value and \"slightly undervalued.\"",
+      "banner_image": null,
+      "source": "Seeking Alpha",
+      "category_within_source": "General",
+      "source_domain": "Seeking Alpha",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.929974"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "1.000000"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.617272"
+        }
+      ],
+      "overall_sentiment_score": 0.413523,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "CHAT",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.412439",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.635209",
+          "ticker_sentiment_score": "0.398999",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "GOOGL",
+          "relevance_score": "0.583426",
+          "ticker_sentiment_score": "0.390360",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.573045",
+          "ticker_sentiment_score": "0.412255",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "META",
+          "relevance_score": "0.580469",
+          "ticker_sentiment_score": "0.409770",
+          "ticker_sentiment_label": "Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Board Games Market Set for Dynamic Boom as Key Players Hasbro \u2022 Mattel \u2022 Asmodee \u2022 Ravensburger",
+      "url": "https://www.openpr.com/news/4294201/board-games-market-set-for-dynamic-boom-as-key-players-hasbro",
+      "time_published": "20250112T073200",
+      "authors": [
+        "Ravina Pandya"
+      ],
+      "summary": "Coherent Market Insights Pvt. Ltd has released a new report titled \"Board Games Market 2025-2032,\" providing an in-depth analysis of market trends, growth drivers, challenges, and opportunities. The report identifies key players such as Hasbro, Mattel, Asmodee, and Ravensburger, and segments the market by various board game types. It aims to help businesses forecast profitability and make strategic decisions by offering insights into market dynamics, regional outlook, and competitor landscapes.",
+      "banner_image": "https://cdn.open-pr.com/L/c/Lc01595631_g.jpg",
+      "source": "openPR.com",
+      "category_within_source": "General",
+      "source_domain": "openPR.com",
+      "topics": [
+        {
+          "topic": "retail_wholesale",
+          "relevance_score": "0.934866"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.717456"
+        }
+      ],
+      "overall_sentiment_score": 0.343774,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "HAS",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.342476",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.605206",
+          "ticker_sentiment_score": "0.328655",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Increased Fund Ownership Could Boost Microsoft\u2019s Stock",
+      "url": "https://www.etftrends.com/leveraged-inverse-channel/increased-fund-ownership-could-boost-microsofts-stock/",
+      "time_published": "20250110T000000",
+      "authors": [
+        "Ben Hernandez"
+      ],
+      "summary": "Increased investment fund ownership in Microsoft could drive a bullish trend for its stock in 2025. Despite underperforming the S&P 500 in 2024, strong fund buying and anticipated positive earnings, fueled by AI investments, suggest potential gains. Analysts expect continued revenue growth and a favorable market environment for tech giants.",
+      "banner_image": null,
+      "source": "ETF Trends",
+      "category_within_source": "General",
+      "source_domain": "ETF Trends",
+      "topics": [
+        {
+          "topic": "earnings",
+          "relevance_score": "0.917026"
+        },
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.800255"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.742785"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.310584"
+        }
+      ],
+      "overall_sentiment_score": 0.272991,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "MSFT",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.429953",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "SPGI",
+          "relevance_score": "0.327900",
+          "ticker_sentiment_score": "0.146792",
+          "ticker_sentiment_label": "Neutral"
+        }
+      ]
+    },
+    {
+      "title": "Most of the \u2018Sweet 16\u2019 stocks have dominated. They might do it again in 2025.",
+      "url": "https://www.marketwatch.com/story/most-of-the-sweet-16-stocks-have-dominated-they-might-to-do-it-again-in-2025-5194bc67?gaa_at=eafs&gaa_n=AWEtsqdcgRlefglpj3gxGLpHu9CU_772L5fzBz8Lfee1SpdbTTaTK6CNFmW5&gaa_ts=690747c6&gaa_sig=TvIxWRWxKGZeRRYso0aSj9zEIF_AgnMbEjVog5X7cpM1QvlSmxej-K89ntKPFSpLvKW7b4tJI18T00PodrDAhA%3D%3D",
+      "time_published": "20250108T100000",
+      "authors": [
+        "Philip van Doorn"
+      ],
+      "summary": "The article discusses the \"Sweet 16\" list of stocks, initially identified by Jefferies in September 2020, highlighting their significant contribution to the U.S. stock market's performance. It suggests that these stocks, including giants like Nvidia, are poised for continued revenue growth in 2025. The piece also mentions other groups of dominant stocks, such as \"BATMMAAN,\" which includes Broadcom and the \"Magnificent Seven.\"",
+      "banner_image": null,
+      "source": "MarketWatch",
+      "category_within_source": "General",
+      "source_domain": "MarketWatch",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.903662"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.812459"
+        },
+        {
+          "topic": "earnings",
+          "relevance_score": "0.737521"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.615021"
+        }
+      ],
+      "overall_sentiment_score": 0.327538,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "META",
+          "relevance_score": "0.826396",
+          "ticker_sentiment_score": "0.304294",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AVGO",
+          "relevance_score": "0.808697",
+          "ticker_sentiment_score": "0.341031",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.849574",
+          "ticker_sentiment_score": "0.306293",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "TSLA",
+          "relevance_score": "0.801747",
+          "ticker_sentiment_score": "0.330911",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.845171",
+          "ticker_sentiment_score": "0.340683",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Most of the \u2018Sweet 16\u2019 stocks have dominated. They might do it again in 2025.",
+      "url": "https://www.marketwatch.com/story/most-of-the-sweet-16-stocks-have-dominated-they-might-to-do-it-again-in-2025-5194bc67?gaa_at=eafs&gaa_n=AWEtsqdddqayxxw61fWfJKx-3yGLcH8Oh5qz_7nWYJUCWSaHk5xhiOV2L9xD&gaa_ts=690748f2&gaa_sig=Y0ZQJTq_Uc7y9INTFgLsksTcjcTmdoPFqT2xsw1zKlzfGxWzNuRTb-cVvxsGATy0qTA35n3eWR7QQqhggLhIjA%3D%3D",
+      "time_published": "20250108T100000",
+      "authors": [
+        "Philip van Doorn"
+      ],
+      "summary": "The article discusses the \"Sweet 16\" stocks identified by Jefferies in September 2020, highlighting their significant contribution to the US stock market's performance over the past five years. It suggests these stocks, including Nvidia, may continue their dominant trend into 2025 due to expected revenue growth. The piece also mentions other dominant stock groupings like \"BATMMAAN\" and the \"Magnificent Seven.\"",
+      "banner_image": "https://mw3.wsj.net/mw5/content/images/logos/mw_logo_social.png",
+      "source": "MarketWatch",
+      "category_within_source": "General",
+      "source_domain": "MarketWatch",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.907849"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.816458"
+        }
+      ],
+      "overall_sentiment_score": 0.348712,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "META",
+          "relevance_score": "0.724341",
+          "ticker_sentiment_score": "0.338363",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AVGO",
+          "relevance_score": "0.634003",
+          "ticker_sentiment_score": "0.334780",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.740346",
+          "ticker_sentiment_score": "0.311165",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "TSLA",
+          "relevance_score": "0.729651",
+          "ticker_sentiment_score": "0.344892",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.700982",
+          "ticker_sentiment_score": "0.340225",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "EWC, Canada ETFs Rise Amid Trudeau Resignation",
+      "url": "https://finance.yahoo.com/news/ewc-canada-etfs-rise-amid-140000949.html",
+      "time_published": "20250107T140000",
+      "authors": [
+        "Kent Thune"
+      ],
+      "summary": "The iShares MSCI Canada ETF (EWC) rose following the announcement of Canadian Prime Minister Justin Trudeau's resignation, citing a need for new leadership. The article also discusses why Canadian ETFs have historically lagged behind U.S. equity ETFs like SPY, attributing it to factors such as sector concentration, innovation, market size, currency effects, venture capital, and global influence.",
+      "banner_image": null,
+      "source": "Yahoo Finance",
+      "category_within_source": "General",
+      "source_domain": "Yahoo Finance",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.933248"
+        },
+        {
+          "topic": "economy_macro",
+          "relevance_score": "0.839111"
+        },
+        {
+          "topic": "economy_fiscal",
+          "relevance_score": "0.749745"
+        }
+      ],
+      "overall_sentiment_score": 0.253925,
+      "overall_sentiment_label": "Somewhat-Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "BBCA",
+          "relevance_score": "0.913941",
+          "ticker_sentiment_score": "0.123303",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "AAPL",
+          "relevance_score": "0.636690",
+          "ticker_sentiment_score": "0.302675",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.616355",
+          "ticker_sentiment_score": "0.333477",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Qualcomm\u2019s New Chips Will Bring AI to $600 Personal Computers",
+      "url": "https://www.bloomberg.com/news/articles/2025-01-06/qualcomm-s-new-chips-will-bring-ai-to-600-personal-computers",
+      "time_published": "20250106T160000",
+      "authors": [
+        "Ian King"
+      ],
+      "summary": "Qualcomm Inc. introduced its new Snapdragon X Platform chips at CES 2025, designed to power AI-capable personal computers priced as low as $600. These chips feature an 8-core Oryon central processor, a graphics component, and a dedicated AI chip, and will run Microsoft Corp.'s Copilot+ software. Major PC manufacturers like Dell Technologies Inc. and Lenovo Group Ltd. are expected to release laptops using this new technology in early 2025.",
+      "banner_image": null,
+      "source": "Bloomberg.com",
+      "category_within_source": "General",
+      "source_domain": "Bloomberg.com",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.911662"
+        }
+      ],
+      "overall_sentiment_score": 0.366345,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "QCOM",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.439406",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.730333",
+          "ticker_sentiment_score": "0.304086",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "DELL",
+          "relevance_score": "0.609994",
+          "ticker_sentiment_score": "0.285992",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Intel Extends Leadership in AI PCs and Edge Computing at CES 2025",
+      "url": "https://www.intc.com/news-events/press-releases/detail/1722/intel-extends-leadership-in-ai-pcs-and-edge-computing-at?utm_source=chatgpt.com",
+      "time_published": "20250106T090000",
+      "authors": [],
+      "summary": "At CES 2025, Intel unveiled new Intel Core Ultra (Series 2) processors, including the 200V series with Intel vPro for businesses, and 200HX and H series for creators and gamers, all featuring cutting-edge AI enhancements and performance improvements. Intel also introduced a new suite of processors for edge computing, showcasing significant performance gains in AI workloads compared to previous generations and competitors. The availability of these new systems is set to begin in January and February 2025, with further releases planned for the first half of the year.",
+      "banner_image": "https://www.businesswire.com/news/home/20250106076497/en/",
+      "source": "Investor Relations :: Intel Corporation (INTC)",
+      "category_within_source": "General",
+      "source_domain": "Investor Relations :: Intel Corporation (INTC)",
+      "topics": [
+        {
+          "topic": "technology",
+          "relevance_score": "0.900975"
+        }
+      ],
+      "overall_sentiment_score": 0.444377,
+      "overall_sentiment_label": "Bullish",
+      "ticker_sentiment": [
+        {
+          "ticker": "INTC",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.861601",
+          "ticker_sentiment_label": "Bullish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.704183",
+          "ticker_sentiment_score": "0.327759",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "AMD",
+          "relevance_score": "0.602846",
+          "ticker_sentiment_score": "0.259238",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        },
+        {
+          "ticker": "NVDA",
+          "relevance_score": "0.558098",
+          "ticker_sentiment_score": "0.236416",
+          "ticker_sentiment_label": "Somewhat-Bullish"
+        }
+      ]
+    },
+    {
+      "title": "Tech Stocks Are Still Pricey. Dip Buyers Should Look Here Instead.",
+      "url": "https://www.barrons.com/articles/industrial-stocks-buy-tech-economy-843c4119?gaa_at=eafs&gaa_n=AWEtsqelnitnYC-ZBJ0b5hgOCrwYxDuqAb53kDOYrhK7VlixFToKy16yP8Q7&gaa_ts=693cc020&gaa_sig=nzOWb6CS5vPSwL3QnxqG27-DyLONczGMx3K85xvbvb56PWRDf4AxzRDlBy25CZs7A-AhJRMOI7pXvpI9XV1qXA%3D%3D",
+      "time_published": "20250103T011246",
+      "authors": [
+        "Jacob Sonenshine"
+      ],
+      "summary": "Investors seeking \"buy-the-dip\" opportunities might be advised to look beyond tech stocks, which remain expensive despite recent market fluctuations. Instead, the article suggests considering other sectors, highlighting that the Industrial Select Sector SPDR Fund has seen a significant drop from its recent high. This implies that industrial stocks may present a more attractive dip-buying opportunity than pricey tech stocks.",
+      "banner_image": "https://images.barrons.com/im-47419481?width=639&height=426",
+      "source": "Barron's",
+      "category_within_source": "General",
+      "source_domain": "Barron's",
+      "topics": [
+        {
+          "topic": "financial_markets",
+          "relevance_score": "0.926496"
+        },
+        {
+          "topic": "technology",
+          "relevance_score": "0.827232"
+        },
+        {
+          "topic": "manufacturing",
+          "relevance_score": "0.708158"
+        }
+      ],
+      "overall_sentiment_score": -0.123834,
+      "overall_sentiment_label": "Neutral",
+      "ticker_sentiment": [
+        {
+          "ticker": "XLI",
+          "relevance_score": "1.000000",
+          "ticker_sentiment_score": "0.122847",
+          "ticker_sentiment_label": "Neutral"
+        },
+        {
+          "ticker": "ADBE",
+          "relevance_score": "0.633225",
+          "ticker_sentiment_score": "-0.201557",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "AMZN",
+          "relevance_score": "0.567001",
+          "ticker_sentiment_score": "-0.197207",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        },
+        {
+          "ticker": "MSFT",
+          "relevance_score": "0.549111",
+          "ticker_sentiment_score": "-0.213736",
+          "ticker_sentiment_label": "Somewhat-Bearish"
+        }
+      ]
+    }
+  ]
+}
