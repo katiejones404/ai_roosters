@@ -1,4 +1,4 @@
-LINK TO WEB APP:
+(Web app links currently not deployed)
 backend: https://ai-roosters.onrender.com/
 frontend: https://ai-roosters-frontend.onrender.com/
 ## Stock Sense 

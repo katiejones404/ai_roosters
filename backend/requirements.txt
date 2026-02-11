@@ -34,3 +34,4 @@ behave
 requests
 beautifulsoup4
 tqdm
+dotenv
