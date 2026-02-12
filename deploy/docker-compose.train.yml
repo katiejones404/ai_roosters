@@ -1,0 +1,24 @@
+services:
+  trainer:
+    build:
+      context: ./backend
+      dockerfile: Backend.Dockerfile.gpu
+    container_name: stock_trainer
+    gpus: all
+    environment:
+      DATABASE_URL: postgresql://stock_user:stock_pass@postgres:5432/stock_db
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True,max_split_size_mb:64"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - ./backend/data:/app/data
+
+    command: ["python", "-m", "app.services.sentiment_training.finbert_training"]
+
+    restart: "no"
+    cpus: "64"
+    mem_limit: "512g"

@@ -1,0 +1,12 @@
+services:
+  postgres:
+    cpus: "4"
+    mem_limit: "16g"
+
+  backend:
+    cpus: "32"
+    mem_limit: "128g"
+
+  frontend:
+    cpus: "4"
+    mem_limit: "4g"

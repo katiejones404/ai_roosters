@@ -12,18 +12,18 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./Backend/app/db/init:/docker-entrypoint-initdb.d:ro # <-- init SQL files run on first start
-    #- ${KAGGLE_CONFIG}:/root/.kaggle:ro
+      - ./backend/app/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stock_user -d stock_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   # FastAPI Backend
   backend:
     build:
-      context: ./Backend
+      context: ./backend
       dockerfile: Backend.Dockerfile
     container_name: stock_backend
     environment:
@@ -42,14 +42,15 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./Backend:/app
-      - ./Backend/data:/app/data
+      - ./backend:/app
+      - ./backend/data:/app/data
       - ./Testing:/app/Testing
     command: >
       uvicorn app.main:app
       --host 0.0.0.0
       --port 8000
       --reload
+    restart: unless-stopped
 
   # Frontend React App (Development)
   frontend:
