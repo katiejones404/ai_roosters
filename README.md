@@ -22,6 +22,74 @@ Press "Ctrl+C" to stop running or run:
 docker-compose down
 ```
 
+## Deployment Configurations
+
+StockSense supports multiple deployment profiles designed to reflect different compute environments and workload characteristics.
+
+These configurations allow the system to scale across development, staging, production, and training scenarios.
+---
+
+### Dev (CPU)
+Lightweight configuration optimized for local development.
+```bash
+docker-compose -f docker-compose.yml -f deploy/docker-compose.dev.yml up --build
+```
+## Staging (GPU-Lite)
+Used for validation, testing, and performance evaluation with moderate GPU resources.
+```bash
+docker-compose -f docker-compose.yml -f deploy/docker-compose.staging.gpu.yml up --build
+```
+
+## Production (CPU)
+Balanced compute configuration for general inference workloads.
+```bash
+docker-compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up --build
+```
+
+## Production (GPU)
+High-throughput configuration leveraging GPU acceleration for NLP inference and feature pipelines.
+```bash
+docker-compose -f docker-compose.yml -f deploy/docker-compose.prod.gpu.yml up --build
+```
+
+## Training/Backtesting (GPU)
+Dedicated compute profile for model retraining and experimental workloads.
+```bash
+docker-compose -f docker-compose.yml -f deploy/docker-compose.train.yml up --build postgres trainer
+```
+
+## System Requiremments
+The system shall support execution on servers with:
+- Up to 64 vCPUs
+- Up to 512 GB RAM
+- Optional GPU acceleration
+
+## GPU Requirements
+The system shall support:
+- Up to 2 GPUs per node
+- GPUs with up to 80 GB VRAM
+
+GPU acceleration is used for:
+- FinBert inference
+- Feature generation pipelines
+- model retraining workloads
+
+## Ram Requirments
+The system shall operate within a maximum memory budget of 512 GB RAM
+Memory allocation supports:
+- Article ingestion
+- NLP inference
+- Feature engineering
+- Model Training
+
+## Storage Requirements
+The system shall support up to 8 TB high-performance storage
+
+Storage utilization includes:
+- Article datasets
+- Model artifacts
+- Feature caches
+- Logs
 
 ## Install Requirements
 
