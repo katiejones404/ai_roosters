@@ -15,11 +15,11 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 
 CREATE TABLE IF NOT EXISTS articles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-
-  published_at timestamptz,
-  title text,
-  description text,
   url text UNIQUE,
+  title text,
+  source text,  -- ADD THIS if missing
+  description text,
+  published_at timestamptz,
   inserted_at timestamptz DEFAULT now(),
 
   -- FinBERT sentiment fields (per article)
@@ -119,3 +119,28 @@ CREATE INDEX IF NOT EXISTS idx_snapshots_ticker_date
 
 CREATE INDEX IF NOT EXISTS idx_snapshot_ticker 
   ON sentiment_snapshots (ticker);
+
+-- Article Ticker Sentiment table
+
+CREATE TABLE IF NOT EXISTS article_ticker_sentiment (
+  id SERIAL PRIMARY KEY,
+  article_url TEXT NOT NULL,
+  ticker VARCHAR(20) NOT NULL,
+  relevance_score NUMERIC,
+  ticker_sentiment_score NUMERIC,
+  ticker_sentiment_label VARCHAR(50),
+  published_at TIMESTAMPTZ,
+  
+  CONSTRAINT fk_article
+    FOREIGN KEY (article_url)
+    REFERENCES articles(url)
+    ON DELETE CASCADE,
+    
+  CONSTRAINT uq_article_ticker UNIQUE (article_url, ticker)
+);
+
+CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_ticker 
+  ON article_ticker_sentiment (ticker);
+
+CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_article 
+  ON article_ticker_sentiment (article_url);
