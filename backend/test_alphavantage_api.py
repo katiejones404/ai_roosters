@@ -66,7 +66,6 @@ os.environ["ALPHAVANTAGE_API_KEY"] = os.getenv("ALPHAVANTAGE_API_KEY", "demo")
 from app.services.api_article_ingest import AlphaVantageIngestor
 def test_ingestion():
     print("=" * 60)
-    print("BALLLLLLLLLLLLLLLLLLLLLLLLLL\nBALLLLL")
     print("Testing AlphaVantage Ingestion")
     print("=" * 60)
     
