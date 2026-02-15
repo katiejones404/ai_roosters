@@ -30,6 +30,9 @@ const Navbar = () => {
         <Link className={isActive("/dashboard")} to="/dashboard">
           Dashboard
         </Link>
+        <Link className={isActive("/portfolio")} to="/portfolio">
+          Portfolio
+        </Link>
         <Link className={isActive("/settings")} to="/settings">
           Settings
         </Link>
