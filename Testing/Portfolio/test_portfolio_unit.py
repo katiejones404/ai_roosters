@@ -7,7 +7,7 @@ from datetime import datetime
 import sys
 sys.path.insert(0, '/app')
 
-from app.services.portfolio import (
+from backend.app.services.portfolio import (
     get_user_portfolio,
     get_portfolio_item_by_ticker,
     add_or_update_position,
@@ -15,7 +15,7 @@ from app.services.portfolio import (
     remove_from_portfolio,
     get_portfolio_summary
 )
-from app.schema.schemas import (
+from backend.app.schema.schemas import (
     PortfolioCreateItem,
     PortfolioUpdateItem
 )
@@ -53,32 +53,32 @@ class TestGetUserPortfolio:
         assert result[0].quantity == 10.0
         assert result[0].avg_price == 150.50
 
-def test_get_portfolio_returns_multiple_items_by_date(self):
-    mock_db = Mock()
-    user_id = uuid4()
+    def test_get_portfolio_returns_multiple_items_by_date(self):
+        mock_db = Mock()
+        user_id = uuid4()
 
-    mock_db.execute.return_value.fetchall.return_value = [
-            {
-                "id": uuid4(),
-                "user_id": user_id,
-                "ticker": "TSLA",
-                "quantity": Decimal("5.0"),
-                "avg_price": Decimal("200.00"),
-                "added_at": datetime(2025, 1, 20)
-            },
-            {
-                "id": uuid4(),
-                "user_id": user_id,
-                "ticker": "AAPL",
-                "quantity": Decimal("10.0"),
-                "avg_price": Decimal("150.50"),
-                "added_at": datetime(2025, 1, 15)
-            }
-        ]
-    result = get_user_portfolio(mock_db, user_id)
-    assert len(result) == 2
-    assert result[0].ticker == "TSLA"
-    assert result[1].ticker == "APPL"
+        mock_db.execute.return_value.fetchall.return_value = [
+                {
+                    "id": uuid4(),
+                    "user_id": user_id,
+                    "ticker": "TSLA",
+                    "quantity": Decimal("5.0"),
+                    "avg_price": Decimal("200.00"),
+                    "added_at": datetime(2025, 1, 20)
+                },
+                {
+                    "id": uuid4(),
+                    "user_id": user_id,
+                    "ticker": "AAPL",
+                    "quantity": Decimal("10.0"),
+                    "avg_price": Decimal("150.50"),
+                    "added_at": datetime(2025, 1, 15)
+                }
+            ]
+        result = get_user_portfolio(mock_db, user_id)
+        assert len(result) == 2
+        assert result[0].ticker == "TSLA"
+        assert result[1].ticker == "AAPL"
 
     def test_get_portfolio_handles_null_added_at(self):
         mock_db = Mock()
@@ -133,7 +133,7 @@ class TestGetPortfolioItemByTicker:
         user_id = uuid4()
         test_id = uuid4()
 
-        mock_db.execute.return_value.fetchall.return_value = {
+        mock_db.execute.return_value.fetchone.return_value = {
             "id": test_id,
             "user_id": user_id,
             "ticker": "NVDA",
@@ -185,7 +185,7 @@ class TestAndOrUpdatePosition:
         assert result.ticker == "AMZN"
         assert result.quantity == 5.0
         assert result.avg_price == 180.00
-        mock_db.commit.assert_called_one()
+        mock_db.commit.assert_called_once()
 
     def test_updates_existing_position_with_avg_price(self):
         mock_db = Mock()

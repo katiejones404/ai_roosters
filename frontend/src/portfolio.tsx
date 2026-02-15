@@ -56,7 +56,11 @@ const Portfolio = () => {
                 return;
             }
 
-            const response = await axios.get(`${API_BASE}/api/portfolio/stats/summary`);
+            const  response = await axios.get(`${API_BASE}/api/portfolio/stats/summary`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
             setPortfolioData(response.data);
             setError(null);
         } catch (err: any) {
@@ -88,7 +92,12 @@ const Portfolio = () => {
 
         try {
             // Use axios - token added automatically
-            await axios.delete(`${API_BASE}/api/portfolio/${ticker}`);
+            const token = getToken();
+            await axios.delete(`${API_BASE}/api/portfolio/${ticker}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
             fetchPortfolioSummary();
         } catch (err) {
             console.error('Error removing stock:', err);
@@ -182,15 +191,15 @@ const Portfolio = () => {
                         <div className="summary-stat-card">
                             <div className="stat-icon">💰</div>
                             <div className="stat-content">
-                                <div className="stat-label">Total Value</div>
-                                <div className="stat-value">{formatCurrency(summary.total_current_value)}</div>
+                                <div className="stat-labelP">Total Value</div>
+                                <div className="stat-valueP">{formatCurrency(summary.total_current_value)}</div>
                             </div>
                         </div>
                         <div className="summary-stat-card">
                             <div className="stat-icon">📊</div>
                             <div className="stat-content">
-                                <div className="stat-label">Total Invested</div>
-                                <div className="stat-value">{formatCurrency(summary.total_cost_basis)}</div>
+                                <div className="stat-labelP">Total Invested</div>
+                                <div className="stat-valueP">{formatCurrency(summary.total_cost_basis)}</div>
                             </div>
                         </div>
                         <div className={`summary-stat-card ${getReturnColor(summary.total_gain_loss)}`}>
@@ -198,8 +207,8 @@ const Portfolio = () => {
                                 {summary.total_gain_loss >= 0 ? '📈' : '📉'}
                             </div>
                             <div className="stat-content">
-                                <div className="stat-label">Total Gain/Loss</div>
-                                <div className={`{stat-value ${getReturnColor(summary.total_gain_loss)}`}>
+                                <div className="stat-labelP">Total Gain/Loss</div>
+                                <div className={`stat-valueP ${getReturnColor(summary.total_gain_loss)}`}>
                                     {formatCurrency(summary.total_gain_loss)}
                                 </div>
                                 <div className={`stat-subvalue ${getReturnColor(summary.total_gain_loss_pct)}`}>
@@ -211,8 +220,8 @@ const Portfolio = () => {
                         <div className="summary-stat-card">
                             <div className="stat-icon">🎯</div>
                             <div className="stat-content">
-                                <div className="stat-label">Positions</div>
-                                <div className="stat-value">{summary.num_positions || 0}</div>
+                                <div className="stat-labelP">Positions</div>
+                                <div className="stat-valueP">{summary.num_positions || 0}</div>
                             </div>
                         </div>
                     </div>

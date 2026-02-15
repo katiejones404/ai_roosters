@@ -1,11 +1,13 @@
-"""
-Portfolio service - Business logic for portfolio operations
-"""
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 from decimal import Decimal
+import math
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 import sys
 sys.path.insert(0, '/app')
@@ -20,18 +22,41 @@ from app.schema.schemas import (
 )
 
 
+def safe_float(value, default=0.0):
+    if value is None:
+        return None if default == 0.0 else default
+    try:
+        f = float(value)
+        if math.isnan(f) or math.isinf(f):
+            return default
+        return f
+    except (ValueError, TypeError) as e:
+        return default
+    
+def row_to_dict(row):
+    """Convert SQLAlchemy Row or dict to dict"""
+    if row is None:
+        return None
+    if hasattr(row, '_mapping'):
+        return dict(row._mapping)
+    return row
+
+def safe_datetime_to_str(value):
+    """Convert datetime to ISO string, or keep string as is"""
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return value  
+    if hasattr(value, 'isoformat'):
+        return value.isoformat()  # Convert datetime to string
+    return str(value)  # Fallback
+
+
 def get_user_portfolio(db: Session, user_id: UUID) -> List[PortfolioItem]:
-    """
-    Get all portfolio items for a user
-    """
+    """Get all portfolio items for a user"""
     sql = text("""
         SELECT 
-            id,
-            user_id,
-            ticker,
-            quantity,
-            avg_price,
-            added_at
+            id, user_id, ticker, quantity, avg_price, added_at
         FROM portfolio
         WHERE user_id = :user_id
         ORDER BY added_at DESC
@@ -39,66 +64,49 @@ def get_user_portfolio(db: Session, user_id: UUID) -> List[PortfolioItem]:
     
     rows = db.execute(sql, {"user_id": str(user_id)}).fetchall()
     
-    return [
-        PortfolioItem(
-            id=row["id"],
-            user_id=row["user_id"],
-            ticker=row["ticker"],
-            quantity=float(row["quantity"]),
-            avg_price=float(row["avg_price"]),
-            added_at=row["added_at"].isoformat() if row["added_at"] else None
-        )
-        for row in rows
-    ]
+    result = []
+    for row in rows:
+        row_dict = row_to_dict(row)
+        result.append(PortfolioItem(
+            id=row_dict["id"],
+            user_id=row_dict["user_id"],
+            ticker=row_dict["ticker"],
+            quantity=float(row_dict["quantity"]),
+            avg_price=float(row_dict["avg_price"]),
+            added_at=safe_datetime_to_str(row_dict["added_at"])
+        ))
+    return result
 
 
 def get_portfolio_item_by_ticker(
-    db: Session, 
-    user_id: UUID, 
-    ticker: str
+    db: Session, user_id: UUID, ticker: str
 ) -> Optional[PortfolioItem]:
-    """
-    Get a specific portfolio item by ticker
-    """
+    """Get a specific portfolio item by ticker"""
     sql = text("""
-        SELECT 
-            id,
-            user_id,
-            ticker,
-            quantity,
-            avg_price,
-            added_at
+        SELECT id, user_id, ticker, quantity, avg_price, added_at
         FROM portfolio
         WHERE user_id = :user_id AND ticker = :ticker
     """)
     
-    row = db.execute(
-        sql,
-        {"user_id": str(user_id), "ticker": ticker}
-    ).fetchone()
-    
+    row = db.execute(sql, {"user_id": str(user_id), "ticker": ticker}).fetchone()
     if not row:
         return None
     
+    row_dict = row_to_dict(row)
     return PortfolioItem(
-        id=row["id"],
-        user_id=row["user_id"],
-        ticker=row["ticker"],
-        quantity=float(row["quantity"]),
-        avg_price=float(row["avg_price"]),
-        added_at=row["added_at"].isoformat() if row["added_at"] else None
+        id=row_dict["id"],
+        user_id=row_dict["user_id"],
+        ticker=row_dict["ticker"],
+        quantity=float(row_dict["quantity"]),
+        avg_price=float(row_dict["avg_price"]),
+        added_at=safe_datetime_to_str(row_dict["added_at"])
     )
 
 
 def add_or_update_position(
-    db: Session, 
-    user_id: UUID, 
-    item: PortfolioCreateItem
+    db: Session, user_id: UUID, item: PortfolioCreateItem
 ) -> PortfolioItem:
-    """
-    Add a new position or update existing position with averaging
-    """
-    # Check if ticker already exists in user's portfolio
+    """Add a new position or update existing position with averaging"""
     check_sql = text("""
         SELECT id, quantity, avg_price
         FROM portfolio
@@ -111,72 +119,57 @@ def add_or_update_position(
     ).fetchone()
     
     if existing:
-        # Update existing position (average down/up)
-        old_quantity = float(existing["quantity"])
-        old_avg_price = float(existing["avg_price"])
+        existing_dict = row_to_dict(existing)
+        old_quantity = float(existing_dict["quantity"])
+        old_avg_price = float(existing_dict["avg_price"])
         new_quantity = old_quantity + item.quantity
-        
-        # Calculate new average price
         new_avg_price = (
             (old_quantity * old_avg_price + item.quantity * item.avg_price) / new_quantity
         )
         
         update_sql = text("""
             UPDATE portfolio
-            SET quantity = :quantity,
-                avg_price = :avg_price
+            SET quantity = :quantity, avg_price = :avg_price
             WHERE id = :id
-            RETURNING id, user_id, ticker, quantity, avg_price, added_at
         """)
         
-        row = db.execute(
+        db.execute(
             update_sql,
             {
-                "id": str(existing["id"]),
+                "id": existing_dict["id"],
                 "quantity": new_quantity,
                 "avg_price": new_avg_price
             }
-        ).fetchone()
+        )
+        db.commit()
+        
+        return get_portfolio_item_by_ticker(db, user_id, item.ticker)
     else:
-        # Insert new position
+        new_id = str(uuid4())
         insert_sql = text("""
-            INSERT INTO portfolio (user_id, ticker, quantity, avg_price)
-            VALUES (:user_id, :ticker, :quantity, :avg_price)
-            RETURNING id, user_id, ticker, quantity, avg_price, added_at
+            INSERT INTO portfolio (id, user_id, ticker, quantity, avg_price)
+            VALUES (:id, :user_id, :ticker, :quantity, :avg_price)
         """)
         
-        row = db.execute(
+        db.execute(
             insert_sql,
             {
+                "id": new_id,
                 "user_id": str(user_id),
                 "ticker": item.ticker,
                 "quantity": item.quantity,
                 "avg_price": item.avg_price
             }
-        ).fetchone()
+        )
     
-    db.commit()
-    
-    return PortfolioItem(
-        id=row["id"],
-        user_id=row["user_id"],
-        ticker=row["ticker"],
-        quantity=float(row["quantity"]),
-        avg_price=float(row["avg_price"]),
-        added_at=row["added_at"].isoformat() if row["added_at"] else None
-    )
+        db.commit()
+
+        return get_portfolio_item_by_ticker(db, user_id, item.ticker)
 
 
 def update_portfolio_item(
-    db: Session,
-    user_id: UUID,
-    ticker: str,
-    item: PortfolioUpdateItem
+    db: Session, user_id: UUID, ticker: str, item: PortfolioUpdateItem
 ) -> Optional[PortfolioItem]:
-    """
-    Update quantity or average price for a portfolio item
-    """
-    # Build dynamic update query
     update_fields = []
     params = {"user_id": str(user_id), "ticker": ticker}
     
@@ -195,68 +188,47 @@ def update_portfolio_item(
         UPDATE portfolio
         SET {', '.join(update_fields)}
         WHERE user_id = :user_id AND ticker = :ticker
-        RETURNING id, user_id, ticker, quantity, avg_price, added_at
     """)
     
-    row = db.execute(sql, params).fetchone()
+    result = db.execute(sql, params)
     db.commit()
-    
-    if not row:
+    if result.rowcount == 0:
         return None
-    
-    return PortfolioItem(
-        id=row["id"],
-        user_id=row["user_id"],
-        ticker=row["ticker"],
-        quantity=float(row["quantity"]),
-        avg_price=float(row["avg_price"]),
-        added_at=row["added_at"].isoformat() if row["added_at"] else None
-    )
+    return get_portfolio_item_by_ticker(db, user_id, ticker)
 
 
-def remove_from_portfolio(
-    db: Session,
-    user_id: UUID,
-    ticker: str
-) -> bool:
-    """
-    Remove a stock from user's portfolio
-    Returns True if deleted, False if not found
-    """
+def remove_from_portfolio(db: Session, user_id: UUID, ticker: str) -> bool:
     sql = text("""
         DELETE FROM portfolio
         WHERE user_id = :user_id AND ticker = :ticker
     """)
     
-    result = db.execute(
-        sql,
-        {"user_id": str(user_id), "ticker": ticker}
-    )
+    result = db.execute(sql, {"user_id": str(user_id), "ticker": ticker})
     db.commit()
-    
     return result.rowcount > 0
 
 
 def get_portfolio_summary(
-    db: Session,
-    user_id: UUID
+    db: Session, user_id: UUID
 ) -> PortfolioSummaryResponse:
-    """
-    Get portfolio summary with current prices and P&L calculations
-    """
-    # Get portfolio items with latest prices and returns
+    """Get portfolio summary with current prices and P&L calculations"""
+    
     sql = text("""
         WITH latest_prices AS (
-            SELECT DISTINCT ON (ticker)
-                ticker,
-                close as current_price,
-                return_1d,
-                return_30d,
-                return_120d,
-                return_360d,
-                date as price_date
-            FROM stocks
-            ORDER BY ticker, date DESC
+            SELECT 
+                s.ticker,
+                s.close as current_price,
+                s.return_1d,
+                s.return_30d,
+                s.return_120d,
+                s.return_360d,
+                s.date as price_date
+            FROM stocks s
+            INNER JOIN (
+               SELECT ticker, MAX(date) as max_date
+               FROM stocks
+               GROUP  BY ticker
+            ) latest ON s.ticker = latest.ticker AND s.date = latest.max_date
         )
         SELECT 
             p.id,
@@ -281,54 +253,61 @@ def get_portfolio_summary(
     """)
     
     rows = db.execute(sql, {"user_id": str(user_id)}).fetchall()
-    
     portfolio_items = []
     total_cost_basis = 0.0
     total_current_value = 0.0
-
-    def safe_float(value, default=0.0):
-        if value is None:
-            return None
-        try:
-            f = float(value)
-            if not (f != f or f == float('inf') or f == float('-inf')):
-                return f
-            return default
-        except (ValueError, TypeError):
-            return default
     
     for row in rows:
-        cost_basis = float(row["cost_basis"]) if row["cost_basis"] else 0.0
-        current_value = float(row["current_value"]) if row["current_value"] else 0.0
-        total_gain_loss = float(row["total_gain_loss"]) if row["total_gain_loss"] else 0.0
-        gain_loss_pct = float(row["gain_loss_pct"]) if row["gain_loss_pct"] else 0.0
+        row_dict = row_to_dict(row)
+        # Log raw values from database
+        logger.info(f"Processing {row_dict['ticker']}: "
+                   f"qty={row_dict['quantity']}, "
+                   f"avg_price={row_dict['avg_price']}, "
+                   f"current_price={row_dict['current_price']}, "
+                   f"cost_basis={row_dict['cost_basis']}, "
+                   f"current_value={row_dict['current_value']}, "
+                   f"gain_loss={row_dict['total_gain_loss']}, "
+                   f"gain_loss_pct={row_dict['gain_loss_pct']}")
         
-        total_cost_basis += cost_basis
-        total_current_value += current_value
+        # Use safe_float for all conversions
+        cost_basis = safe_float(row_dict["cost_basis"], 0.0)
+        current_value = safe_float(row_dict["current_value"], 0.0)
+        total_gain_loss = safe_float(row_dict["total_gain_loss"], 0.0)
+        gain_loss_pct = safe_float(row_dict["gain_loss_pct"], 0.0)
+        
+        total_cost_basis += cost_basis if cost_basis is not None else 0.0
+        total_current_value += current_value if current_value is not None else 0.0
         
         portfolio_items.append(
             PortfolioItemWithMetrics(
-                id=str(row["id"]),
-                ticker=row["ticker"],
-                quantity=float(row["quantity"]),
-                avg_price=float(row["avg_price"]),
-                current_price=float(row["current_price"]) if row["current_price"] else None,
+                id=str(row_dict["id"]),
+                ticker=row_dict["ticker"],
+                quantity=safe_float(row_dict["quantity"], 0.0),
+                avg_price=safe_float(row_dict["avg_price"], 0.0),
+                current_price=safe_float(row_dict["current_price"]),
                 cost_basis=cost_basis,
                 current_value=current_value,
                 total_gain_loss=total_gain_loss,
                 gain_loss_pct=gain_loss_pct,
-                return_1d=float(row["return_1d"]) if row["return_1d"] else None,
-                return_30d=float(row["return_30d"]) if row["return_30d"] else None,
-                return_120d=float(row["return_120d"]) if row["return_120d"] else None,
-                return_360d=float(row["return_360d"]) if row["return_360d"] else None,
-                added_at=row["added_at"].isoformat() if row["added_at"] else None
+                return_1d=safe_float(row_dict["return_1d"]),
+                return_30d=safe_float(row_dict["return_30d"]),
+                return_120d=safe_float(row_dict["return_120d"]),
+                return_360d=safe_float(row_dict["return_360d"]),
+                added_at=safe_datetime_to_str(row_dict["added_at"])
             )
         )
     
-    total_gain_loss = total_current_value - total_cost_basis
-    total_gain_loss_pct = (
-        (total_gain_loss / total_cost_basis * 100) if total_cost_basis > 0 else 0.0
+    # Safe final calculations
+    total_gain_loss = safe_float(total_current_value - total_cost_basis, 0.0)
+    total_gain_loss_pct = safe_float(
+        (total_gain_loss / total_cost_basis * 100) if total_cost_basis > 0 else 0.0,
+        0.0
     )
+    
+    logger.info(f"Summary totals: cost_basis={total_cost_basis}, "
+               f"current_value={total_current_value}, "
+               f"gain_loss={total_gain_loss}, "
+               f"gain_loss_pct={total_gain_loss_pct}")
     
     summary = PortfolioSummary(
         total_cost_basis=total_cost_basis,

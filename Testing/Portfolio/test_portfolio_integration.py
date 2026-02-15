@@ -8,7 +8,7 @@ from decimal import Decimal
 import sys
 sys.path.insert(0, '/app')
 
-from app.services.portfolio import (
+from backend.app.services.portfolio import (
     get_user_portfolio,
     get_portfolio_item_by_ticker,
     add_or_update_position,
@@ -16,7 +16,7 @@ from app.services.portfolio import (
     remove_from_portfolio,
     get_portfolio_summary
 )
-from app.schema.schemas import (
+from backend.app.schema.schemas import (
     PortfolioCreateItem,
     PortfolioUpdateItem
 )
@@ -29,14 +29,14 @@ def test_db():
 
     #Create portfolio table
     with engine.connect() as conn:
-        conn.execute(text(""""
+        conn.execute(text("""
             CREATE TABLE portfolio (
                 id TEXT PRIMARY KEY,
                           user_id TEXT NOT NULL,
                           ticker TEXT NOT NULL,
                           quantity REAL NOT NULL,
                           avg_price REAL NOT NULL,
-                          added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                           UNIQUE(user_id, ticker)
             )
             """))
@@ -48,7 +48,7 @@ def test_db():
                 date DATE NOT NULL,
                 close REAL,
                 return_1d REAL,
-                reuturn_30d REAL,
+                return_30d REAL,
                 return_120d REAL,
                 return_360d REAL,
                 UNIQUE(ticker, date)
@@ -200,7 +200,7 @@ class TestCompletePortfolioWorkflows:
         assert spy.avg_price == pytest.approx(401.25, rel=0.01)
 
 class TestPortolfioSummaryBehaviors:
-    def setup_Stock_prices(self, test_db):
+    def setup_stock_prices(self, test_db):
         """Helper to insert stock price data"""
         prices = [
             {
