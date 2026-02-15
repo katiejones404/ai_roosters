@@ -8,14 +8,14 @@ from uuid import UUID
 
 class UserRegister(BaseModel):
     """Schema for user registration"""
-    email: EmailStr
+    email: str
     username: str
     password: str
 
 
 class UserLogin(BaseModel):
     """Schema for user login"""
-    email: EmailStr
+    email: str
     password: str
 
 
