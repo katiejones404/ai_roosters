@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, sentiment, news, stocks
+from app.api import auth, sentiment, portfolio, stocks
 from app.services.prices_ingest import PriceIngestor
 from app.services.sentiment.article_processing import run_finbert_pipeline_from_env
 from app.services.sentiment.stock_processing import run_returns_pipeline
@@ -42,6 +42,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api")
 app.include_router(sentiment.router)
 app.include_router(stocks.router)
+app.include_router(portfolio.router)
 
 # Automates price ingestion on startup 
 @app.on_event("startup")
