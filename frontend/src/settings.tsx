@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getCurrentUser } from "./utils/auth";
+import { getCurrentUser, logout } from "./utils/auth";
 import { Link } from "react-router-dom";
 import "./settings.css";
 
@@ -135,15 +135,10 @@ useEffect(() => {
     }, 1000);
   };
 
-  const isActive = (path: string) =>
-    location.pathname === path ? "nav-link active" : "nav-link";
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
-      alert("Logging out...");
-      <Link className={isActive("/logout")} to="/logout">
-        Logout
-      </Link>
+      logout();
     }
   };
 

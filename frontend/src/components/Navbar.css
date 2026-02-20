@@ -28,6 +28,20 @@
   gap: 20px;
 }
 
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.username {
+  font-size: 0.95rem;
+  color: #222;
+  font-weight: 600;
+}
+
+
 .nav-link {
   font-size: 1rem;
   text-decoration: none;
