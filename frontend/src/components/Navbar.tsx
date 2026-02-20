@@ -3,14 +3,23 @@ import { Link, useLocation } from "react-router-dom";
 import { getCurrentUser } from "../utils/auth";
 import "./Navbar.css";
 
+interface CurrentUser {
+  email?: string;
+  username?: string;
+}
+
 const Navbar = () => {
   const location = useLocation();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<CurrentUser | null>(null);
 
   useEffect(() => {
     async function fetchUser() {
-      const user = await getCurrentUser();
-      setUser(user.username);
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      } catch {
+        setUser(null);
+      }
     }
     fetchUser();
   }, []);
@@ -40,16 +49,14 @@ const Navbar = () => {
 
       <div className="right">
         {user ? (
-          <span className="username">{user.email}</span>
+          <span className="username">{user.username || user.email}</span>
         ) : (
-          <Link className={isActive("/logout")} to="/logout">
-            Logout
+          <Link className={isActive("/login")} to="/login">
+            Login
           </Link>
         )}
       </div>
     </nav>
   );
 };
-
 export default Navbar;
-

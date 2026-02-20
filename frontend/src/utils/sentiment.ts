@@ -16,6 +16,11 @@ export interface StockIndicators {
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 
 /** GET /api/sentiment/indicators[?ticker=...] */
 export async function fetchAllStockIndicators(
@@ -26,7 +31,9 @@ export async function fetchAllStockIndicators(
     url.searchParams.set("ticker", ticker.trim());
   }
 
-  const res = await fetch(url.toString());
+  const res = await fetch(url.toString(), {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) {
     throw new Error(
       `Failed to fetch indicators: ${res.status} ${res.statusText}`
@@ -46,7 +53,10 @@ export async function fetchStockIndicatorsByTicker(
   const res = await fetch(
     `${API_BASE}/api/sentiment/indicators?ticker=${encodeURIComponent(
       trimmed
-    )}`
+    )}`,
+    {
+      headers: getAuthHeaders(),
+    }
   );
 
   if (!res.ok) {
@@ -63,6 +73,7 @@ export async function deleteStockIndicator(ticker: string): Promise<void> {
     `${API_BASE}/api/sentiment/indicators/${encodeURIComponent(ticker)}`,
     {
       method: "DELETE",
+      headers: getAuthHeaders(),
     }
   );
   if (!res.ok) {
