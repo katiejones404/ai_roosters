@@ -9,10 +9,11 @@ services:
       POSTGRES_PASSWORD: stock_pass
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      #2/20/2026 just changed from ' - "5432:5432"'  to:
+      - "${POSTGRES_PORT:-5432}:5432" #allows for overrides, but defaults to 5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./Backend/app/db/init:/docker-entrypoint-initdb.d:ro # <-- init SQL files run on first start
+      - ./backend/app/db/init:/docker-entrypoint-initdb.d:ro # <-- init SQL files run on first start
     #- ${KAGGLE_CONFIG}:/root/.kaggle:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stock_user -d stock_db"]
@@ -23,7 +24,7 @@ services:
   # FastAPI Backend
   backend:
     build:
-      context: ./Backend
+      context: ./backend
       dockerfile: Backend.Dockerfile
     container_name: stock_backend
     environment:
@@ -42,8 +43,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./Backend:/app
-      - ./Backend/data:/app/data
+      - ./backend:/app
+      - ./backend/data:/app/data
       - ./Testing:/app/Testing
     command: >
       uvicorn app.main:app
