@@ -1,5 +1,4 @@
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:15
     container_name: stock_postgres
@@ -9,18 +8,16 @@ services:
       POSTGRES_PASSWORD: stock_pass
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      #2/20/2026 just changed from ' - "5432:5432"'  to:
-      - "${POSTGRES_PORT:-5432}:5432" #allows for overrides, but defaults to 5432
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/app/db/init:/docker-entrypoint-initdb.d:ro # <-- init SQL files run on first start
+      - ./backend/app/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stock_user -d stock_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # FastAPI Backend
   backend:
     build:
       context: ./backend
@@ -51,10 +48,9 @@ services:
       --port 8000
       --reload
 
-  # Jupyter Notebook Server (runs in Docker, connect via URL)
   notebook:
     build:
-      context: ./Backend
+      context: ./backend
       dockerfile: Backend.Dockerfile
     container_name: stock_notebook
     environment:
@@ -70,8 +66,8 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./Backend:/app
-      - ./Backend/data:/app/data
+      - ./backend:/app
+      - ./backend/data:/app/data
       - ./Testing:/app/Testing
     command: >
       sh -c "python -m pip install -U pip &&
@@ -79,7 +75,6 @@ services:
              jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
              --ServerApp.token='' --ServerApp.password='' --ServerApp.allow_origin='*'"
 
-  # Frontend React App (Development)
   frontend:
     build:
       context: ./frontend
