@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, sentiment, portfolio, stocks
-from app.services.prices_ingest import PriceIngestor
+
+from app.api import auth, sentiment, portfolio, news, stocks
+from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
+
 from app.services.sentiment.article_processing import run_finbert_pipeline_from_env
 from app.services.sentiment.stock_processing import run_returns_pipeline
 from app.services.sentiment.aggregator import run_sentiment_snapshot_pipeline_from_env
-from app.db_init import init_db  
+from app.db_init import init_db
 import logging
 import os
 
