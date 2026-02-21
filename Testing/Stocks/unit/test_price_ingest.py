@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 import pandas as pd
 from sqlalchemy import MetaData, Table, Column, String, Date, Float, Integer
-from app.services.prices_ingest import build_db_url, PriceIngestor
+from app.services.ingesting_pipelines.prices_ingest import build_db_url, PriceIngestor
 
 
 def test_build_db_url_prefers_DATABASE_URL(monkeypatch):
@@ -21,7 +21,7 @@ def test_build_db_url_uses_components_defaults(monkeypatch):
     assert build_db_url() == "postgresql://user1:pass1@localhost:5433/mydb"
 
 def _make_ingestor_without_real_db(monkeypatch):
-    import app.services.prices_ingest as module_under_test
+    import app.services.ingesting_pipelines.prices_ingest as module_under_test
 
     fake_engine = MagicMock()
     monkeypatch.setattr(module_under_test, "create_engine", lambda *_a, **_kw: fake_engine)
@@ -55,7 +55,7 @@ def _make_ingestor_without_real_db(monkeypatch):
 
 def test_fetch_stock_data_happy_path(monkeypatch):
     ing, _engine, _table = _make_ingestor_without_real_db(monkeypatch)
-    import app.services.prices_ingest as module_under_test
+    import app.services.ingesting_pipelines.prices_ingest as module_under_test
 
     fake_hist = pd.DataFrame(
         {
@@ -85,7 +85,7 @@ def test_fetch_stock_data_happy_path(monkeypatch):
 
 def test_fetch_stock_data_empty_returns_empty_df(monkeypatch):
     ing, _engine, _table = _make_ingestor_without_real_db(monkeypatch)
-    import app.services.prices_ingest as module_under_test
+    import app.services.ingesting_pipelines.prices_ingest as module_under_test
 
     fake_ticker = MagicMock()
     fake_ticker.history.return_value = pd.DataFrame()
