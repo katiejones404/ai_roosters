@@ -63,7 +63,7 @@ os.environ["DATABASE_URL"] = os.getenv("DATABASE_URL", "postgresql://stock_user:
 #!!! Set API key in .env file in project root
 os.environ["ALPHAVANTAGE_API_KEY"] = os.getenv("ALPHAVANTAGE_API_KEY", "demo")
 
-from app.services.api_article_ingest import AlphaVantageIngestor
+from app.services.ingesting_pipelines.api_article_ingest import AlphaVantageIngestor
 def test_ingestion():
     print("=" * 60)
     print("Testing AlphaVantage Ingestion")
