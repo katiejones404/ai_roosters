@@ -43,7 +43,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(sentiment.router, prefix="/api")
 app.include_router(stocks.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")
-app.include_router(news.router, prefix="/api")  # ✅ add this
+# app.include_router(news.router, prefix="/api")
 
 @app.on_event("startup")
 def ingest_stock_prices_on_startup():
