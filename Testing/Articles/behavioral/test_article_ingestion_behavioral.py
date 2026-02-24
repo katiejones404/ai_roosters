@@ -7,7 +7,7 @@ from typing import List, Dict
 
 import pytest
 
-from app.services import news_ingest as ni
+from app.services.ingesting_pipelines import news_ingest as ni
 
 
 def make_fake_article(url="https://example.com/a", published_at="2023-01-01T00:00:00+00:00"):

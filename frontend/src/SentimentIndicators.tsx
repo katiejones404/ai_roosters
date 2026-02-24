@@ -5,6 +5,7 @@ import type { SentimentLabel, StockIndicators } from "./utils/sentiment";
 interface StockCardProps {
   data: StockIndicators;
   onDelete?: (ticker: string) => void | Promise<void>;
+  onAddToPortfolio?: (ticker: string, currentPrice: number) => void;
 }
 
 /**
@@ -62,6 +63,7 @@ const SentimentPie: React.FC<{ label: SentimentLabel }> = ({ label }) => {
 export const StockSentimentCard: React.FC<StockCardProps> = ({
   data,
   onDelete,
+  onAddToPortfolio,
 }) => {
   const { ticker, snapshot_date, close_price, indicators } = data;
   const dateStr = new Date(snapshot_date).toISOString().slice(0, 10);
@@ -77,7 +79,9 @@ export const StockSentimentCard: React.FC<StockCardProps> = ({
           <div className="sentiment-meta">
             <span>{dateStr}</span>
             {close_price != null && (
-              <span className="sentiment-price">${close_price.toFixed(2)}</span>
+              <span className="sentiment-price">
+                ${close_price.toFixed(2)}
+              </span>
             )}
           </div>
         </div>
@@ -116,6 +120,18 @@ export const StockSentimentCard: React.FC<StockCardProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Add to Portfolio Button */}
+      {onAddToPortfolio && close_price != null && (
+        <button
+          className="add-portfolio-btn"
+          onClick={() => onAddToPortfolio(ticker, close_price)}
+          title="Add To Portfolio"
+        >
+          <span className="add-portfolio-icon">➕</span>
+          Add to Portfolio 
+        </button>
+      )}
     </div>
   );
 };

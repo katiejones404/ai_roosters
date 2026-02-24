@@ -11,16 +11,18 @@ import CreateAccount from "./create_account";
 import Login from "./login";
 import Settings from "./settings";
 import Dashboard from "./Dashboard";
+import Portfolio from "./portfolio";
 import Layout from "./layout";
 import Navbar from "./components/Navbar";
+import ProtectedRoute from "./ProtectedRoute";
 
-import "./App.css"; // ← Keep this high so global CSS loads
-import "./index.css"; // ← If you have this, uncomment it
-// import "./styles.css";        // ← Add any missing CSS imports here
+import "./App.css"; // Keep up high for global CSS loads
+import "./index.css"; 
+// import "./styles.css";        // Add any missing CSS imports here
 
 import { fetchAllStockIndicators } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
-//import { StockSentimentCard } from "./SentimentIndicators";
+import { StockSentimentCard } from "./SentimentIndicators";
 
 // ---------------------- HOME PAGE ----------------------
 function Home() {
@@ -114,6 +116,7 @@ function Home() {
               </div>
             )}
           </div>
+
         </div>
 
         <div className="home-branding">
@@ -157,9 +160,12 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
 
         {/* Authenticated Layout Routes */}
-        <Route element={<Layout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/settings" element={<Settings />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
         </Route>
 
         {/* Fallback */}

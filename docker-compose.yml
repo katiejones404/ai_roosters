@@ -1,5 +1,4 @@
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:15
     container_name: stock_postgres
@@ -9,21 +8,19 @@ services:
       POSTGRES_PASSWORD: stock_pass
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./Backend/app/db/init:/docker-entrypoint-initdb.d:ro # <-- init SQL files run on first start
-    #- ${KAGGLE_CONFIG}:/root/.kaggle:ro
+      - ./backend/app/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stock_user -d stock_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # FastAPI Backend
   backend:
     build:
-      context: ./Backend
+      context: ./backend
       dockerfile: Backend.Dockerfile
     container_name: stock_backend
     environment:
@@ -42,8 +39,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./Backend:/app
-      - ./Backend/data:/app/data
+      - ./backend:/app
+      - ./backend/data:/app/data
       - ./Testing:/app/Testing
     command: >
       uvicorn app.main:app
@@ -51,7 +48,33 @@ services:
       --port 8000
       --reload
 
-  # Frontend React App (Development)
+  notebook:
+    build:
+      context: ./backend
+      dockerfile: Backend.Dockerfile
+    container_name: stock_notebook
+    environment:
+      DATABASE_URL: postgresql://stock_user:stock_pass@postgres:5432/stock_db
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DB: stock_db
+      PG_USER: stock_user
+      PG_PASS: stock_pass
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./backend:/app
+      - ./backend/data:/app/data
+      - ./Testing:/app/Testing
+    command: >
+      sh -c "python -m pip install -U pip &&
+             python -m pip install -U jupyter ipykernel &&
+             jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+             --ServerApp.token='' --ServerApp.password='' --ServerApp.allow_origin='*'"
+
   frontend:
     build:
       context: ./frontend

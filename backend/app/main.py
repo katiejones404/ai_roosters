@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, sentiment, news, stocks
-from app.services.prices_ingest import PriceIngestor
+
+from app.api import auth, sentiment, portfolio, news, stocks
+from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
+
 from app.services.sentiment.article_processing import run_finbert_pipeline_from_env
 from app.services.sentiment.stock_processing import run_returns_pipeline
 from app.services.sentiment.aggregator import run_sentiment_snapshot_pipeline_from_env
-from app.db_init import init_db  
+from app.db_init import init_db
 import logging
 import os
 
@@ -18,7 +20,6 @@ app = FastAPI(
 )
 
 FRONTEND_ORIGINS = os.getenv("FRONTEND_ORIGINS", "https://ai-roosters-frontend.onrender.com")
-
 base_origins = [o.strip() for o in FRONTEND_ORIGINS.split(",") if o.strip()]
 
 origins = base_origins + [
@@ -29,10 +30,9 @@ origins = base_origins + [
     "https://sccapstone.github.io/ai_roosters/"
 ]
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = origins,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,15 +40,15 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router, prefix="/api")
-app.include_router(sentiment.router)
-app.include_router(stocks.router)
+app.include_router(sentiment.router, prefix="/api")
+app.include_router(stocks.router, prefix="/api")
+app.include_router(portfolio.router, prefix="/api")
+# app.include_router(news.router, prefix="/api")
 
-# Automates price ingestion on startup 
 @app.on_event("startup")
 def ingest_stock_prices_on_startup():
     logger.info("Backend startup initiated...")
-    
-    # Initialize database tables first
+
     try:
         logger.info("Initializing database tables...")
         init_db()
@@ -56,16 +56,14 @@ def ingest_stock_prices_on_startup():
     except Exception as e:
         logger.warning(f"Database initialization skipped or failed: {e}")
         logger.info("Tables may already exist, continuing...")
-    
-    # Database URL
+
     db_url = os.getenv(
         "DATABASE_URL",
         "postgresql://stock_user:stock_pass@postgres:5432/stock_db"
     )
-    
+
     try:
-        # 1. Ingest prices
-        logger.info(f"Ingesting price data...")
+        logger.info("Ingesting price data...")
         ingestor = PriceIngestor(db_url)
         tickers = ["BP", "RELIANCE.NS"]
         ingestor.ingest_multiple_stocks(
@@ -76,28 +74,24 @@ def ingest_stock_prices_on_startup():
             update_existing=False,
         )
         logger.info("Finished price ingestion.")
-        
-        # 2. FinBERT article sentiment
+
         logger.info("Running FinBERT pipeline...")
         run_finbert_pipeline_from_env()
         logger.info("FinBERT article processing complete.")
-        
-        # 3. Calculate returns
+
         logger.info("Running returns pipeline...")
         run_returns_pipeline()
         logger.info("Returns pipeline complete.")
-        
-        # 4. Aggregate sentiment snapshots
+
         logger.info("Running sentiment snapshot pipeline...")
         run_sentiment_snapshot_pipeline_from_env()
         logger.info("Sentiment snapshot pipeline complete.")
-        
+
         logger.info("Backend startup complete, all pipelines finished.")
-        
+
     except Exception as e:
         logger.error(f"Startup pipeline failed: {e}", exc_info=True)
         logger.warning("Backend will start anyway, but data pipelines did not complete.")
-
 
 @app.get("/")
 def root():
