@@ -9,7 +9,7 @@ import sys
 
 from app.db.main import get_db
 
-router = APIRouter(prefix="/api/stocks", tags=["stocks"])
+router = APIRouter(prefix="/stocks", tags=["stocks"])
 
 
 # ---------------------------------------------------------------------------
