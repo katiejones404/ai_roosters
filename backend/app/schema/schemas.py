@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime, date
 from typing import Optional, Literal, Union
 from uuid import UUID
@@ -8,14 +8,22 @@ from uuid import UUID
 
 class UserRegister(BaseModel):
     """Schema for user registration"""
-    email: EmailStr
+    email: str
     username: str
     password: str
+    confirm_password: str
+
+    # --- Feature #5: Backend password confirmation validation ---
+    @validator('confirm_password')
+    def passwords_must_match(cls, confirm_password, values):
+        if 'password' in values and confirm_password != values['password']:
+            raise ValueError('Passwords do not match.')
+        return confirm_password
 
 
 class UserLogin(BaseModel):
     """Schema for user login"""
-    email: EmailStr
+    email: str
     password: str
 
 
@@ -64,6 +72,33 @@ class PortfolioItem(PortfolioBaseItem):
 
     class Config:
         orm_mode = True
+
+class PortfolioItemWithMetrics(PortfolioBaseItem):
+    id: str
+    ticker: str
+    quantity: float
+    avg_price: float
+    current_price: Optional[float]
+    cost_basis: float
+    current_value: float
+    total_gain_loss: float
+    gain_loss_pct: float
+    return_1d: Optional[float]
+    return_30d: Optional[float]
+    return_120d: Optional[float]
+    return_360d: Optional[float]
+    added_at: Optional[str]
+
+class PortfolioSummary(BaseModel):
+    total_cost_basis: float
+    total_current_value: float
+    total_gain_loss: float
+    total_gain_loss_pct: float
+    num_positions: int
+
+class PortfolioSummaryResponse(BaseModel):
+    portfolio_items: list[PortfolioItemWithMetrics]
+    summary: PortfolioSummary
 
 
 # ============ SENTIMENT SCHEMAS ============

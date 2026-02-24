@@ -28,12 +28,14 @@ export const isAuthenticated = (): boolean => {
 export const register = async (
   email: string,
   username: string,
-  password: string
+  password: string,
+  confirm_password: string, // #5: added confirm_password
 ): Promise<void> => {
   const response = await axios.post(`${API_URL}/api/auth/register`, {
     email,
     username,
     password,
+    confirm_password, // #5: sent to backend for validation
   });
   return response.data;
 };
@@ -48,7 +50,22 @@ export const login = async (email: string, password: string): Promise<void> => {
   setToken(access_token);
 };
 
-export const logout = (): void => {
+export const logout = async (): Promise<void> => {
+  const token = getToken();
+
+  // #6: Tell the backend to blacklist the token before removing it locally
+  if (token) {
+    try {
+      await axios.post(
+        `${API_URL}/api/auth/logout`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+    } catch {
+      // If the backend call fails, still log out locally
+    }
+  }
+
   removeToken();
   window.location.href = "/login";
 };
@@ -76,5 +93,24 @@ axios.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
+);
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      removeToken();
+
+      const path = window.location.pathname;
+      const isPublicRoute =
+        path === "/" || path === "/login" || path === "/signup";
+
+      if (!isPublicRoute) {
+        window.location.href = "/login";
+      }
+    }
+
+    return Promise.reject(error);
+  },
 );
