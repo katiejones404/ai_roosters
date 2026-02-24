@@ -1,0 +1,22 @@
+# Slim requirements for the API container (no ML dependencies).
+# Used by API.Dockerfile - builds fast, small image.
+
+fastapi==0.95.2
+uvicorn==0.22.0
+sqlalchemy==1.4.41
+psycopg2-binary==2.9.6
+pydantic[email]==1.10.9
+python-jose[cryptography]
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+pandas==2.0.3
+numpy<2.0
+yfinance
+requests
+httpx==0.24.1
+python-dotenv
+email-validator
+beautifulsoup4
+tqdm
+pytest
+behave
