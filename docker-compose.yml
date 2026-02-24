@@ -2,10 +2,11 @@ services:
   postgres:
     image: postgres:15
     container_name: stock_postgres
+    env_file: .env
     environment:
-      POSTGRES_DB: stock_db
-      POSTGRES_USER: stock_user
-      POSTGRES_PASSWORD: stock_pass
+      POSTGRES_DB: ${POSTGRES_DB:-stock_db}
+      POSTGRES_USER: ${POSTGRES_USER:-stock_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stock_pass}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
@@ -13,25 +14,27 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/app/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U stock_user -d stock_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stock_user} -d ${POSTGRES_DB:-stock_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  backend:
+  # Lightweight API container - no ML dependencies, fast build.
+  # For Neon: set DATABASE_URL in .env to your Neon connection string.
+  # For local dev: DATABASE_URL defaults to the postgres service above.
+  api:
     build:
       context: ./backend
-      dockerfile: Backend.Dockerfile
-    container_name: stock_backend
+      dockerfile: API.Dockerfile
+    container_name: stock_api
+    env_file: .env
     environment:
-      DATABASE_URL: postgresql://stock_user:stock_pass@postgres:5432/stock_db
       INPUT_JSON: /app/data/reliance_news.json
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: stock_db
-      PG_USER: stock_user
-      PG_PASS: stock_pass
-      KAGGLE_CONFIG_DIR: /root/.kaggle
+      PG_DB: ${POSTGRES_DB:-stock_db}
+      PG_USER: ${POSTGRES_USER:-stock_user}
+      PG_PASS: ${POSTGRES_PASSWORD:-stock_pass}
       NEWS_CSV_PATH: /app/data/reliance_news_sentiment.csv
     depends_on:
       postgres:
@@ -48,18 +51,48 @@ services:
       --port 8000
       --reload
 
+  # Heavy ML pipeline container - includes PyTorch, Transformers, XGBoost.
+  # Only starts when explicitly requested:
+  #   docker-compose --profile pipeline up pipeline
+  # To run a specific pipeline:
+  #   docker-compose --profile pipeline run pipeline python -m app.services.sentiment.article_processing
+  pipeline:
+    build:
+      context: ./backend
+      dockerfile: Pipeline.Dockerfile
+    container_name: stock_pipeline
+    env_file: .env
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.kaggle
+      INPUT_JSON: /app/data/reliance_news.json
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DB: ${POSTGRES_DB:-stock_db}
+      PG_USER: ${POSTGRES_USER:-stock_user}
+      PG_PASS: ${POSTGRES_PASSWORD:-stock_pass}
+      NEWS_CSV_PATH: /app/data/reliance_news_sentiment.csv
+    profiles:
+      - pipeline
+    depends_on:
+      - api
+    volumes:
+      - ./backend:/app
+      - ./backend/data:/app/data
+      - ./Testing:/app/Testing
+
+  # Jupyter notebook — uses the full Backend.Dockerfile (unchanged).
   notebook:
     build:
       context: ./backend
       dockerfile: Backend.Dockerfile
     container_name: stock_notebook
+    env_file: .env
     environment:
-      DATABASE_URL: postgresql://stock_user:stock_pass@postgres:5432/stock_db
       PG_HOST: postgres
       PG_PORT: 5432
-      PG_DB: stock_db
-      PG_USER: stock_user
-      PG_PASS: stock_pass
+      PG_DB: ${POSTGRES_DB:-stock_db}
+      PG_USER: ${POSTGRES_USER:-stock_user}
+      PG_PASS: ${POSTGRES_PASSWORD:-stock_pass}
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,7 +119,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
-      - backend
+      - api
     command: ["npm", "run", "dev", "--", "--host"]
     restart: unless-stopped
 
