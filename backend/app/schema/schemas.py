@@ -42,6 +42,10 @@ class ProfilePictureUpdate(BaseModel):
     profile_picture: str
 
 
+class DeleteAccountRequest(BaseModel):
+    password: str
+
+
 class Token(BaseModel):
     """Schema for token response"""
     access_token: str
