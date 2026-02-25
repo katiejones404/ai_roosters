@@ -468,3 +468,155 @@
     flex-direction: column;
   }
 }
+
+/*Compare Stocks*/
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Override the original margin so the header div controls it */
+.section-header .section-title {
+  margin-bottom: 0;
+}
+
+.compare-btn {
+  padding: 0.625rem 1.25rem;
+  background: rgba(102, 126, 234, 0.15);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  color: #a5b4fc;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.compare-btn:hover {
+  background: rgba(102, 126, 234, 0.25);
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+.compare-btn.active {
+  background: rgba(102, 126, 234, 0.3);
+  border-color: #818cf8;
+  color: #c7d2fe;
+}
+
+.compare-hint {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+  margin-bottom: 1.25rem;
+  margin-top: -0.75rem;
+}
+
+.holding-card.compare-selected {
+  border-color: rgba(102, 126, 234, 0.6);
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.compare-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.compare-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #818cf8;
+  cursor: pointer;
+  margin-right: 0.4rem;
+}
+
+/* Comparison Table for stocks */
+
+.comparison-section {
+  margin-top: 2.5rem;
+}
+
+.comparison-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.comparison-table-wrapper {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.comparison-table thead tr {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.comparison-table th {
+  padding: 1rem 1.25rem;
+  text-align: center;
+  font-weight: 700;
+  color: #10b981;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.comparison-table th:first-child {
+  text-align: left;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.comparison-table td {
+  padding: 0.875rem 1.25rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.comparison-table td:first-child {
+  text-align: left;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.comparison-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.comparison-table tbody tr:hover td:first-child {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.comparison-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.comparison-table .positive {
+  color: #10b981 !important;
+  font-weight: 600;
+}
+
+.comparison-table .negative {
+  color: #ef4444 !important;
+  font-weight: 600;
+}
