@@ -40,6 +40,8 @@ const Settings: React.FC = () => {
   const [pictureError, setPictureError] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -166,15 +168,26 @@ const Settings: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
+  const closeDeleteModal = () => {
+    setShowDeleteConfirm(false);
+    setDeletePassword("");
+    setDeleteError("");
+  };
+
   const confirmDeleteAccount = async () => {
+    if (!deletePassword) {
+      setDeleteError("Please enter your password.");
+      return;
+    }
     setIsDeleting(true);
+    setDeleteError("");
     try {
-      await deleteAccount();
+      await deleteAccount(deletePassword);
       // deleteAccount handles redirect to "/"
-    } catch {
+    } catch (err: any) {
       setIsDeleting(false);
-      setShowDeleteConfirm(false);
-      alert("Failed to delete account. Please try again.");
+      const detail = err?.response?.data?.detail;
+      setDeleteError(detail === "Incorrect password." ? "Incorrect password." : "Failed to delete account. Please try again.");
     }
   };
 
@@ -195,10 +208,29 @@ const Settings: React.FC = () => {
               This will permanently delete your account and all portfolio data.
               This action cannot be undone.
             </p>
+            <div className="form-group" style={{ marginBottom: "1rem" }}>
+              <label style={{ fontSize: "0.9rem", fontWeight: 600, color: "#374151" }}>
+                Enter your password to confirm
+              </label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder="Your current password"
+                disabled={isDeleting}
+                onKeyDown={(e) => e.key === "Enter" && confirmDeleteAccount()}
+                style={{ marginTop: "0.5rem" }}
+              />
+            </div>
+            {deleteError && (
+              <p style={{ color: "#ef4444", fontSize: "0.875rem", marginBottom: "1rem" }}>
+                {deleteError}
+              </p>
+            )}
             <div className="modal-actions">
               <button
                 className="modal-cancel-btn"
-                onClick={() => setShowDeleteConfirm(false)}
+                onClick={closeDeleteModal}
                 disabled={isDeleting}
               >
                 Cancel

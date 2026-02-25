@@ -83,10 +83,11 @@ export const getCurrentUser = async (): Promise<any> => {
   return response.data;
 };
 
-export const deleteAccount = async (): Promise<void> => {
+export const deleteAccount = async (password: string): Promise<void> => {
   const token = getToken();
   await axios.delete(`${API_URL}/api/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
+    data: { password },
   });
   removeToken();
   window.location.href = "/";
