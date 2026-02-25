@@ -15,7 +15,7 @@ sys.path.insert(0, '/app')
 
 from app.db.main import get_db
 from app.models.models import User
-from app.schema.schemas import UserRegister, UserLogin, UserResponse, Token, ProfilePictureUpdate
+from app.schema.schemas import UserRegister, UserLogin, UserResponse, Token, ProfilePictureUpdate, DeleteAccountRequest
 from app.core.security import (
     hash_password,
     verify_password,
@@ -162,14 +162,21 @@ async def logout(token: Annotated[str, Depends(oauth2_scheme)]):
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_account(
+    data: DeleteAccountRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Permanently delete the authenticated user's account and all associated data.
+    Requires the user's current password for confirmation.
     Cascades to portfolio rows via the foreign key constraint.
     """
+    if not verify_password(data.password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect password."
+        )
     db.delete(current_user)
     db.commit()
     token_blacklist.add(token)
