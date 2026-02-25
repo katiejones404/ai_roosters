@@ -32,9 +32,14 @@ class UserResponse(BaseModel):
     username: str
     email: str
     created_at: datetime
+    profile_picture: Optional[str] = None
 
     class Config:
         orm_mode = True
+
+
+class ProfilePictureUpdate(BaseModel):
+    profile_picture: str
 
 
 class Token(BaseModel):

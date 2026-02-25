@@ -83,6 +83,24 @@ export const getCurrentUser = async (): Promise<any> => {
   return response.data;
 };
 
+export const deleteAccount = async (): Promise<void> => {
+  const token = getToken();
+  await axios.delete(`${API_URL}/api/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  removeToken();
+  window.location.href = "/";
+};
+
+export const updateProfilePicture = async (base64: string): Promise<void> => {
+  const token = getToken();
+  await axios.put(
+    `${API_URL}/api/auth/me/picture`,
+    { profile_picture: base64 },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+};
+
 axios.interceptors.request.use(
   (config) => {
     const token = getToken();

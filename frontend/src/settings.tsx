@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { getCurrentUser, logout } from "./utils/auth";
+import React, { useEffect, useState, useRef } from "react";
+import { getCurrentUser, logout, deleteAccount, updateProfilePicture } from "./utils/auth";
 import { Link } from "react-router-dom";
 import "./settings.css";
 
-type TabType =
-  | "account"
-  | "security";
+type TabType = "account" | "security";
 
 interface AccountFormData {
   name: string;
@@ -38,17 +36,21 @@ const Settings: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string>(
     "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
   );
+  const [pictureUploading, setPictureUploading] = useState(false);
+  const [pictureError, setPictureError] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Account form state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [accountForm, setAccountForm] = useState<AccountFormData>({
-    name: "John Doe",
-    username: "johndoe",
-    email: "john.doe@example.com",
-    bio: "Passionate investor and tech enthusiast",
-    phone: "+1 (555) 123-4567",
+    name: "",
+    username: "",
+    email: "",
+    bio: "",
+    phone: "",
   });
 
-  // Security form state
   const [securityForm, setSecurityForm] = useState<SecurityFormData>({
     currentPassword: "",
     newPassword: "",
@@ -56,7 +58,6 @@ const Settings: React.FC = () => {
     twoFactorEnabled: false,
   });
 
-  // Notification settings state
   const [notifications, setNotifications] = useState<NotificationSettings>({
     emailNotifications: true,
     pushNotifications: true,
@@ -71,31 +72,26 @@ const Settings: React.FC = () => {
     confirm: false,
   });
 
-  // Load user info on mount
-useEffect(() => {
-  const loadUser = async () => {
-    try {
-      const user = await getCurrentUser();
-
-      setAccountForm({
-        name: user.name || "",
-        username: user.username || "",
-        email: user.email,
-        bio: user.bio || "",
-        phone: user.phone || "",
-      });
-
-      if (user.profileImage) {
-        setProfileImage(user.profileImage);
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        setAccountForm({
+          name: user.name || "",
+          username: user.username || "",
+          email: user.email,
+          bio: user.bio || "",
+          phone: user.phone || "",
+        });
+        if (user.profile_picture) {
+          setProfileImage(user.profile_picture);
+        }
+      } catch (err) {
+        console.error("Failed to load user info", err);
       }
-    } catch (err) {
-      console.error("Failed to load user info", err);
-    }
-  };
-
-  loadUser();
-}, []);
-
+    };
+    loadUser();
+  }, []);
 
   const handleAccountChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -120,25 +116,65 @@ useEffect(() => {
       [e.target.name]: e.target.checked,
     }));
   };
-  
+
   const handleSave = () => {
     setIsSaving(true);
-
     setTimeout(() => {
       setIsSaving(false);
       setSuccessMessage("Settings saved successfully!");
-
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
+      setTimeout(() => setSuccessMessage(""), 3000);
     }, 1000);
   };
-
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       logout();
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setPictureError("Please select an image file.");
+      return;
+    }
+    if (file.size > 1.5 * 1024 * 1024) {
+      setPictureError("Image must be smaller than 1.5 MB.");
+      return;
+    }
+
+    setPictureError("");
+    setPictureUploading(true);
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string;
+      try {
+        await updateProfilePicture(base64);
+        setProfileImage(base64);
+        setSuccessMessage("Profile picture updated!");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } catch {
+        setPictureError("Failed to upload picture. Please try again.");
+      } finally {
+        setPictureUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const confirmDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      // deleteAccount handles redirect to "/"
+    } catch {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      alert("Failed to delete account. Please try again.");
     }
   };
 
@@ -149,6 +185,35 @@ useEffect(() => {
         <div className="settings-shape settings-shape-2"></div>
         <div className="settings-shape settings-shape-3"></div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h4>Delete Account?</h4>
+            <p>
+              This will permanently delete your account and all portfolio data.
+              This action cannot be undone.
+            </p>
+            <div className="modal-actions">
+              <button
+                className="modal-cancel-btn"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="modal-confirm-btn"
+                onClick={confirmDeleteAccount}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Yes, Delete My Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="settings-content">
         {/* Sidebar Navigation */}
@@ -202,11 +267,41 @@ useEffect(() => {
 
               <div className="profile-section">
                 <div className="profile-image-container">
-                  <img
-                    src={profileImage}
-                    alt="Profile"
-                    className="profile-image"
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleFileChange}
                   />
+                  <div
+                    className="profile-image-wrapper"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Click to change profile picture"
+                  >
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      className="profile-image"
+                    />
+                    <div className="profile-upload-overlay">
+                      {pictureUploading ? "⏳" : "📷"}
+                    </div>
+                  </div>
+                  {pictureError && (
+                    <p className="picture-error">{pictureError}</p>
+                  )}
+                  {pictureUploading ? (
+                    <p className="picture-uploading">Uploading...</p>
+                  ) : (
+                    <button
+                      className="upload-button"
+                      style={{ marginTop: "0.5rem" }}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Change Photo
+                    </button>
+                  )}
                 </div>
 
                 <div className="profile-info">
@@ -258,9 +353,25 @@ useEffect(() => {
                       readOnly
                       className="readonly-input"
                     />
+                    
                   </div>
                 </div>
+              </div>
 
+              {/* Danger Zone */}
+              <div className="danger-zone">
+                <h4>Danger Zone</h4>
+                <p>
+                  Permanently delete your account and all associated portfolio
+                  data. This cannot be undone.
+                </p>
+                
+                <button
+                  className="delete-account-btn"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Delete Account
+                </button>
               </div>
             </div>
           )}
