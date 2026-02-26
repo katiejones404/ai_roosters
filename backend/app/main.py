@@ -3,13 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, sentiment, portfolio, news, stocks
 from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
-
-from app.services.sentiment.article_processing import run_finbert_pipeline_from_env
-from app.services.sentiment.stock_processing import run_returns_pipeline
-from app.services.sentiment.aggregator import run_sentiment_snapshot_pipeline_from_env
 from app.db_init import init_db
 import logging
 import os
+
+# ML pipeline imports — only available in the pipeline container (not the slim API container)
+try:
+    from app.services.sentiment.article_processing import run_finbert_pipeline_from_env
+    from app.services.sentiment.stock_processing import run_returns_pipeline
+    from app.services.sentiment.aggregator import run_sentiment_snapshot_pipeline_from_env
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
 
 logger = logging.getLogger("startup")
 
@@ -43,7 +48,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(sentiment.router, prefix="/api")
 app.include_router(stocks.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")
-app.include_router(news.router, prefix="/api")  # ✅ add this
+# app.include_router(news.router, prefix="/api")
 
 @app.on_event("startup")
 def ingest_stock_prices_on_startup():
@@ -75,19 +80,22 @@ def ingest_stock_prices_on_startup():
         )
         logger.info("Finished price ingestion.")
 
-        logger.info("Running FinBERT pipeline...")
-        run_finbert_pipeline_from_env()
-        logger.info("FinBERT article processing complete.")
+        if ML_AVAILABLE:
+            logger.info("Running FinBERT pipeline...")
+            run_finbert_pipeline_from_env()
+            logger.info("FinBERT article processing complete.")
 
-        logger.info("Running returns pipeline...")
-        run_returns_pipeline()
-        logger.info("Returns pipeline complete.")
+            logger.info("Running returns pipeline...")
+            run_returns_pipeline()
+            logger.info("Returns pipeline complete.")
 
-        logger.info("Running sentiment snapshot pipeline...")
-        run_sentiment_snapshot_pipeline_from_env()
-        logger.info("Sentiment snapshot pipeline complete.")
+            logger.info("Running sentiment snapshot pipeline...")
+            run_sentiment_snapshot_pipeline_from_env()
+            logger.info("Sentiment snapshot pipeline complete.")
+        else:
+            logger.info("ML pipeline libraries not installed — skipping FinBERT/sentiment pipelines.")
 
-        logger.info("Backend startup complete, all pipelines finished.")
+        logger.info("Backend startup complete.")
 
     except Exception as e:
         logger.error(f"Startup pipeline failed: {e}", exc_info=True)

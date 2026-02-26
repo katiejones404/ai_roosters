@@ -11,7 +11,7 @@ sys.path.insert(0, "/app")
 from app.db.main import get_db
 from app.schema.schemas import StockIndicatorsOut, TimeRangeIndicators, SentimentLabel
 
-router = APIRouter(prefix="/api/sentiment", tags=["sentiment"])
+router = APIRouter(prefix="/sentiment", tags=["sentiment"])
 
 
 def label_from_return(value: Optional[float]) -> SentimentLabel:
