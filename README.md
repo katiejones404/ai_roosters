@@ -1,5 +1,5 @@
 (Web app links currently not deployed)
-backend: https://ai-roosters.onrender.com/
+backend: [https://ai-roosters.onrender.com/](https://stocksense-api-7go1.onrender.com/)
 frontend: https://ai-roosters-frontend.onrender.com/
 ## Stock Sense 
 
