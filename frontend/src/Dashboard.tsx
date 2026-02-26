@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./app-header.css";
+import { useNavigate } from "react-router-dom";
 
 import {
   fetchAllStockIndicators,
@@ -8,17 +9,22 @@ import {
 } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
 import { StockSentimentCard } from "./SentimentIndicators";
+import AddToPortfolioModal from "./components/AddToPortfolio";
 import axios from "axios";
-import { apiGet } from "./api/clients";
+
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [indicators, setIndicators] = useState<StockIndicators[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTicker, setSearchTicker] = useState("");
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
+  // Add stocks
+  const [modalStock, setModalStock] = useState<{ ticker: string; currentPrice: number } | null>(null);
 
   const handleSearch = async () => {
     const trimmed = searchTicker.trim();
@@ -70,38 +76,13 @@ const Dashboard: React.FC = () => {
   };
 
   const handleAddToPortfolio = async (ticker: string, currentPrice: number) => {
-    const quantityStr = prompt(`Add ${ticker} to portfolio\n\Enter quantity (number of shares):`);
-    if (!quantityStr) return;
+    setModalStock({ ticker, currentPrice });
+  };
 
-    const quantity = parseFloat(quantityStr);
-
-    if (isNaN(quantity) || quantity <= 0) {
-      alert("Please enter a valid positive number");
-      return;
-    }
-
-    //Calculate total cost
-    const totalCost = quantity * currentPrice;
-
-    const confirmed = window.confirm(
-      `Add ${quantity} shares of ${ticker}\n\n` +
-      `Price per share: $${currentPrice.toFixed(2)}\n` +
-      `Total cost: $${totalCost.toFixed(2)}`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      await axios.post(`${API_BASE}/api/portfolio`, {
-        ticker: ticker,
-        quantity: quantity,
-        avg_price: currentPrice
-      });
-      alert(`Successfully added ${quantity} shares of ${ticker} to your potfolio!\n\n Total investment: $${totalCost.toFixed(2)}`);
-    } catch (err: any) {
-      console.error("Error adding to portfolio:", err);
-      alert(`Failed to add to portfolio: ${err.response?.data?.detail || err.message}`);
-    }
+  const handleModalClose = () => setModalStock(null);
+  const handleModalSuccess = () => {
+    setModalStock(null);
+    navigate("/portfolio");
   };
 
   return (
@@ -124,6 +105,7 @@ const Dashboard: React.FC = () => {
               placeholder="Search ticker (e.g. BP, RELIANCE.NS)"
               value={searchTicker}
               onChange={(e) => setSearchTicker(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
             <button onClick={handleSearch}>Search</button>
             <button onClick={handleLoadAll}>Load All</button>
@@ -156,6 +138,14 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
+      {modalStock && (
+        <AddToPortfolioModal
+          ticker={modalStock.ticker}
+          currentPrice={modalStock.currentPrice}
+          onClose={handleModalClose}
+          onSuccess={handleModalSuccess}
+        />
+      )}
     </div>
   );
 };
