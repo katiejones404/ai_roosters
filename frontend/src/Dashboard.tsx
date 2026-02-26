@@ -198,7 +198,7 @@ const Dashboard: React.FC = () => {
           <div className="dashboard-controls">
             <input
               type="text"
-              placeholder="Search ticker (e.g. AAPL, NVDA)"
+              placeholder="Search ticker"
               value={searchTicker}
               onChange={(e) => setSearchTicker(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}

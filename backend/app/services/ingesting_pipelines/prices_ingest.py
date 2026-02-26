@@ -265,7 +265,8 @@ class PriceIngestor:
 if __name__ == "__main__":
     # Optional CLI usage, doesn't affect FastAPI integration
     ingestor = PriceIngestor()
-    stocks = ["BP", "RELIANCE.NS", "AAPL", "NVDA", "AMD", "AMZN", "GOOGL"]
+    stocks = ["KSS","ALK", "NVS", "AXP", "FCX", "CSX", "DAL", "NTAP", "GPS", "AEO",
+              "MRK", "DFS", "COP", "BHP", "EA"]
     ingestor.ingest_multiple_stocks(
         tickers=stocks,
         start_date= None,
