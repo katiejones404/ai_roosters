@@ -15,6 +15,7 @@ import Portfolio from "./portfolio";
 import Layout from "./layout";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./ProtectedRoute";
+import StockDetail from "./StockDetail";
 
 import "./App.css"; // Keep up high for global CSS loads
 import "./index.css"; 
@@ -165,6 +166,7 @@ function AppContent() {
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/stock/:ticker" element={<StockDetail />} />
           </Route>
         </Route>
 
