@@ -117,7 +117,6 @@ const CreateAccount: React.FC = () => {
     try {
       await register(formData.email, formData.username, formData.password);
 
-      alert("Account created successfully! Please login.");
       navigate("/login");
     } catch (error: any) {
       setErrors({
