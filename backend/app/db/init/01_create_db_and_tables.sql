@@ -143,5 +143,7 @@ CREATE TABLE IF NOT EXISTS article_ticker_sentiment (
 CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_ticker 
   ON article_ticker_sentiment (ticker);
 
-CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_article 
+CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_article
   ON article_ticker_sentiment (article_url);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT;

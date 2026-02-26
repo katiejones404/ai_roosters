@@ -39,7 +39,7 @@ const CreateAccount: React.FC = () => {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const validatePassword = (password: string): boolean =>
-    password.length >= 8;
+    password.length >= 8 && /[0-9!@#$%^&*(),.?":{}|<>]/.test(password);
 
   const validateDateOfBirth = (date: string): boolean => {
     const dateRegex =
@@ -88,10 +88,14 @@ const CreateAccount: React.FC = () => {
     if (!formData.username) newErrors.username = "Username is required";
     else if (formData.username.length < 3)
       newErrors.username = "Username must be at least 3 characters";
+    else if (!/^[a-zA-Z0-9_]+$/.test(formData.username))
+      newErrors.username =
+        "Username can only contain letters, numbers, and underscores";
 
     if (!formData.password) newErrors.password = "Password is required";
     else if (!validatePassword(formData.password))
-      newErrors.password = "Password must be at least 8 characters";
+      newErrors.password =
+        "Password must be at least 8 characters and contain at least one number or special character";
 
     if (!formData.retypePassword)
       newErrors.retypePassword = "Please confirm your password";
@@ -115,16 +119,38 @@ const CreateAccount: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await register(formData.email, formData.username, formData.password);
+      // Pass confirm_password so the backend can validate it too (#5)
+      await register(
+        formData.email,
+        formData.username,
+        formData.password,
+        formData.retypePassword,
+      );
 
-      alert("Account created successfully! Please login.");
       navigate("/login");
     } catch (error: any) {
-      setErrors({
-        email:
-          error.response?.data?.detail ||
-          "Registration failed. Please try again.",
-      });
+      // Handle pydantic 422 validation errors (e.g. passwords don't match)
+      const responseData = error.response?.data;
+      if (error.response?.status === 422 && responseData?.detail) {
+        const firstError = Array.isArray(responseData.detail)
+          ? responseData.detail[0]?.msg
+          : responseData.detail;
+        setErrors({ retypePassword: firstError });
+        return;
+      }
+
+      // Handle regular HTTP errors
+      const detail =
+        responseData?.detail || "Registration failed. Please try again.";
+      if (detail.toLowerCase().includes("email")) {
+        setErrors({ email: detail });
+      } else if (detail.toLowerCase().includes("username")) {
+        setErrors({ username: detail });
+      } else if (detail.toLowerCase().includes("password")) {
+        setErrors({ password: detail });
+      } else {
+        setErrors({ email: detail });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -160,7 +186,9 @@ const CreateAccount: React.FC = () => {
               />
               <span className="input-icon">📧</span>
             </div>
-            {errors.email && <span className="error-message">{errors.email}</span>}
+            {errors.email && (
+              <span className="error-message">{errors.email}</span>
+            )}
           </div>
 
           {/* USERNAME */}
@@ -174,11 +202,13 @@ const CreateAccount: React.FC = () => {
                 value={formData.username}
                 onChange={handleChange}
                 className={errors.username ? "error" : ""}
-                placeholder="Choose a username"
+                placeholder="Letters, numbers, and underscores only"
               />
               <span className="input-icon">👤</span>
             </div>
-            {errors.username && <span className="error-message">{errors.username}</span>}
+            {errors.username && (
+              <span className="error-message">{errors.username}</span>
+            )}
           </div>
 
           {/* PASSWORD */}
@@ -192,7 +222,7 @@ const CreateAccount: React.FC = () => {
                 value={formData.password}
                 onChange={handleChange}
                 className={errors.password ? "error" : ""}
-                placeholder="At least 8 characters"
+                placeholder="Min 8 chars, include a number or special character"
               />
               <button
                 type="button"
@@ -223,9 +253,7 @@ const CreateAccount: React.FC = () => {
               <button
                 type="button"
                 className="toggle-password"
-                onClick={() =>
-                  setShowRetypePassword(!showRetypePassword)
-                }
+                onClick={() => setShowRetypePassword(!showRetypePassword)}
               >
                 {showRetypePassword ? "🙈" : "👁️"}
               </button>

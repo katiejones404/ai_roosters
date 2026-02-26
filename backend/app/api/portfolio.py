@@ -20,7 +20,7 @@ from app.schema.schemas import (
 from app.api.auth import get_current_user
 from app.services import portfolio
 
-router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
+router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
 
 @router.get("", response_model=List[PortfolioItem])

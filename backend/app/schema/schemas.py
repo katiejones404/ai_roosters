@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime, date
 from typing import Optional, Literal, Union
 from uuid import UUID
@@ -11,6 +11,14 @@ class UserRegister(BaseModel):
     email: str
     username: str
     password: str
+    confirm_password: str
+
+    # --- Feature #5: Backend password confirmation validation ---
+    @validator('confirm_password')
+    def passwords_must_match(cls, confirm_password, values):
+        if 'password' in values and confirm_password != values['password']:
+            raise ValueError('Passwords do not match.')
+        return confirm_password
 
 
 class UserLogin(BaseModel):
@@ -24,9 +32,18 @@ class UserResponse(BaseModel):
     username: str
     email: str
     created_at: datetime
+    profile_picture: Optional[str] = None
 
     class Config:
         orm_mode = True
+
+
+class ProfilePictureUpdate(BaseModel):
+    profile_picture: str
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str
 
 
 class Token(BaseModel):
