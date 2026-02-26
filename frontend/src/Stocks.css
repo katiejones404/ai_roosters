@@ -1,0 +1,490 @@
+/* 
+   DASHBOARD — CONTROLS
+ */
+.dashboard-controls {
+  display: flex;
+  gap: 10px;
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+
+.dashboard-controls input {
+  flex: 1;
+  min-width: 220px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #111827;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.dashboard-controls input::placeholder {
+  color: #9ca3af;
+}
+
+.dashboard-controls input:focus {
+  border-color: #6366f1;
+  background: #fff;
+}
+
+.btn-primary {
+  padding: 12px 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.88;
+}
+
+.btn-ghost {
+  padding: 12px 24px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-ghost:hover {
+  background: #e5e7eb;
+}
+
+/* 
+   DASHBOARD — EMPTY STATE
+ */
+.dashboard-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.dashboard-empty .empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.dashboard-empty p {
+  font-size: 15px;
+}
+
+/* 
+   DASHBOARD — STOCK GRID
+ */
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+/* 
+   STOCK MINI CARD
+ */
+.stock-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stock-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+}
+
+.stock-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 16px 16px 0 0;
+}
+
+.stock-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.stock-card-ticker {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: 0.03em;
+}
+
+.stock-card-price {
+  font-size: 15px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.sentiment-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* Score bar */
+.score-bar-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.score-bar-label {
+  font-size: 11px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.score-bar-value {
+  font-size: 11px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.score-bar-track {
+  height: 4px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+/* Card footer */
+.stock-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.stock-card-hint {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.stock-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-add-portfolio {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-add-portfolio:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.btn-delete {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-delete:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* 
+   STOCK DETAIL PAGE
+ */
+.sd-page {
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+.sd-header {
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sd-header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sd-back-btn {
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 0;
+  margin-right: 16px;
+}
+
+.sd-back-btn:hover {
+  color: #111827;
+}
+
+.sd-ticker-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.sd-body {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.sd-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.sd-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+}
+
+.sd-card-label {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.sd-card-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.sd-card-value.positive { color: #16a34a; }
+.sd-card-value.negative { color: #dc2626; }
+.sd-card-value.neutral  { color: #6b7280; }
+
+.sd-position-banner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.sd-position-banner h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1e3a8a;
+  margin: 0 0 16px;
+}
+
+.sd-position-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.sd-position-label {
+  font-size: 13px;
+  color: #3b82f6;
+  margin-bottom: 4px;
+}
+
+.sd-position-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.sd-chart-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.sd-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sd-chart-title {
+  font-size: 19px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.sd-range-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.sd-range-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sd-range-btn.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.sd-range-btn.inactive {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.sd-range-btn.inactive:hover {
+  background: #d1d5db;
+}
+
+.sd-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.sd-metrics-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+}
+
+.sd-metrics-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px;
+}
+
+.sd-metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.sd-metric-row:last-child {
+  border-bottom: none;
+}
+
+.sd-metric-label {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.sd-metric-value {
+  font-weight: 600;
+  font-size: 14px;
+  color: #111827;
+}
+
+.sd-metric-value.positive { color: #16a34a; }
+.sd-metric-value.negative { color: #dc2626; }
+.sd-metric-value.neutral  { color: #6b7280; }
+
+.sd-sentiment-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sd-sentiment-badge.positive { background: #dcfce7; color: #166534; }
+.sd-sentiment-badge.negative { background: #fee2e2; color: #991b1b; }
+.sd-sentiment-badge.neutral  { background: #f3f4f6; color: #374151; }
+
+.sd-articles-note {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 8px;
+}
+
+.btn-remove-portfolio {
+  padding: 10px 20px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-remove-portfolio:hover {
+  background: #b91c1c;
+}
+
+.btn-add-portfolio-lg {
+  padding: 10px 20px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-add-portfolio-lg:hover {
+  background: #1d4ed8;
+}
