@@ -66,7 +66,7 @@ const Login: React.FC = () => {
 
     try {
       await login(formData.email, formData.password);
-      alert("Login successful! Welcome back!");
+      // alert("Login successful! Welcome back!");
       navigate("/dashboard", { replace: true });
     } catch (error: any) {
       const detail = error?.response?.data?.detail;
