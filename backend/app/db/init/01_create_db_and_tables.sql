@@ -17,10 +17,11 @@ CREATE TABLE IF NOT EXISTS articles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   url text UNIQUE,
   title text,
-  source text,  -- ADD THIS if missing
+  source text,  
   description text,
   published_at timestamptz,
   inserted_at timestamptz DEFAULT now(),
+  stock text, 
 
   -- FinBERT sentiment fields (per article)
   sentiment text,
