@@ -261,12 +261,21 @@ class PriceIngestor:
         else:
             logger.warning(f"No data fetched for backfill of {ticker}")
 
-
+# to rerun the stock ingestion use this command
+# docker compose exec api python -m app.services.ingesting_pipelines.prices_ingest
 if __name__ == "__main__":
     # Optional CLI usage, doesn't affect FastAPI integration
     ingestor = PriceIngestor()
     stocks = ["KSS","ALK", "NVS", "AXP", "FCX", "CSX", "DAL", "NTAP", "GPS", "AEO",
               "MRK", "DFS", "COP", "BHP", "EA"]
+    
+    with ingestor.engine.begin() as conn:
+        conn.execute(
+            text("DELETE FROM stocks WHERE ticker != ALL(:tickers)"),
+            {"tickers": stocks}
+        )
+        logger.info("Removed old tickers from database.")
+        
     ingestor.ingest_multiple_stocks(
         tickers=stocks,
         start_date= None,
