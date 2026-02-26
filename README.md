@@ -1,6 +1,8 @@
-(Web app links currently not deployed)
+(Not fully integrated with Beta Milestone features as of 02/26/2026)
+frontend: [https://ai-roosters-frontend.onrender.com/](https://ai-roosters-webpage.vercel.app/)
+
+To see backend/API health:
 backend: [https://ai-roosters.onrender.com/](https://stocksense-api-7go1.onrender.com/)
-frontend: https://ai-roosters-frontend.onrender.com/
 ## Stock Sense 
 
 StockSense is a full-stack web application that provides investors with an AI-driven platform to track stock performance, analyze sentiment trends, and manage personalized portfolios. It integrates both quantitative (price and performance) and qualitative (news sentiment) data using a modern, containerized architecture.
