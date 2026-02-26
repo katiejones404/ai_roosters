@@ -127,7 +127,6 @@ const CreateAccount: React.FC = () => {
         formData.retypePassword,
       );
 
-      alert("Account created successfully! Please login.");
       navigate("/login");
     } catch (error: any) {
       // Handle pydantic 422 validation errors (e.g. passwords don't match)
