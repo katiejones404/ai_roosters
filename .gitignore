@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 
+<<<<<<< HEAD
 # Python virtual environments
 .venv/
 venv/
@@ -18,3 +19,15 @@ backend/data/kaggle.json
 
 # Project-specific files
 backend/data/masterfilelist.txt
+=======
+./backend/data/masterfilelist.txt
+venv1
+./venv1
+.pyc
+__pycache__
+.pytest_cache
+./__pycache__
+./pytest_cache
+
+node_modules
+>>>>>>> main

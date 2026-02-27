@@ -1,7 +1,11 @@
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { getToken } from "./utils/auth";
+import {
+    BarChart, Bar, XAxis, YAxis, Tooltip,
+    LineChart, Line, CartesianGrid, ResponsiveContainer, Cell, Legend
+} from "recharts";
 import './portfolio.css';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
@@ -36,6 +40,13 @@ interface PortfolioData {
     summary: PortfolioSummary;
 }
 
+interface PricePoint {
+    date: string;
+    close: number;
+}
+
+const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981'];
+
 const Portfolio = () => {
     const navigate = useNavigate();
     const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(null);
@@ -43,25 +54,57 @@ const Portfolio = () => {
     const [error, setError] = useState<string | null>(null);
     const [compareMode, setCompareMode] = useState(false);
     const [selectedTickers, setSelectedTickers] = useState<string[]>([]);
+    const [compareData, setCompareData] = useState<Record<string, PricePoint[]>>({});
+    const [compareView, setCompareView] = useState<'pct' | 'price'>('pct');
+    const [compareRange, setCompareRange] = useState<'30' | '120' | '360'>('30');
+    const [compareLoading, setCompareLoading] = useState(false);
 
     useEffect(() => {
         fetchPortfolioSummary();
     }, []);
 
+    // Fetch price history whenever selected tickers change (compare mode on)
+    useEffect(() => {
+        if (!compareMode || selectedTickers.length < 2) {
+            setCompareData({});
+            return;
+        }
+        const fetchPriceData = async () => {
+            setCompareLoading(true);
+            try {
+                const token = getToken();
+                const results = await Promise.all(
+                    selectedTickers.map((ticker: string) =>
+                        axios.get<PricePoint[]>(
+                            `${API_BASE}/api/stocks/${encodeURIComponent(ticker)}/prices`,
+                            { headers: { Authorization: `Bearer ${token}` } }
+                        )
+                    )
+                );
+                const newData: Record<string, PricePoint[]> = {};
+                selectedTickers.forEach((ticker: string, i: number) => {
+                    newData[ticker] = results[i].data;
+                });
+                setCompareData(newData);
+            } catch (err) {
+                console.error('Error fetching price data:', err);
+            } finally {
+                setCompareLoading(false);
+            }
+        };
+        fetchPriceData();
+    }, [selectedTickers, compareMode]);
+
     const fetchPortfolioSummary = async () => {
         try {
             setLoading(true);
             const token = getToken();
-
             if (!token) {
                 navigate('/dashboard');
                 return;
             }
-
             const response = await axios.get(`${API_BASE}/api/portfolio/stats/summary`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
+                headers: { Authorization: `Bearer ${token}` }
             });
             setPortfolioData(response.data);
             setError(null);
@@ -91,13 +134,10 @@ const Portfolio = () => {
 
     const removeStock = async (ticker: string) => {
         if (!confirm(`Remove ${ticker} from portfolio?`)) return;
-
         try {
             const token = getToken();
             await axios.delete(`${API_BASE}/api/portfolio/${ticker}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
+                headers: { Authorization: `Bearer ${token}` }
             });
             setSelectedTickers(prev => prev.filter(t => t !== ticker));
             fetchPortfolioSummary();
@@ -144,6 +184,50 @@ const Portfolio = () => {
         return value >= 0 ? '▲' : '▼';
     };
 
+    // Get the first/last dates from the current chart slice (YYYY-MM-DD -> MM/DD/YYYY)
+    const getChartDateRange = (): { start: string; end: string } | null => {
+        const tickers = Object.keys(compareData);
+        if (tickers.length === 0) return null;
+        const days: Record<string, number> = { '30': 30, '120': 120, '360': 360 };
+        const slice = (compareData[tickers[0]] || []).slice(-days[compareRange]);
+        if (slice.length === 0) return null;
+        const fmt = (d: string) => {
+            const [y, m, day] = d.split('-');
+            return `${m}/${day}/${y}`;
+        };
+        return { start: fmt(slice[0].date), end: fmt(slice[slice.length - 1].date) };
+    };
+
+    // Build merged chart dataset for the comparison LineChart
+    const buildChartData = () => {
+        const tickers = Object.keys(compareData);
+        if (tickers.length === 0) return [];
+        const rangeMap: Record<string, number> = { '30': 30, '120': 120, '360': 360 };
+        const days = rangeMap[compareRange];
+        const baseSlice = (compareData[tickers[0]] || []).slice(-days);
+
+        // first close per ticker for % normalization
+        const firstCloses: Record<string, number> = {};
+        tickers.forEach((ticker: string) => {
+            const slice = (compareData[ticker] || []).slice(-days);
+            firstCloses[ticker] = slice[0]?.close || 1;
+        });
+
+        return baseSlice.map((point: PricePoint) => {
+            const row: Record<string, any> = { date: point.date.slice(5) }; // MM-DD
+            tickers.forEach((ticker: string) => {
+                const slice = (compareData[ticker] || []).slice(-days);
+                const match = slice.find((p: PricePoint) => p.date === point.date);
+                if (match) {
+                    row[ticker] = compareView === 'pct'
+                        ? parseFloat(((match.close / firstCloses[ticker] - 1) * 100).toFixed(2))
+                        : parseFloat(match.close.toFixed(2));
+                }
+            });
+            return row;
+        });
+    };
+
     if (loading) {
         return (
             <div className="app-container">
@@ -185,6 +269,18 @@ const Portfolio = () => {
     const { portfolio_items = [], summary = {} as PortfolioSummary } = portfolioData || {};
     const comparedItems = portfolio_items.filter(item => selectedTickers.includes(item.ticker));
 
+    // Top performers for trending widget
+    const trendingData = [...portfolio_items]
+        .filter(item => item.return_1d !== null)
+        .sort((a, b) => (b.return_1d ?? -Infinity) - (a.return_1d ?? -Infinity))
+        .slice(0, 3)
+        .map(item => ({
+            ticker: item.ticker,
+            return: parseFloat((item.return_1d ?? 0).toFixed(2)),
+        }));
+
+    const chartData = buildChartData();
+
     return (
         <div className="app-container">
             <div className="home-background-shapes">
@@ -193,14 +289,14 @@ const Portfolio = () => {
                 <div className="home-shape home-shape-3"></div>
             </div>
 
-            <div className="home-card">
+            <div className="home-card portfolio-card">
                 <div className="home-content">
                     <div className="portfolio-header">
                         <h1>My Portfolio</h1>
                         <p>Track your investments and monitor performances</p>
                     </div>
 
-                    {/* Summary Stats */}
+                    {/* Summary Stats — full width */}
                     <div className="portfolio-summary-grid">
                         <div className="summary-stat-card">
                             <div className="stat-icon">💰</div>
@@ -230,7 +326,6 @@ const Portfolio = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="summary-stat-card">
                             <div className="stat-icon">🎯</div>
                             <div className="stat-content">
@@ -240,250 +335,342 @@ const Portfolio = () => {
                         </div>
                     </div>
 
-                    {/* Holdings Section */}
-                    <div className="portfolio-holdings-section">
-                        <div className="section-header">
-                            <h2 className="section-title">Holdings</h2>
-                            {portfolio_items.length >= 2 && (
-                                <button
-                                    className={`compare-btn ${compareMode ? 'active' : ''}`}
-                                    onClick={toggleCompareMode}
-                                >
-                                    {compareMode ? 'Done Comparing' : 'Compare'}
-                                </button>
-                            )}
+                    {/* 2-column layout: Holdings (left) | Widgets (right) */}
+                    <div className="portfolio-layout">
+
+                        {/* Left: Holdings */}
+                        <div className="portfolio-left">
+                            <div className="portfolio-holdings-section">
+                                <div className="section-header">
+                                    <h2 className="section-title">Holdings</h2>
+                                    {portfolio_items.length >= 2 && (
+                                        <button
+                                            className={`compare-btn ${compareMode ? 'active' : ''}`}
+                                            onClick={toggleCompareMode}
+                                        >
+                                            {compareMode ? 'Done Comparing' : 'Compare'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {compareMode && (
+                                    <p className="compare-hint">
+                                        Select 2 or more holdings to compare them side by side.
+                                    </p>
+                                )}
+
+                                {portfolio_items.length === 0 ? (
+                                    <div className="empty-portfolio">
+                                        <p className="empty-message">Your portfolio is empty</p>
+                                        <button
+                                            onClick={() => navigate('/dashboard')}
+                                            className="add-stocks-btn"
+                                        >
+                                            Add Stocks from Dashboard
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="holdings-grid">
+                                        {portfolio_items.map((item) => {
+                                            const isSelected = selectedTickers.includes(item.ticker);
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className={`holding-card ${compareMode && isSelected ? 'compare-selected' : ''}`}
+                                                >
+                                                    <div className="holding-header">
+                                                        <div className="ticker-section">
+                                                            {compareMode && (
+                                                                <label className="compare-checkbox-wrapper">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="compare-checkbox"
+                                                                        checked={isSelected}
+                                                                        onChange={() => toggleTickerSelection(item.ticker)}
+                                                                    />
+                                                                </label>
+                                                            )}
+                                                            <Link
+                                                                to={`/stock/${encodeURIComponent(item.ticker)}`}
+                                                                className="ticker-link"
+                                                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                                            >
+                                                                {item.ticker}
+                                                            </Link>
+                                                            <span className="quantity-badge">{item.quantity} shares</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => removeStock(item.ticker)}
+                                                            className="remove-btn"
+                                                            title="Remove from Portfolio"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="holding-price-section">
+                                                        <div className="price-row">
+                                                            <span className="price-label">Current Price</span>
+                                                            <span className="price-value">{formatCurrency(item.current_price)}</span>
+                                                        </div>
+                                                        <div className="price-row">
+                                                            <span className="price-label">Avg. Price</span>
+                                                            <span className="price-value">{formatCurrency(item.avg_price)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="holding-divider"></div>
+                                                    <div className="holding-metrics">
+                                                        <div className="metric-row">
+                                                            <span className="metric-label">Cost Basis</span>
+                                                            <span className="metric-value">{formatCurrency(item.cost_basis)}</span>
+                                                        </div>
+                                                        <div className="metric-row">
+                                                            <span className="metric-label">Current Value</span>
+                                                            <span className="metric-value">{formatCurrency(item.current_value)}</span>
+                                                        </div>
+                                                        <div className={`metric-row gain-loss-row ${getReturnColor(item.total_gain_loss)}`}>
+                                                            <span className="metric-label">Gain/Loss</span>
+                                                            <span className={`metric-value ${getReturnColor(item.total_gain_loss)}`}>
+                                                                {getReturnIndicator(item.total_gain_loss)} {formatCurrency(item.total_gain_loss)}
+                                                                <span className="gain-loss-pct">
+                                                                    ({formatPercent(item.gain_loss_pct)})
+                                                                </span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="holding-divider"></div>
+                                                    <div className="holding-returns">
+                                                        <div className="return-item">
+                                                            <span className="return-label">1D</span>
+                                                            <span className={`return-value ${getReturnColor(item.return_1d)}`}>
+                                                                {formatPercent(item.return_1d)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="return-item">
+                                                            <span className="return-label">30D</span>
+                                                            <span className={`return-value ${getReturnColor(item.return_30d)}`}>
+                                                                {formatPercent(item.return_30d)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="return-item">
+                                                            <span className="return-label">120D</span>
+                                                            <span className={`return-value ${getReturnColor(item.return_120d)}`}>
+                                                                {formatPercent(item.return_120d)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="return-item">
+                                                            <span className="return-label">360D</span>
+                                                            <span className={`return-value ${getReturnColor(item.return_360d)}`}>
+                                                                {formatPercent(item.return_360d)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        {compareMode && (
-                            <p className="compare-hint">
-                                Select 2 or more holdings to compare them side by side.
-                            </p>
-                        )}
+                        {/* Right: Trending widget + Comparison chart */}
+                        <div className="portfolio-right">
 
-                        {portfolio_items.length === 0 ? (
-                            <div className="empty-portfolio">
-                                <p className="empty-message">Your portfolio is empty</p>
-                                <button
-                                    onClick={() => navigate('/dashboard')}
-                                    className="add-stocks-btn"
-                                >
-                                    Add Stocks from Dashboard
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="holdings-grid">
-                                {portfolio_items.map((item) => {
-                                    const isSelected = selectedTickers.includes(item.ticker);
-                                    return (
-                                        <div
-                                            key={item.id}
-                                            className={`holding-card ${compareMode && isSelected ? 'compare-selected' : ''}`}
-                                        >
-                                            <div className="holding-header">
-                                                <div className="ticker-section">
-                                                    {compareMode && (
-                                                        <label className="compare-checkbox-wrapper">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="compare-checkbox"
-                                                                checked={isSelected}
-                                                                onChange={() => toggleTickerSelection(item.ticker)}
-                                                            />
-                                                        </label>
-                                                    )}
-                                                    <span className="ticker-symbol">{item.ticker}</span>
-                                                    <span className="quantity-badge">{item.quantity} shares</span>
-                                                </div>
-                                                <button
-                                                    onClick={() => removeStock(item.ticker)}
-                                                    className="remove-btn"
-                                                    title="Remove from Portfolio"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </div>
-
-                                            <div className="holding-price-section">
-                                                <div className="price-row">
-                                                    <span className="price-label">Current Price</span>
-                                                    <span className="price-value">
-                                                        {formatCurrency(item.current_price)}
-                                                    </span>
-                                                </div>
-                                                <div className="price-row">
-                                                    <span className="price-label">Avg. Price</span>
-                                                    <span className="price-value">
-                                                        {formatCurrency(item.avg_price)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="holding-divider"></div>
-                                            <div className="holding-metrics">
-                                                <div className="metric-row">
-                                                    <span className="metric-label">Cost Basis</span>
-                                                    <span className="metric-value">
-                                                        {formatCurrency(item.cost_basis)}
-                                                    </span>
-                                                </div>
-                                                <div className="metric-row">
-                                                    <span className="metric-label">Current Value</span>
-                                                    <span className="metric-value">
-                                                        {formatCurrency(item.current_value)}
-                                                    </span>
-                                                </div>
-                                                <div className={`metric-row gain-loss-row ${getReturnColor(item.total_gain_loss)}`}>
-                                                    <span className="metric-label">Gain/Loss</span>
-                                                    <span className={`metric-value ${getReturnColor(item.total_gain_loss)}`}>
-                                                        {getReturnIndicator(item.total_gain_loss)} {formatCurrency(item.total_gain_loss)}
-                                                        <span className="gain-loss-pct">
-                                                            ({formatPercent(item.gain_loss_pct)})
-                                                        </span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="holding-divider"></div>
-                                            <div className="holding-returns">
-                                                <div className="return-item">
-                                                    <span className="return-label">1D</span>
-                                                    <span className={`return-value ${getReturnColor(item.return_1d)}`}>
-                                                        {formatPercent(item.return_1d)}
-                                                    </span>
-                                                </div>
-                                                <div className="return-item">
-                                                    <span className="return-label">30D</span>
-                                                    <span className={`return-value ${getReturnColor(item.return_30d)}`}>
-                                                        {formatPercent(item.return_30d)}
-                                                    </span>
-                                                </div>
-                                                <div className="return-item">
-                                                    <span className="return-label">120D</span>
-                                                    <span className={`return-value ${getReturnColor(item.return_120d)}`}>
-                                                        {formatPercent(item.return_120d)}
-                                                    </span>
-                                                </div>
-                                                <div className="return-item">
-                                                    <span className="return-label">360D</span>
-                                                    <span className={`return-value ${getReturnColor(item.return_360d)}`}>
-                                                        {formatPercent(item.return_360d)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        {/* Comparison Table - unsure if this works correctly yet.
-                         */}
-                        {compareMode && comparedItems.length >= 2 && (
-                            <div className="comparison-section">
-                                <h3 className="comparison-title">Side-by-Side Comparison</h3>
-                                <div className="comparison-table-wrapper">
-                                    <table className="comparison-table">
-                                        <thead>
-                                            <tr>
-
-                                                <th>Metric</th>
-                                                {comparedItems.map(item => (
-                                                    <th key={item.ticker}>{item.ticker}</th>
-
+                            {/* Trending widget */}
+                            {trendingData.length > 0 && (
+                                <div className="trending-widget">
+                                    <h3 className="widget-title">Top Performers Today</h3>
+                                    <ResponsiveContainer width="100%" height={200}>
+                                        <BarChart data={trendingData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                                            <XAxis dataKey="ticker" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                                            <YAxis tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                                            <Tooltip formatter={(v: any) => [`${v}%`, '1D Return']} />
+                                            <Bar dataKey="return" radius={[4, 4, 0, 0]}>
+                                                {trendingData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.return >= 0 ? '#10b981' : '#ef4444'} />
                                                 ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>Current Price</td>
-                                                {comparedItems.map(item => (
-                                                    <td key={item.ticker}>{formatCurrency(item.current_price)}</td>
-                                                ))}
-                                            </tr>
-
-
-                                            <tr>
-                                                <td>Avg. Price</td>
-                                                {comparedItems.map(item => (
-                                                    <td key={item.ticker}>{formatCurrency(item.avg_price)}</td>
-                                                ))}
-                                            </tr>
-                                            <tr>
-                                                <td>Quantity</td>
-                                                {comparedItems.map(item => (
-                                                    <td key={item.ticker}>{item.quantity}</td>
-                                                ))}
-                                            </tr>
-                                            <tr>
-                                                <td>Cost Basis</td>
-                                                {comparedItems.map(item => (
-                                                    <td key={item.ticker}>{formatCurrency(item.cost_basis)}</td>
-                                                ))}
-                                            </tr>
-                                            <tr>
-                                                <td>Current Value</td>
-                                                {comparedItems.map(item => (
-
-                                                    <td key={item.ticker}>{formatCurrency(item.current_value)}</td>
-                                                
-                                                ))}
-                                            </tr>
-                                            <tr>
-                                                <td>Gain / Loss</td>
-                                                {comparedItems.map(item => (
-
-                                                    <td key={item.ticker} className={getReturnColor(item.total_gain_loss)}>
-                                                        {formatCurrency(item.total_gain_loss)}
-                                                        <span style={{ fontSize: '0.8rem', marginLeft: '0.25rem' }}>
-                                                            ({formatPercent(item.gain_loss_pct)})
-                                                        </span>
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                            <tr>
-                                                <td>1D Return</td>
-
-                                                {comparedItems.map(item => (
-
-                                                    <td key={item.ticker} className={getReturnColor(item.return_1d)}>
-                                                        {formatPercent(item.return_1d)}
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                            <tr>
-                                                <td>30D Return</td>
-                                                {comparedItems.map(item => (
-                                                    <td key={item.ticker} className={getReturnColor(item.return_30d)}>
-                                                        {formatPercent(item.return_30d)}
-                                                    </td>
-                                                ))}
-                                            </tr>
-
-
-                                            <tr>
-                                                <td>120D Return</td>
-                                                {comparedItems.map(item => (
-                                                    <td key={item.ticker} className={getReturnColor(item.return_120d)}>
-                                                        {formatPercent(item.return_120d)}
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                            <tr>
-                                                <td>360D Return</td>
-                                                {comparedItems.map(item => (
-                                                    <td key={item.ticker} className={getReturnColor(item.return_360d)}>
-                                                        {formatPercent(item.return_360d)}
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 </div>
-                            </div>
+                            )}
 
-
-                        )}
+                            {/* Comparison chart */}
+                            {compareMode && selectedTickers.length >= 2 && (
+                                <div className="comparison-chart-section">
+                                    <h3 className="widget-title">Price Comparison</h3>
+                                    {!compareLoading && (() => {
+                                        const range = getChartDateRange();
+                                        return range ? (
+                                            <div className="chart-date-range">
+                                                {compareView === 'pct' ? '% Return normalized' : 'Price'} for {range.start} – {range.end}
+                                            </div>
+                                        ) : null;
+                                    })()}
+                                    <div className="compare-controls">
+                                        <div className="compare-view-toggle">
+                                            <button
+                                                className={compareView === 'pct' ? 'active' : ''}
+                                                onClick={() => setCompareView('pct')}
+                                            >
+                                                % Return
+                                            </button>
+                                            <button
+                                                className={compareView === 'price' ? 'active' : ''}
+                                                onClick={() => setCompareView('price')}
+                                            >
+                                                Price
+                                            </button>
+                                        </div>
+                                        <div className="compare-range-btns">
+                                            {(['30', '120', '360'] as const).map(r => (
+                                                <button
+                                                    key={r}
+                                                    className={compareRange === r ? 'active' : ''}
+                                                    onClick={() => setCompareRange(r)}
+                                                >
+                                                    {r}D
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    {compareLoading ? (
+                                        <div className="chart-loading">Loading chart...</div>
+                                    ) : chartData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={260}>
+                                            <LineChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
+                                                <XAxis
+                                                    dataKey="date"
+                                                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                                                    interval={Math.floor(chartData.length / 5)}
+                                                />
+                                                <YAxis
+                                                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                                                    tickFormatter={(v: number) => compareView === 'pct' ? `${v}%` : `$${v}`}
+                                                />
+                                                <Tooltip
+                                                    formatter={(v: any, name: any) =>
+                                                        compareView === 'pct' ? [`${v}%`, name] : [`$${v}`, name]
+                                                    }
+                                                    contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                                                    labelStyle={{ color: '#94a3b8', fontSize: 11 }}
+                                                />
+                                                <Legend />
+                                                {selectedTickers.map((ticker, i) => (
+                                                    <Line
+                                                        key={ticker}
+                                                        type="monotone"
+                                                        dataKey={ticker}
+                                                        stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                                                        dot={false}
+                                                        strokeWidth={2}
+                                                    />
+                                                ))}
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="chart-loading">No data available</div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
 
+                    {/* Comparison table — full width, below 2-col */}
+                    {compareMode && comparedItems.length >= 2 && (
+                        <div className="comparison-section">
+                            <h3 className="comparison-title">Side-by-Side Comparison</h3>
+                            <div className="comparison-table-wrapper">
+                                <table className="comparison-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Metric</th>
+                                            {comparedItems.map(item => (
+                                                <th key={item.ticker}>{item.ticker}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Current Price</td>
+                                            {comparedItems.map(item => (
+                                                <td key={item.ticker}>{formatCurrency(item.current_price)}</td>
+                                            ))}
+                                        </tr>
+                                        <tr>
+                                            <td>Avg. Price</td>
+                                            {comparedItems.map(item => (
+                                                <td key={item.ticker}>{formatCurrency(item.avg_price)}</td>
+                                            ))}
+                                        </tr>
+                                        <tr>
+                                            <td>Quantity</td>
+                                            {comparedItems.map(item => (
+                                                <td key={item.ticker}>{item.quantity}</td>
+                                            ))}
+                                        </tr>
+                                        <tr>
+                                            <td>Cost Basis</td>
+                                            {comparedItems.map(item => (
+                                                <td key={item.ticker}>{formatCurrency(item.cost_basis)}</td>
+                                            ))}
+                                        </tr>
+                                        <tr>
+                                            <td>Current Value</td>
+                                            {comparedItems.map(item => (
+                                                <td key={item.ticker}>{formatCurrency(item.current_value)}</td>
+                                            ))}
+                                        </tr>
+                                        <tr>
+                                            <td>Gain / Loss</td>
+                                            {comparedItems.map(item => (
+                                                <td key={item.ticker} className={getReturnColor(item.total_gain_loss)}>
+                                                    {formatCurrency(item.total_gain_loss)}
+                                                    <span style={{ fontSize: '0.8rem', marginLeft: '0.25rem' }}>
+                                                        ({formatPercent(item.gain_loss_pct)})
+                                                    </span>
+                                                </td>
+                                            ))}
+                                        </tr>
+                                        <tr>
+                                            <td>1D Return</td>
+                                            {comparedItems.map(item => (
+                                                <td key={item.ticker} className={getReturnColor(item.return_1d)}>
+                                                    {formatPercent(item.return_1d)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                        <tr>
+                                            <td>30D Return</td>
+                                            {comparedItems.map(item => (
+                                                <td key={item.ticker} className={getReturnColor(item.return_30d)}>
+                                                    {formatPercent(item.return_30d)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                        <tr>
+                                            <td>120D Return</td>
+                                            {comparedItems.map(item => (
+                                                <td key={item.ticker} className={getReturnColor(item.return_120d)}>
+                                                    {formatPercent(item.return_120d)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                        <tr>
+                                            <td>360D Return</td>
+                                            {comparedItems.map(item => (
+                                                <td key={item.ticker} className={getReturnColor(item.return_360d)}>
+                                                    {formatPercent(item.return_360d)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

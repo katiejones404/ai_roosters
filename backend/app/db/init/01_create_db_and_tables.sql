@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS articles (
   description text,
   published_at timestamptz,
   inserted_at timestamptz DEFAULT now(),
+<<<<<<< HEAD
+=======
+  stock text,
+>>>>>>> main
 
   CONSTRAINT articles_url_stock_unique UNIQUE (url, stock),
 
@@ -111,10 +115,10 @@ CREATE TABLE IF NOT EXISTS sentiment_snapshots (
 
   prob_pos_mean numeric, 
   prob_neg_mean numeric, 
-  prob_neu_mean numeric, 
+  prob_neu_mean numeric,
 
-  prob_pos_max numeric, 
-  prob_neg_max numeric, 
+  prob_pos_max numeric,
+  prob_neg_max numeric,
 
   created_at timestamptz DEFAULT now(),
 
@@ -142,14 +146,23 @@ CREATE TABLE IF NOT EXISTS article_ticker_sentiment (
     FOREIGN KEY (article_id)
     REFERENCES articles(id)
     ON DELETE CASCADE,
+<<<<<<< HEAD
 
   CONSTRAINT uq_article_ticker UNIQUE (article_id, ticker)
+=======
+    
+
+  CONSTRAINT uq_article_ticker UNIQUE (article_url, ticker)
+>>>>>>> main
 );
 
 CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_ticker
   ON article_ticker_sentiment (ticker);
 
+
 CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_article
   ON article_ticker_sentiment (article_id);
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;

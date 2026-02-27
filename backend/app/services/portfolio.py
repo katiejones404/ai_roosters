@@ -214,38 +214,57 @@ def get_portfolio_summary(
     """Get portfolio summary with current prices and P&L calculations"""
     
     sql = text("""
-        WITH latest_prices AS (
-            SELECT 
+        WITH latest AS (
+            SELECT ticker, MAX(date) AS max_date FROM stocks GROUP BY ticker
+        ),
+        latest_prices AS (
+            SELECT
                 s.ticker,
-                s.close as current_price,
-                s.return_1d,
-                s.return_30d,
-                s.return_120d,
-                s.return_360d,
-                s.date as price_date
+                s.close AS current_price,
+                s.date  AS price_date,
+                (SELECT s2.close FROM stocks s2
+                 WHERE s2.ticker = s.ticker
+                   AND s2.date <= s.date - INTERVAL '1 day'
+                 ORDER BY s2.date DESC LIMIT 1) AS close_1d_ago,
+                (SELECT s2.close FROM stocks s2
+                 WHERE s2.ticker = s.ticker
+                   AND s2.date <= s.date - INTERVAL '30 days'
+                 ORDER BY s2.date DESC LIMIT 1) AS close_30d_ago,
+                (SELECT s2.close FROM stocks s2
+                 WHERE s2.ticker = s.ticker
+                   AND s2.date <= s.date - INTERVAL '120 days'
+                 ORDER BY s2.date DESC LIMIT 1) AS close_120d_ago,
+                (SELECT s2.close FROM stocks s2
+                 WHERE s2.ticker = s.ticker
+                   AND s2.date <= s.date - INTERVAL '360 days'
+                 ORDER BY s2.date DESC LIMIT 1) AS close_360d_ago
             FROM stocks s
-            INNER JOIN (
-               SELECT ticker, MAX(date) as max_date
-               FROM stocks
-               GROUP  BY ticker
-            ) latest ON s.ticker = latest.ticker AND s.date = latest.max_date
+            INNER JOIN latest ON s.ticker = latest.ticker AND s.date = latest.max_date
         )
-        SELECT 
+        SELECT
             p.id,
             p.ticker,
             p.quantity,
             p.avg_price,
             p.added_at,
             lp.current_price,
-            lp.return_1d,
-            lp.return_30d,
-            lp.return_120d,
-            lp.return_360d,
             lp.price_date,
-            (p.quantity * p.avg_price) as cost_basis,
-            (p.quantity * COALESCE(lp.current_price, p.avg_price)) as current_value,
-            (p.quantity * COALESCE(lp.current_price, p.avg_price)) - (p.quantity * p.avg_price) as total_gain_loss,
-            ((COALESCE(lp.current_price, p.avg_price) - p.avg_price) / p.avg_price * 100) as gain_loss_pct
+            CASE WHEN lp.close_1d_ago   IS NOT NULL AND lp.close_1d_ago   <> 0
+                 THEN (lp.current_price - lp.close_1d_ago)   / lp.close_1d_ago   * 100
+                 END AS return_1d,
+            CASE WHEN lp.close_30d_ago  IS NOT NULL AND lp.close_30d_ago  <> 0
+                 THEN (lp.current_price - lp.close_30d_ago)  / lp.close_30d_ago  * 100
+                 END AS return_30d,
+            CASE WHEN lp.close_120d_ago IS NOT NULL AND lp.close_120d_ago <> 0
+                 THEN (lp.current_price - lp.close_120d_ago) / lp.close_120d_ago * 100
+                 END AS return_120d,
+            CASE WHEN lp.close_360d_ago IS NOT NULL AND lp.close_360d_ago <> 0
+                 THEN (lp.current_price - lp.close_360d_ago) / lp.close_360d_ago * 100
+                 END AS return_360d,
+            (p.quantity * p.avg_price) AS cost_basis,
+            (p.quantity * COALESCE(lp.current_price, p.avg_price)) AS current_value,
+            (p.quantity * COALESCE(lp.current_price, p.avg_price)) - (p.quantity * p.avg_price) AS total_gain_loss,
+            ((COALESCE(lp.current_price, p.avg_price) - p.avg_price) / p.avg_price * 100) AS gain_loss_pct
         FROM portfolio p
         LEFT JOIN latest_prices lp ON p.ticker = lp.ticker
         WHERE p.user_id = :user_id
