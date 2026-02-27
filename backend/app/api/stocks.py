@@ -20,6 +20,14 @@ class StockSummary(BaseModel):
     ticker: str
 
 
+class StockLatestRow(BaseModel):
+    ticker: str
+    date: date
+    close: Optional[float] = None
+    return_1d: Optional[float] = None
+    return_30d: Optional[float] = None
+
+
 class StockPriceRow(BaseModel):
     ticker: str
     date: date
@@ -79,6 +87,31 @@ def list_stocks(
     )
     rows = db.execute(sql).mappings().all()
     return [StockSummary(ticker=row["ticker"]) for row in rows]
+
+
+@router.get("/latest", response_model=List[StockLatestRow])
+def get_all_latest_prices(db: Session = Depends(get_db)):
+    """
+    Return the single most-recent price row for every ticker in one query.
+    Used by the dashboard to avoid N+1 per-ticker requests.
+    """
+    sql = text("""
+        SELECT DISTINCT ON (ticker)
+            ticker, date, close, return_1d, return_30d
+        FROM stocks
+        ORDER BY ticker, date DESC
+    """)
+    rows = db.execute(sql).mappings().all()
+    return [
+        StockLatestRow(
+            ticker=row["ticker"],
+            date=row["date"],
+            close=float(row["close"]) if row["close"] is not None else None,
+            return_1d=float(row["return_1d"]) if row["return_1d"] is not None else None,
+            return_30d=float(row["return_30d"]) if row["return_30d"] is not None else None,
+        )
+        for row in rows
+    ]
 
 
 @router.get("/{ticker}/prices", response_model=List[StockPriceRow])
