@@ -103,7 +103,7 @@ const Navbar = () => {
 
   const isActive = (path: string) =>
     location.pathname === path ? "nav-link active" : "nav-link";
-
+//Random avatars. Can be changed in settings.
   const avatarSrc =
     user?.profile_picture ||
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || "default"}`;
