@@ -16,10 +16,6 @@ import AddToPortfolioModal from "./components/AddToPortfolio";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
-interface StockSummary {
-  ticker: string;
-}
-
 interface StockPriceRow {
   ticker: string;
   date: string;
@@ -160,10 +156,8 @@ const Dashboard: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get<StockSummary[]>(`${API_BASE}/api/stocks`);
-      const tickers = res.data.map((s) => s.ticker);
-      const results = await Promise.all(tickers.map(fetchLatestForTicker));
-      setCards(results.filter((c): c is StockCard => c !== null));
+      const res = await axios.get<StockCard[]>(`${API_BASE}/api/stocks/latest`);
+      setCards(res.data.filter((c: StockCard) => c.close !== null));
       setHasLoadedOnce(true);
     } catch {
       setError("Failed to load stocks");
