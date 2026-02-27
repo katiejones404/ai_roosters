@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./app-header.css";
-import "./stocks.css";
+import "./Stocks.css";
 import axios from "axios";
 import { TICKER_NAMES } from "./utils/stockNames";
 
