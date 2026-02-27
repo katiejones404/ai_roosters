@@ -17,19 +17,13 @@ CREATE TABLE IF NOT EXISTS articles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
   url text NOT NULL,
-  stock text NOT NULL,
-
   title text,
   source text,
   description text,
   published_at timestamptz,
   inserted_at timestamptz DEFAULT now(),
-<<<<<<< HEAD
-=======
-  stock text,
->>>>>>> main
 
-  CONSTRAINT articles_url_stock_unique UNIQUE (url, stock),
+  CONSTRAINT articles_url_unique UNIQUE (url),
 
   -- FinBERT sentiment fields (per url+stock row)
   sentiment text,
@@ -40,7 +34,6 @@ CREATE TABLE IF NOT EXISTS articles (
 );
 
 
-CREATE INDEX IF NOT EXISTS idx_articles_stock_published_at ON articles (stock, published_at);
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at);
 CREATE INDEX IF NOT EXISTS idx_articles_url ON articles (url);
 CREATE INDEX IF NOT EXISTS idx_articles_sentiment ON articles (sentiment);
@@ -146,14 +139,8 @@ CREATE TABLE IF NOT EXISTS article_ticker_sentiment (
     FOREIGN KEY (article_id)
     REFERENCES articles(id)
     ON DELETE CASCADE,
-<<<<<<< HEAD
 
   CONSTRAINT uq_article_ticker UNIQUE (article_id, ticker)
-=======
-    
-
-  CONSTRAINT uq_article_ticker UNIQUE (article_url, ticker)
->>>>>>> main
 );
 
 CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_ticker
