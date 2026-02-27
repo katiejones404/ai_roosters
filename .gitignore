@@ -1,12 +1,25 @@
-# .gitignore
-
-
-backend/data/kaggle.json
+# Environment variables
 .env
-./.env
-*.pyc 
-.venv/
+.env.*
+!.env.example
 
+<<<<<<< HEAD
+# Python virtual environments
+.venv/
+venv/
+venv1/
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Kaggle credentials
+backend/data/kaggle.json
+
+# Project-specific files
+backend/data/masterfilelist.txt
+=======
 ./backend/data/masterfilelist.txt
 venv1
 ./venv1
@@ -17,3 +30,4 @@ __pycache__
 ./pytest_cache
 
 node_modules
+>>>>>>> main

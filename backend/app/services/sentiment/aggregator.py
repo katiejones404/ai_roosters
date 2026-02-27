@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, List, Callable, Type, Optional
+from typing import Any, Dict, List, Callable, Type, Optional, Tuple
 from datetime import date, datetime
+import math
 
 import psycopg2
 import numpy as np
-import math
-
 from xgboost import XGBRegressor
 
 # --------------------------------------------------------------------------------------
@@ -17,10 +16,10 @@ from xgboost import XGBRegressor
 
 logger = logging.getLogger("snapshot_pipeline")
 logger.setLevel(logging.INFO)
-_handler = logging.StreamHandler()
-_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-logger.addHandler(_handler)
-
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    logger.addHandler(_handler)
 
 # --------------------------------------------------------------------------------------
 # Pydantic BaseModel (with stub fallback)
@@ -30,11 +29,7 @@ try:
     from pydantic import BaseModel
 except ImportError:
     class BaseModel:
-        """Minimal stub for Pydantic BaseModel if not installed."""
         model_fields: Dict[str, Any] = {}
-
-        def __init_subclass__(cls, **kwargs: Any):
-            super().__init_subclass__(**kwargs)
 
         def __init__(self, **data: Any):
             for k, v in data.items():
@@ -49,10 +44,8 @@ class Artifact(BaseModel):
         if hasattr(self, "model_dump"):
             return self.model_dump()
         if hasattr(self, "dict"):
-            # Pydantic v1
             return self.dict()
         return self.__dict__.copy()
-
 
 # --------------------------------------------------------------------------------------
 # Core Stage / Pipeline infra
@@ -97,25 +90,19 @@ class Pipeline:
         logger.info(f"Pipeline '{self.name}' completed.")
         return data
 
-
 # --------------------------------------------------------------------------------------
 # Artifacts
 # --------------------------------------------------------------------------------------
 
 class SnapshotRequestArtifact(Artifact):
-    """
-    Input artifact for snapshot pipeline.
-    Filter by ticker and/or date range if desired.
-    """
-    ticker: Optional[str] = None              # e.g. "RELIANCE.NS"
-    start_date: Optional[str] = None          # "YYYY-MM-DD"
-    end_date: Optional[str] = None            # "YYYY-MM-DD"
+    ticker: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
 
 
 class StockRowsArtifact(Artifact):
-    """Rows loaded from the `stocks` table."""
     ticker: List[str]
-    date: List[str]  # ISO date string "YYYY-MM-DD"
+    date: List[str]  # "YYYY-MM-DD"
     close_price: List[Optional[float]]
     return_1d: List[Optional[float]]
     return_30d: List[Optional[float]]
@@ -124,11 +111,8 @@ class StockRowsArtifact(Artifact):
 
 
 class SentimentAggregateArtifact(Artifact):
-    """
-    Per (ticker, snapshot_date) aggregation joining stocks + article sentiment.
-    """
     ticker: List[str]
-    snapshot_date: List[str]  # ISO date string
+    snapshot_date: List[str]
 
     close_price: List[Optional[float]]
     return_1d: List[Optional[float]]
@@ -154,7 +138,6 @@ class SentimentAggregateArtifact(Artifact):
     prob_pos_max: List[Optional[float]]
     prob_neg_max: List[Optional[float]]
 
-    # XGBoost predictions for future returns (optional; not persisted yet)
     pred_return_1d: Optional[List[Optional[float]]] = None
     pred_return_30d: Optional[List[Optional[float]]] = None
     pred_return_120d: Optional[List[Optional[float]]] = None
@@ -162,19 +145,13 @@ class SentimentAggregateArtifact(Artifact):
 
 
 class DBArtifact(Artifact):
-    """Output artifact after writing snapshots to DB."""
     num_snapshots: int
-
 
 # --------------------------------------------------------------------------------------
 # Helpers
 # --------------------------------------------------------------------------------------
 
 def _get_dsn() -> str:
-    """
-    Returns the Postgres connection string.
-    Override with DATABASE_URL env var if present.
-    """
     return os.getenv(
         "DATABASE_URL",
         "postgresql://stock_user:stock_pass@postgres:5432/stock_db",
@@ -185,16 +162,54 @@ def _parse_date(s: str) -> date:
     return datetime.fromisoformat(s).date()
 
 
-def _safe_float(x: Optional[float]) -> float:
-    return float(x) if x is not None else 0.0
-
-
 def _mean(values: List[Optional[float]]) -> Optional[float]:
-    nums = [float(v) for v in values if v is not None]
+    nums = [float(v) for v in values if v is not None and math.isfinite(float(v))]
     if not nums:
         return None
     return float(sum(nums) / len(nums))
 
+
+def _safe_max(values: List[Optional[float]]) -> Optional[float]:
+    nums = [float(v) for v in values if v is not None and math.isfinite(float(v))]
+    return max(nums) if nums else None
+
+
+def _safe_min(values: List[Optional[float]]) -> Optional[float]:
+    nums = [float(v) for v in values if v is not None and math.isfinite(float(v))]
+    return min(nums) if nums else None
+
+
+def _truthy_env(name: str, default: str = "0") -> bool:
+    val = os.getenv(name, default).strip().lower()
+    return val in {"1", "true", "t", "yes", "y", "on"}
+
+
+def _xgb_has_cuda_build() -> bool:
+    try:
+        import xgboost as xgb
+        bi = getattr(xgb, "build_info", None)
+        if not callable(bi):
+            return False
+        info = bi()
+        if not isinstance(info, dict):
+            return False
+        use_cuda = info.get("USE_CUDA", info.get("use_cuda"))
+        if isinstance(use_cuda, bool):
+            return use_cuda
+        if isinstance(use_cuda, str):
+            return use_cuda.strip().lower() in {"1", "true", "yes", "y", "on"}
+        return False
+    except Exception:
+        return False
+
+
+def _safe_num(x: Optional[float]) -> float:
+    if x is None:
+        return 0.0
+    v = float(x)
+    if not math.isfinite(v):
+        return 0.0
+    return v
 
 # --------------------------------------------------------------------------------------
 # Stage 1: Load stocks + returns
@@ -221,7 +236,6 @@ def load_stock_rows(req: SnapshotRequestArtifact) -> StockRowsArtifact:
     """
     params: List[Any] = []
 
-    # Optional filters
     if req.ticker:
         sql += " AND ticker = %s"
         params.append(req.ticker)
@@ -249,16 +263,8 @@ def load_stock_rows(req: SnapshotRequestArtifact) -> StockRowsArtifact:
     r120d: List[Optional[float]] = []
     r360d: List[Optional[float]] = []
 
-    for (
-        t,
-        d,
-        close,
-        ret1,
-        ret30,
-        ret120,
-        ret360,
-    ) in rows:
-        tickers.append(t)
+    for (t, d, close, ret1, ret30, ret120, ret360) in rows:
+        tickers.append(str(t))
         dates.append(d.isoformat() if isinstance(d, date) else str(d))
         close_price.append(float(close) if close is not None else None)
         r1d.append(float(ret1) if ret1 is not None else None)
@@ -286,13 +292,16 @@ LoadStocksStage = Stage(
     compute_fn=load_stock_rows,
 )
 
-
 # --------------------------------------------------------------------------------------
-# Stage 2: Aggregate article sentiment per (ticker, date)
+# Stage 2: Aggregate article sentiment per DATE (ALL articles apply to ALL stocks)
 # --------------------------------------------------------------------------------------
 
 def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact:
-    logger.info("[AggregateSentiment] Aggregating article sentiment by (ticker, date)")
+    """
+    Build daily sentiment aggregates from articles by published_at::date,
+    then attach those daily aggregates to every (ticker, stocks.date).
+    """
+    logger.info("[AggregateSentiment] Aggregating ALL-articles sentiment per day (published_at::date)")
 
     n = len(stocks.ticker)
     if n == 0:
@@ -320,113 +329,91 @@ def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact
             prob_neg_max=[],
         )
 
-    # Determine date range for article query
     all_dates = [_parse_date(d) for d in stocks.date]
     min_date_val = min(all_dates)
     max_date_val = max(all_dates)
 
-    # Load all candidate articles in the date window
+    logger.info(f"[AggregateSentiment] Stocks window: {min_date_val} -> {max_date_val}")
+
     dsn = _get_dsn()
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
 
+    # Pull only the fields we need, grouped per day.
+    # IMPORTANT: we count only rows that have a sentiment label and/or scores available.
     cur.execute(
         """
         SELECT
             published_at::date AS pub_date,
-            title,
-            description,
-            url,
-            sentiment,
-            sentiment_score,
-            prob_pos,
-            prob_neg,
-            prob_neu
+            COUNT(*) FILTER (WHERE sentiment IS NOT NULL) AS n_labeled,
+            COUNT(*) FILTER (WHERE sentiment = 'positive') AS n_pos,
+            COUNT(*) FILTER (WHERE sentiment = 'negative') AS n_neg,
+
+            AVG(sentiment_score) FILTER (WHERE sentiment_score IS NOT NULL) AS mean_score,
+            MAX(sentiment_score) FILTER (WHERE sentiment_score IS NOT NULL) AS max_score,
+            MIN(sentiment_score) FILTER (WHERE sentiment_score IS NOT NULL) AS min_score,
+
+            AVG(prob_pos) FILTER (WHERE prob_pos IS NOT NULL) AS prob_pos_mean,
+            AVG(prob_neg) FILTER (WHERE prob_neg IS NOT NULL) AS prob_neg_mean,
+            AVG(prob_neu) FILTER (WHERE prob_neu IS NOT NULL) AS prob_neu_mean,
+
+            MAX(prob_pos) FILTER (WHERE prob_pos IS NOT NULL) AS prob_pos_max,
+            MAX(prob_neg) FILTER (WHERE prob_neg IS NOT NULL) AS prob_neg_max
         FROM articles
         WHERE published_at IS NOT NULL
           AND published_at::date BETWEEN %s AND %s
+        GROUP BY 1
+        ORDER BY 1;
         """,
         (min_date_val, max_date_val),
     )
 
-    article_rows = cur.fetchall()
+    daily: Dict[date, Dict[str, Any]] = {}
+    rows = cur.fetchall()
     cur.close()
     conn.close()
 
-    # Build in-memory list of dicts for flexible filtering
-    articles: List[Dict[str, Any]] = []
+    logger.info(f"[AggregateSentiment] Loaded {len(rows)} daily sentiment rows from articles")
+
     for (
         pub_date,
-        title,
-        description,
-        url,
-        sentiment,
-        sentiment_score,
-        prob_pos,
-        prob_neg,
-        prob_neu,
-    ) in article_rows:
-        articles.append(
-            {
-                "pub_date": pub_date,
-                "title": title or "",
-                "description": description or "",
-                "url": url,
-                "sentiment": (sentiment or "").lower() if sentiment else None,
-                "sentiment_score": float(sentiment_score)
-                if sentiment_score is not None
-                else None,
-                "prob_pos": float(prob_pos) if prob_pos is not None else None,
-                "prob_neg": float(prob_neg) if prob_neg is not None else None,
-                "prob_neu": float(prob_neu) if prob_neu is not None else None,
-            }
-        )
+        n_labeled,
+        n_pos,
+        n_neg,
+        mean_score,
+        max_score,
+        min_score,
+        pp_mean,
+        pn_mean,
+        pneu_mean,
+        pp_max,
+        pn_max,
+    ) in rows:
+        d = pub_date if isinstance(pub_date, date) else _parse_date(str(pub_date))
+        nl = int(n_labeled or 0)
+        np_ = int(n_pos or 0)
+        nn_ = int(n_neg or 0)
 
-    logger.info(
-        f"[AggregateSentiment] Loaded {len(articles)} candidate articles "
-        f"between {min_date_val} and {max_date_val}"
-    )
+        daily[d] = {
+            "num_articles": nl,
+            "num_pos_articles": np_,
+            "num_neg_articles": nn_,
+            "pos_share": (float(np_) / nl) if nl > 0 else None,
+            "neg_share": (float(nn_) / nl) if nl > 0 else None,
 
-    # Industry / energy-related filter (broad, not ticker-specific)
-    def is_energy_related(art: Dict[str, Any]) -> bool:
-    # Be safe with missing keys
-        text = f"{art.get('title', '')} {art.get('description', '')}".lower()
+            "sentiment_mean": float(mean_score) if mean_score is not None else None,
+            "sentiment_max": float(max_score) if max_score is not None else None,
+            "sentiment_min": float(min_score) if min_score is not None else None,
 
-        # 1) General energy / oil & gas / macro
-        energy_keywords = [
-            "energy", "oil", "gas", "natural gas", "lng", "petroleum",
-            "refinery", "refining", "upstream", "downstream",
-            "offshore", "onshore", "pipeline", "crude", "brent crude",
-            "wti crude", "oil price", "oil prices", "fossil fuel",
-            "renewables", "solar", "wind farm", "opec", "opec+",
-            "production cut", "output cut", "drilling", "rig count",
-        ]
+            "prob_pos_mean": float(pp_mean) if pp_mean is not None else None,
+            "prob_neg_mean": float(pn_mean) if pn_mean is not None else None,
+            "prob_neu_mean": float(pneu_mean) if pneu_mean is not None else None,
 
-        # 2) BP-specific phrases
-        bp_keywords = [
-            "bp", "bp plc", "bp p.l.c", "british oil major",
-            "london-listed oil major", "north sea", "gulf of mexico",
-            "bp share buyback", "bp dividend"
-        ]
+            "prob_pos_max": float(pp_max) if pp_max is not None else None,
+            "prob_neg_max": float(pn_max) if pn_max is not None else None,
+        }
 
-        # 3) Reliance-specific phrases
-        reliance_keywords = [
-            "reliance", "reliance industries", "ril",
-            "mukesh ambani", "ambani",
-            "jamnagar refinery", "jamnagar complex",
-            "reliance jio", "jio", "reliance retail",
-            "indian energy giant", "indian conglomerate"
-        ]
-
-        # 4) Other big energy names you might still care about
-        peer_keywords = [
-            "shell", "chevron", "exxon", "exxonmobil", "totalenergies"
-        ]
-
-        keywords = energy_keywords + bp_keywords + reliance_keywords + peer_keywords
-
-        return any(k in text for k in keywords)
-
+    # Now attach daily stats to each stock row
     out_ticker: List[str] = []
     out_date: List[str] = []
     out_close: List[Optional[float]] = []
@@ -442,99 +429,56 @@ def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact
     num_articles: List[int] = []
     num_pos: List[int] = []
     num_neg: List[int] = []
-
     pos_share: List[Optional[float]] = []
     neg_share: List[Optional[float]] = []
 
     prob_pos_mean: List[Optional[float]] = []
     prob_neg_mean: List[Optional[float]] = []
     prob_neu_mean: List[Optional[float]] = []
-
     prob_pos_max: List[Optional[float]] = []
     prob_neg_max: List[Optional[float]] = []
 
-    # For each stock row, gather matching articles and compute stats
+    missing_days = 0
+
     for i in range(n):
         t = stocks.ticker[i]
         d = _parse_date(stocks.date[i])
 
-        # Option A: all articles on that date (broad market sentiment)
-        # matched = [a for a in articles if a["pub_date"] == d]
-
-        # Option B (current): only energy/industry-related articles that day
-        matched = [
-            a
-            for a in articles
-            if a["pub_date"] == d and is_energy_related(a)
-        ]
-
-        sentiment_scores: List[Optional[float]] = [
-            a["sentiment_score"] for a in matched
-        ]
-        pos_flags = [1 for a in matched if a["sentiment"] == "positive"]
-        neg_flags = [1 for a in matched if a["sentiment"] == "negative"]
-
-        prob_pos_vals = [a["prob_pos"] for a in matched]
-        prob_neg_vals = [a["prob_neg"] for a in matched]
-        prob_neu_vals = [a["prob_neu"] for a in matched]
-
-        if matched:
-            n_articles = len(matched)
-            n_pos = len(pos_flags)
-            n_neg = len(neg_flags)
-
-            sent_mean.append(_mean(sentiment_scores))
-            sent_max.append(
-                max(
-                    [s for s in sentiment_scores if s is not None],
-                    default=None,
-                )
-            )
-            sent_min.append(
-                min(
-                    [s for s in sentiment_scores if s is not None],
-                    default=None,
-                )
-            )
-
-            num_articles.append(n_articles)
-            num_pos.append(n_pos)
-            num_neg.append(n_neg)
-
-            pos_share.append(n_pos / n_articles if n_articles else None)
-            neg_share.append(n_neg / n_articles if n_articles else None)
-
-            prob_pos_mean.append(_mean(prob_pos_vals))
-            prob_neg_mean.append(_mean(prob_neg_vals))
-            prob_neu_mean.append(_mean(prob_neu_vals))
-
-            prob_pos_max.append(
-                max(
-                    [p for p in prob_pos_vals if p is not None],
-                    default=None,
-                )
-            )
-            prob_neg_max.append(
-                max(
-                    [p for p in prob_neg_vals if p is not None],
-                    default=None,
-                )
-            )
-        else:
-            # No matching articles for this snapshot_date
+        day = daily.get(d)
+        if day is None:
+            missing_days += 1
+            # No articles that day -> fill zeros/None
             sent_mean.append(None)
             sent_max.append(None)
             sent_min.append(None)
+
             num_articles.append(0)
             num_pos.append(0)
             num_neg.append(0)
             pos_share.append(None)
             neg_share.append(None)
+
             prob_pos_mean.append(None)
             prob_neg_mean.append(None)
             prob_neu_mean.append(None)
             prob_pos_max.append(None)
             prob_neg_max.append(None)
+        else:
+            sent_mean.append(day["sentiment_mean"])
+            sent_max.append(day["sentiment_max"])
+            sent_min.append(day["sentiment_min"])
+
+            num_articles.append(int(day["num_articles"]))
+            num_pos.append(int(day["num_pos_articles"]))
+            num_neg.append(int(day["num_neg_articles"]))
+            pos_share.append(day["pos_share"])
+            neg_share.append(day["neg_share"])
+
+            prob_pos_mean.append(day["prob_pos_mean"])
+            prob_neg_mean.append(day["prob_neg_mean"])
+            prob_neu_mean.append(day["prob_neu_mean"])
+            prob_pos_max.append(day["prob_pos_max"])
+            prob_neg_max.append(day["prob_neg_max"])
 
         out_ticker.append(t)
         out_date.append(d.isoformat())
@@ -544,7 +488,10 @@ def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact
         out_r120d.append(stocks.return_120d[i])
         out_r360d.append(stocks.return_360d[i])
 
-    logger.info(f"[AggregateSentiment] Built aggregates for {len(out_ticker)} snapshot rows")
+    logger.info(
+        f"[AggregateSentiment] Built aggregates for {len(out_ticker)} snapshot rows "
+        f"(days_missing_articles={missing_days})"
+    )
 
     return SentimentAggregateArtifact(
         ticker=out_ticker,
@@ -569,6 +516,7 @@ def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact
         prob_neg_max=prob_neg_max,
     )
 
+
 AggregateStage = Stage(
     name="AggregateSentiment",
     input_schema=StockRowsArtifact,
@@ -576,47 +524,9 @@ AggregateStage = Stage(
     compute_fn=aggregate_sentiment,
 )
 
-
 # --------------------------------------------------------------------------------------
 # Stage 3: XGBoost on returns using sentiment features
 # --------------------------------------------------------------------------------------
-
-def _truthy_env(name: str, default: str = "0") -> bool:
-    val = os.getenv(name, default).strip().lower()
-    return val in {"1", "true", "t", "yes", "y", "on"}
-
-
-def _xgb_has_cuda_build() -> bool:
-    """Return True if the installed XGBoost was compiled with CUDA support."""
-    try:
-        import xgboost as xgb  # local import to avoid import-time failures elsewhere
-
-        bi = getattr(xgb, "build_info", None)
-        if not callable(bi):
-            return False
-
-        info = bi()
-        if not isinstance(info, dict):
-            return False
-
-        use_cuda = info.get("USE_CUDA", info.get("use_cuda"))
-        if isinstance(use_cuda, bool):
-            return use_cuda
-        if isinstance(use_cuda, str):
-            return use_cuda.strip().lower() in {"1", "true", "yes", "y", "on"}
-        return False
-    except Exception:
-        return False
-
-def _safe_num(x: Optional[float]) -> float:
-    
-    if x is None: 
-        return 0.0
-    v = float(x)
-    if not math.isfinite(v):
-        return 0.0
-    return v 
-
 
 def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArtifact:
     logger.info("[XGBoost] Building dataset from sentiment snapshots")
@@ -639,7 +549,6 @@ def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArt
     y_360d: List[float] = []
 
     for i in range(n):
-        # Require at least a realized 1d return and a sentiment_mean to use row
         if agg.return_1d[i] is None or agg.sentiment_mean[i] is None:
             continue
 
@@ -694,8 +603,6 @@ def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArt
         logger.info("[XGBoost] XGBoost CUDA not available; using CPU")
 
     def make_model(device: str) -> XGBRegressor:
-        # XGBoost 2.x+ prefers `device` with `tree_method=hist`.
-        # If GPU is unavailable at runtime, we catch the error and fall back to CPU.
         return XGBRegressor(
             n_estimators=200,
             max_depth=4,
@@ -708,96 +615,59 @@ def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArt
             device=device,
         )
 
-    # We built X only on “usable” rows; idxs holds the mapping from rows in X
-    # back to the full agg.* arrays (length n).
-    m = X.shape[0]  # number of rows in X
-    n_full = n      # number of rows in the aggregate artifact
+    m = X.shape[0]
+    n_full = n
 
-    def _train_and_predict_per_horizon(
-        y: np.ndarray, horizon_name: str
-    ) -> List[Optional[float]]:
-        """
-        For a given horizon (1d, 30d, 120d, 360d), drop rows whose labels are
-        non-finite (NaN/inf), train an XGBoost model, and scatter predictions
-        back into a full-length list (len = n_full), with None for rows that
-        were not used.
-        """
-        if m == 0:
-            logger.info(f"[XGBoost] No rows in X for {horizon_name}; skipping.")
-            return [None] * n_full
-
-        # Mask of rows with finite labels
+    def _train_and_predict_per_horizon(y: np.ndarray, horizon_name: str) -> List[Optional[float]]:
         finite_mask = np.isfinite(y)
         num_used = int(finite_mask.sum())
-
         if num_used < 3:
-            logger.warning(
-                f"[XGBoost] Not enough finite labels for {horizon_name} "
-                f"(have {num_used}). Skipping training for this horizon."
-            )
+            logger.warning(f"[XGBoost] Not enough finite labels for {horizon_name} (have {num_used}). Skipping.")
             return [None] * n_full
 
         X_clean = X[finite_mask]
         y_clean = y[finite_mask]
 
-        logger.info(
-            f"[XGBoost] Training {horizon_name} model on {num_used} rows "
-            f"(dropped {m - num_used} rows with NaN/inf labels)."
-        )
-
         model: Optional[XGBRegressor] = None
         trained_device = "cpu"
+
         if prefer_gpu:
             try:
                 model = make_model("cuda")
                 model.fit(X_clean, y_clean)
-                logger.info(f"[XGBoost] Trained {horizon_name} model on GPU (cuda)")
                 trained_device = "cuda"
+                logger.info(f"[XGBoost] Trained {horizon_name} model on GPU")
             except Exception as e:
-                logger.warning(
-                    f"[XGBoost] GPU training failed for {horizon_name}; retrying on CPU: {e}"
-                )
+                logger.warning(f"[XGBoost] GPU training failed for {horizon_name}; retrying on CPU: {e}")
                 model = None
 
         if model is None:
             model = make_model("cpu")
             model.fit(X_clean, y_clean)
-            logger.info(f"[XGBoost] Trained {horizon_name} model on CPU")
             trained_device = "cpu"
+            logger.info(f"[XGBoost] Trained {horizon_name} model on CPU")
 
-        # Avoid XGBoost warning about mismatched devices (GPU booster + CPU NumPy input)
-        # by explicitly predicting via DMatrix when the booster is on CUDA.
         if trained_device == "cuda":
             import xgboost as xgb
-
-            dmat = xgb.DMatrix(X_clean)
-            preds_clean = model.get_booster().predict(dmat)
+            preds_clean = model.get_booster().predict(xgb.DMatrix(X_clean))
         else:
             preds_clean = model.predict(X_clean)
 
-        # Scatter predictions back to full-length array. We need to map from
-        # “row index in X” -> “global index in agg.* lists” using idxs.
         full_preds: List[Optional[float]] = [None] * n_full
         clean_idx = 0
         for row_in_X, used in enumerate(finite_mask):
             if not used:
                 continue
-            global_row = idxs[row_in_X]  # index in agg.* lists
+            global_row = idxs[row_in_X]
             full_preds[global_row] = float(preds_clean[clean_idx])
             clean_idx += 1
 
         return full_preds
 
-    # Train one model per horizon and get full-length predictions
-    pred_1d_full = _train_and_predict_per_horizon(y_1d_arr, "1d")
-    pred_30d_full = _train_and_predict_per_horizon(y_30d_arr, "30d")
-    pred_120d_full = _train_and_predict_per_horizon(y_120d_arr, "120d")
-    pred_360d_full = _train_and_predict_per_horizon(y_360d_arr, "360d")
-
-    agg.pred_return_1d = pred_1d_full
-    agg.pred_return_30d = pred_30d_full
-    agg.pred_return_120d = pred_120d_full
-    agg.pred_return_360d = pred_360d_full
+    agg.pred_return_1d = _train_and_predict_per_horizon(y_1d_arr, "1d")
+    agg.pred_return_30d = _train_and_predict_per_horizon(y_30d_arr, "30d")
+    agg.pred_return_120d = _train_and_predict_per_horizon(y_120d_arr, "120d")
+    agg.pred_return_360d = _train_and_predict_per_horizon(y_360d_arr, "360d")
 
     logger.info("[XGBoost] Finished training and predictions")
     return agg
@@ -809,7 +679,6 @@ XGBoostStage = Stage(
     output_schema=SentimentAggregateArtifact,
     compute_fn=run_xgboost_models,
 )
-
 
 # --------------------------------------------------------------------------------------
 # Stage 4: Write to sentiment_snapshots
@@ -921,25 +790,24 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
                 %(prob_neg_max)s
             )
             ON CONFLICT (ticker, snapshot_date) DO UPDATE SET
-                close_price     = EXCLUDED.close_price,
-                return_1d       = EXCLUDED.return_1d,
-                return_30d      = EXCLUDED.return_30d,
-                return_120d     = EXCLUDED.return_120d,
-                return_360d     = EXCLUDED.return_360d,
-                sentiment_mean  = EXCLUDED.sentiment_mean,
-                sentiment_max   = EXCLUDED.sentiment_max,
-                sentiment_min   = EXCLUDED.sentiment_min,
-                num_articles    = EXCLUDED.num_articles,
-                num_pos_articles= EXCLUDED.num_pos_articles,
-                num_neg_articles= EXCLUDED.num_neg_articles,
-                pos_share       = EXCLUDED.pos_share,
-                neg_share       = EXCLUDED.neg_share,
-                prob_pos_mean   = EXCLUDED.prob_pos_mean,
-                prob_neg_mean   = EXCLUDED.prob_neg_mean,
-                prob_neu_mean   = EXCLUDED.prob_neu_mean,
-                prob_pos_max    = EXCLUDED.prob_pos_max,
-                prob_neg_max    = EXCLUDED.prob_neg_max
-            ;
+                close_price      = EXCLUDED.close_price,
+                return_1d        = EXCLUDED.return_1d,
+                return_30d       = EXCLUDED.return_30d,
+                return_120d      = EXCLUDED.return_120d,
+                return_360d      = EXCLUDED.return_360d,
+                sentiment_mean   = EXCLUDED.sentiment_mean,
+                sentiment_max    = EXCLUDED.sentiment_max,
+                sentiment_min    = EXCLUDED.sentiment_min,
+                num_articles     = EXCLUDED.num_articles,
+                num_pos_articles = EXCLUDED.num_pos_articles,
+                num_neg_articles = EXCLUDED.num_neg_articles,
+                pos_share        = EXCLUDED.pos_share,
+                neg_share        = EXCLUDED.neg_share,
+                prob_pos_mean    = EXCLUDED.prob_pos_mean,
+                prob_neg_mean    = EXCLUDED.prob_neg_mean,
+                prob_neu_mean    = EXCLUDED.prob_neu_mean,
+                prob_pos_max     = EXCLUDED.prob_pos_max,
+                prob_neg_max     = EXCLUDED.prob_neg_max;
             """,
             {
                 "ticker": ticker,
@@ -965,13 +833,15 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
             },
         )
         num_written += 1
+        if num_written % 5000 == 0:
+            logger.info(f"[WriteSnapshots] Upserted {num_written} rows...")
+            conn.commit()
 
     conn.commit()
     cur.close()
     conn.close()
 
     logger.info(f"[WriteSnapshots] Wrote/updated {num_written} snapshot rows")
-
     return DBArtifact(num_snapshots=num_written)
 
 
@@ -982,7 +852,6 @@ WriteSnapshotsStage = Stage(
     compute_fn=write_snapshots_to_db,
 )
 
-
 # --------------------------------------------------------------------------------------
 # Pipeline
 # --------------------------------------------------------------------------------------
@@ -990,26 +859,18 @@ WriteSnapshotsStage = Stage(
 sentiment_snapshot_pipeline = Pipeline(
     "SentimentSnapshotAggregator",
     [
-        LoadStocksStage,   # load stock + returns
-        AggregateStage,    # join + aggregate article sentiment per (ticker, date)
-        XGBoostStage,      # train XGBoost on returns using sentiment features
-        WriteSnapshotsStage,  # write into sentiment_snapshots
+        LoadStocksStage,
+        AggregateStage,
+        XGBoostStage,
+        WriteSnapshotsStage,
     ],
 )
-
 
 # --------------------------------------------------------------------------------------
 # Public helper for FastAPI startup
 # --------------------------------------------------------------------------------------
 
 def run_sentiment_snapshot_pipeline_from_env() -> Dict[str, Any]:
-    """
-    Run the sentiment snapshot pipeline using optional filters from env vars:
-      - AGG_TICKER: filter by ticker (e.g. 'BP' or 'RELIANCE.NS')
-      - AGG_START_DATE: 'YYYY-MM-DD'
-      - AGG_END_DATE: 'YYYY-MM-DD'
-    If not set, runs for ALL stocks / dates currently in the stocks table.
-    """
     req = {
         "ticker": os.getenv("AGG_TICKER") or None,
         "start_date": os.getenv("AGG_START_DATE") or None,
@@ -1021,11 +882,9 @@ def run_sentiment_snapshot_pipeline_from_env() -> Dict[str, Any]:
     logger.info(f"[SnapshotPipeline] Completed with result={result}")
     return result
 
-
 # --------------------------------------------------------------------------------------
 # CLI entry point
 # --------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    # keep CLI behavior the same, just re-use the helper
     run_sentiment_snapshot_pipeline_from_env()

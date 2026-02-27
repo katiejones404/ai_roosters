@@ -1,8 +1,8 @@
 import os
 import sys
 import logging
-from datetime import datetime
-from typing import List, Optional
+from datetime import datetime, date, timedelta
+from typing import List, Optional, Tuple
 
 import yfinance as yf
 import pandas as pd
@@ -23,10 +23,6 @@ logger.setLevel(logging.INFO)
 
 
 def build_db_url() -> str:
-    """
-    Build DB URL from env vars.
-    Used as a fallback if nothing is passed into PriceIngestor.
-    """
     db_url = os.getenv("DATABASE_URL")
     if db_url:
         return db_url
@@ -42,9 +38,6 @@ def build_db_url() -> str:
 
 class PriceIngestor:
     def __init__(self, db_url: Optional[str] = None):
-        """
-        Initialize the ingestor and reflect the 'stocks' table from the database.
-        """
         if db_url is None:
             db_url = build_db_url()
 
@@ -52,7 +45,6 @@ class PriceIngestor:
         self.engine = create_engine(db_url)
         self.metadata = MetaData()
 
-        # Reflect the existing 'stocks' table schema (including created_at, return_* etc.)
         logger.info("Reflecting 'stocks' table from database...")
         self.metadata.reflect(self.engine, only=["stocks"])
         if "stocks" not in self.metadata.tables:
@@ -64,21 +56,69 @@ class PriceIngestor:
         self.stocks: Table = self.metadata.tables["stocks"]
         logger.info("Successfully reflected 'stocks' table.")
 
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Article date window helpers
+    # ------------------------------------------------------------
+
+    def get_article_date_range(self) -> Tuple[date, date]:
+        """
+        Returns (min_date, max_date) from articles.published_at as *dates*.
+        """
+        with self.engine.connect() as conn:
+            row = conn.execute(
+                text("SELECT MIN(published_at), MAX(published_at) FROM articles;")
+            ).fetchone()
+
+        if not row or row[0] is None or row[1] is None:
+            raise RuntimeError(
+                "Could not determine article date range. "
+                "Make sure 'articles' has published_at populated."
+            )
+
+        min_dt: datetime = row[0]
+        max_dt: datetime = row[1]
+        return min_dt.date(), max_dt.date()
+
+    def normalize_price_window(
+        self,
+        start_date: Optional[str],
+        end_date: Optional[str],
+        use_article_window_if_missing: bool = True,
+    ) -> Tuple[str, str]:
+        """
+        Ensures we always have a bounded [start, end] window aligned to articles.
+        Returns ISO date strings (YYYY-MM-DD).
+
+        Note: yfinance's `end` is effectively exclusive, so we will add +1 day
+        at fetch-time (see fetch_stock_data).
+        """
+        if start_date and end_date:
+            return start_date, end_date
+
+        if not use_article_window_if_missing:
+            # fallback to a sensible default
+            today = date.today()
+            return str(today - timedelta(days=365)), str(today)
+
+        min_d, max_d = self.get_article_date_range()
+        return str(min_d), str(max_d)
+
+    # ------------------------------------------------------------
     # Data fetching
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
 
     def fetch_stock_data(
         self,
         ticker: str,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        period: Optional[str] = "1y",
+        start_date: Optional[str] = None,   # YYYY-MM-DD
+        end_date: Optional[str] = None,     # YYYY-MM-DD (inclusive intent)
+        period: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Fetch OHLCV data from yfinance for a single ticker.
+        Fetch OHLCV data from yfinance.
 
-        - If start_date & end_date are set, period is ignored.
+        - If start_date & end_date are set: uses them.
+        - `end_date` is treated as inclusive by adding +1 day (yfinance end is exclusive-ish).
         - Uses Close as adjusted_close for now.
         """
         try:
@@ -86,7 +126,9 @@ class PriceIngestor:
             stock = yf.Ticker(ticker)
 
             if start_date and end_date:
-                df = stock.history(start=start_date, end=end_date)
+                # make end inclusive
+                end_plus_one = (pd.to_datetime(end_date) + pd.Timedelta(days=1)).date()
+                df = stock.history(start=start_date, end=str(end_plus_one))
             else:
                 df = stock.history(period=period or "1y")
 
@@ -110,8 +152,6 @@ class PriceIngestor:
             df["adjusted_close"] = df["close"]
             df["ticker"] = ticker
 
-            # Only the fields we want to insert here.
-            # created_at is handled by DB default; returns handled by returns pipeline.
             columns = [
                 "ticker",
                 "date",
@@ -127,6 +167,12 @@ class PriceIngestor:
             # Ensure 'date' is a Python date, not Timestamp
             df["date"] = pd.to_datetime(df["date"]).dt.date
 
+            # If the caller provided an intended window, hard-filter to it
+            if start_date and end_date:
+                s = pd.to_datetime(start_date).date()
+                e = pd.to_datetime(end_date).date()
+                df = df[(df["date"] >= s) & (df["date"] <= e)]
+
             logger.info(f"Retrieved {len(df)} records for {ticker}")
             return df
 
@@ -134,17 +180,11 @@ class PriceIngestor:
             logger.error(f"Error fetching data for {ticker}: {str(e)}")
             return pd.DataFrame()
 
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
     # Storage
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
 
     def store_prices(self, df: pd.DataFrame, update_existing: bool = False) -> None:
-        """
-        Store price records in the stocks table.
-
-        - If update_existing=True, upserts on (ticker, date).
-        - If update_existing=False, ignores conflicts on (ticker, date).
-        """
         if df.empty:
             logger.warning("No data to store (DataFrame is empty).")
             return
@@ -152,7 +192,7 @@ class PriceIngestor:
         try:
             records = df.to_dict("records")
             total_records = len(records)
-            batch_size = 100
+            batch_size = 500  # a bit bigger is fine
             records_processed = 0
 
             for i in range(0, total_records, batch_size):
@@ -162,7 +202,6 @@ class PriceIngestor:
                     stmt = insert(self.stocks).values(batch)
 
                     if update_existing:
-                        # Upsert on (ticker, date)
                         stmt = stmt.on_conflict_do_update(
                             index_elements=["ticker", "date"],
                             set_={
@@ -175,14 +214,12 @@ class PriceIngestor:
                             },
                         )
                     else:
-                        # Ignore if row already exists
-                        stmt = stmt.on_conflict_do_nothing(
-                            index_elements=["ticker", "date"]
-                        )
+                        stmt = stmt.on_conflict_do_nothing(index_elements=["ticker", "date"])
 
                     conn.execute(stmt)
-                    records_processed += len(batch)
-                    logger.info(f"Processed {records_processed}/{total_records} records")
+
+                records_processed += len(batch)
+                logger.info(f"Processed {records_processed}/{total_records} records")
 
             logger.info(f"Successfully stored {total_records} records into stocks table")
 
@@ -190,21 +227,32 @@ class PriceIngestor:
             logger.error(f"Error storing prices: {str(e)}")
             raise
 
-    # ------------------------------------------------------------------
-    # Utilities & helpers
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Main ingest
+    # ------------------------------------------------------------
 
     def ingest_multiple_stocks(
         self,
         tickers: List[str],
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        period: Optional[str] = "1y",
+        period: Optional[str] = None,
         update_existing: bool = False,
+        use_article_window_if_missing: bool = True,
     ) -> None:
         """
         Fetch and store prices for multiple tickers.
+
+        If start/end not provided, defaults to articles' min/max published_at dates.
         """
+        start_date, end_date = self.normalize_price_window(
+            start_date=start_date,
+            end_date=end_date,
+            use_article_window_if_missing=use_article_window_if_missing,
+        )
+
+        logger.info(f"Price ingest window: {start_date} -> {end_date} (inclusive)")
+
         for ticker in tickers:
             logger.info(f"Processing {ticker} ...")
             df = self.fetch_stock_data(
@@ -218,69 +266,32 @@ class PriceIngestor:
             else:
                 logger.warning(f"Skipping {ticker} - no data retrieved")
 
-    def get_latest_date(self, ticker: str) -> Optional[datetime]:
-        """
-        Return the most recent date stored for a given ticker.
-        """
-        try:
-            with self.engine.connect() as conn:
-                query = text(
-                    """
-                    SELECT MAX(date) AS latest_date
-                    FROM stocks
-                    WHERE ticker = :ticker
-                    """
-                )
-                result = conn.execute(query, {"ticker": ticker}).fetchone()
-                return result[0] if result and result[0] else None
-        except Exception as e:
-            logger.error(f"Error getting latest date for {ticker}: {str(e)}")
-            return None
-
-    def backfill_missing_data(self, ticker: str, target_start_date: str) -> None:
-        """
-        Example helper: backfill from target_start_date up to latest existing date (or now).
-        """
-        latest = self.get_latest_date(ticker)
-
-        if latest:
-            logger.info(f"Latest existing data for {ticker}: {latest}")
-            df = self.fetch_stock_data(
-                ticker=ticker,
-                start_date=target_start_date,
-                end_date=str(latest),
-            )
-        else:
-            logger.info(
-                f"No existing data for {ticker}, fetching from {target_start_date} onward"
-            )
-            df = self.fetch_stock_data(ticker=ticker, start_date=target_start_date)
-
-        if not df.empty:
-            self.store_prices(df, update_existing=False)
-        else:
-            logger.warning(f"No data fetched for backfill of {ticker}")
 
 # to rerun the stock ingestion use this command
 # docker compose exec api python -m app.services.ingesting_pipelines.prices_ingest
 if __name__ == "__main__":
-    # Optional CLI usage, doesn't affect FastAPI integration
     ingestor = PriceIngestor()
-    stocks = ["KSS","ALK", "NVS", "AXP", "FCX", "CSX", "DAL", "NTAP", "GPS", "AEO",
-              "MRK", "DFS", "COP", "BHP", "EA"]
-    
+    stocks = [
+        "KSS","ALK", "NVS", "AXP", "FCX", "CSX", "DAL", "NTAP", "AMZN", "AEO",
+        "MRK", "NVDA", "COP", "BHP", "EA"
+    ]
+
+    # Remove old tickers safely
     with ingestor.engine.begin() as conn:
         conn.execute(
-            text("DELETE FROM stocks WHERE ticker != ALL(:tickers)"),
-            {"tickers": stocks}
+            text("DELETE FROM stocks WHERE NOT (ticker = ANY(:tickers));"),
+            {"tickers": stocks},
         )
-        logger.info("Removed old tickers from database.")
-        
+        logger.info("Removed old tickers from database (kept only current tickers).")
+
+    # Align prices exactly to your article window (2019-01-01 -> 2024-07-30 in your DB)
     ingestor.ingest_multiple_stocks(
         tickers=stocks,
-        start_date= None,
-        end_date= None,
-        period="5y",
+        start_date=None,
+        end_date=None,
+        period=None,                 # not used when start/end are determined
         update_existing=True,
+        use_article_window_if_missing=True,
     )
+
     logger.info("Manual price ingestion complete.")
