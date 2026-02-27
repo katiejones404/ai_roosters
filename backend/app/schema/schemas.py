@@ -33,6 +33,8 @@ class UserResponse(BaseModel):
     email: str
     created_at: datetime
     profile_picture: Optional[str] = None
+    name: Optional[str] = None
+    phone: Optional[str] = None
 
     class Config:
         orm_mode = True
@@ -44,6 +46,17 @@ class ProfilePictureUpdate(BaseModel):
 
 class DeleteAccountRequest(BaseModel):
     password: str
+
+
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    username: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
 
 
 class Token(BaseModel):

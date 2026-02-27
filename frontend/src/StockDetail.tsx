@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import AddToPortfolioModal from './components/AddToPortfolio';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid
@@ -64,6 +65,7 @@ const StockDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'7' | '30' | '120' | '360'>('30');
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     if (!ticker) return;
@@ -111,21 +113,8 @@ const StockDetail: React.FC = () => {
   const isPositive  = (rangeChange ?? 0) >= 0;
   const accentColor = isPositive ? '#16a34a' : '#dc2626';
 
-  const addToPortfolio = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) { navigate('/login'); return; }
-    const quantity = prompt('Enter quantity:', '1');
-    if (!quantity) return;
-    const avgPrice = prompt('Enter purchase price:', String(latest?.close ?? '0'));
-    if (!avgPrice) return;
-    try {
-      await axios.post(
-        `${API_BASE}/api/portfolio`,
-        { ticker, quantity: parseFloat(quantity), avg_price: parseFloat(avgPrice) },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      alert('Added to portfolio!');
-    } catch { alert('Failed to add to portfolio'); }
+  const addToPortfolio = () => {
+    setShowModal(true);
   };
 
   if (loading) return (
@@ -307,6 +296,14 @@ const StockDetail: React.FC = () => {
         </div>
 
       </div>
+      {showModal && ticker && (
+        <AddToPortfolioModal
+          ticker={ticker}
+          currentPrice={latest?.close ?? 0}
+          onClose={() => setShowModal(false)}
+          onSuccess={() => { setShowModal(false); navigate('/portfolio'); }}
+        />
+      )}
     </div>
   );
 };
