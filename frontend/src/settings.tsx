@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { getCurrentUser, logout, deleteAccount, updateProfilePicture } from "./utils/auth";
+import { getCurrentUser, logout, deleteAccount, updateProfilePicture, updateProfile, changePassword } from "./utils/auth";
 import { Link } from "react-router-dom";
 import "./settings.css";
 
@@ -32,6 +32,10 @@ const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("account");
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
 
   const [profileImage, setProfileImage] = useState<string>(
     "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
@@ -119,13 +123,49 @@ const Settings: React.FC = () => {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      setSuccessMessage("Settings saved successfully!");
+    setErrorMessage("");
+    setSuccessMessage("");
+    try {
+      await updateProfile({
+        name: accountForm.name || undefined,
+        username: accountForm.username || undefined,
+        phone: accountForm.phone || undefined,
+      });
+      setSuccessMessage("Profile updated successfully!");
       setTimeout(() => setSuccessMessage(""), 3000);
-    }, 1000);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setErrorMessage(detail || "Failed to save profile. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePasswordSave = async () => {
+    setPasswordError("");
+    setPasswordSuccess("");
+    if (securityForm.newPassword !== securityForm.confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+    if (!securityForm.currentPassword || !securityForm.newPassword) {
+      setPasswordError("Please fill in all password fields.");
+      return;
+    }
+    setIsSavingPassword(true);
+    try {
+      await changePassword(securityForm.currentPassword, securityForm.newPassword);
+      setPasswordSuccess("Password updated successfully!");
+      setSecurityForm((prev: SecurityFormData) => ({ ...prev, currentPassword: "", newPassword: "", confirmPassword: "" }));
+      setTimeout(() => setPasswordSuccess(""), 3000);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setPasswordError(detail || "Failed to update password. Please try again.");
+    } finally {
+      setIsSavingPassword(false);
+    }
   };
 
   const handleLogout = () => {
@@ -252,8 +292,8 @@ const Settings: React.FC = () => {
         <div className="settings-sidebar">
           <div className="settings-header">
             <h2>Settings</h2>
-            <Link to="/" className="back-link">
-              ← Back to Home
+            <Link to="/dashboard" className="back-link">
+              ← Back to Dashboard
             </Link>
           </div>
 
@@ -294,8 +334,11 @@ const Settings: React.FC = () => {
             <div className="tab-content">
               <div className="content-header">
                 <h3>Account Information</h3>
-                <p>Your profile details (read-only)</p>
+                <p>Update your name, username, and phone number</p>
               </div>
+              {errorMessage && (
+                <div className="error-banner">{errorMessage}</div>
+              )}
 
               <div className="profile-section">
                 <div className="profile-image-container">
@@ -351,18 +394,20 @@ const Settings: React.FC = () => {
                     <label>Full Name</label>
                     <input
                       type="text"
+                      name="name"
                       value={accountForm.name}
-                      readOnly
-                      className="readonly-input"
+                      onChange={handleAccountChange}
+                      placeholder="Your full name"
                     />
                   </div>
                   <div className="form-group">
                     <label>Username</label>
                     <input
                       type="text"
+                      name="username"
                       value={accountForm.username}
-                      readOnly
-                      className="readonly-input"
+                      onChange={handleAccountChange}
+                      placeholder="Your username"
                     />
                   </div>
                 </div>
@@ -381,14 +426,26 @@ const Settings: React.FC = () => {
                     <label>Phone Number</label>
                     <input
                       type="tel"
+                      name="phone"
                       value={accountForm.phone}
-                      readOnly
-                      className="readonly-input"
+                      onChange={handleAccountChange}
+                      placeholder="Your phone number"
                     />
-                    
                   </div>
                 </div>
               </div>
+
+              <button
+                onClick={handleSave}
+                className="save-button"
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <><span className="spinner"></span> Saving...</>
+                ) : (
+                  "Save Profile"
+                )}
+              </button>
 
               {/* Danger Zone */}
               <div className="danger-zone">
@@ -496,17 +553,26 @@ const Settings: React.FC = () => {
                 </div>
               </div>
 
+              {passwordError && (
+                <div className="error-banner">{passwordError}</div>
+              )}
+              {passwordSuccess && (
+                <div className="success-banner">
+                  <span className="success-icon">✅</span> {passwordSuccess}
+                </div>
+              )}
+
               <button
-                onClick={handleSave}
+                onClick={handlePasswordSave}
                 className="save-button"
-                disabled={isSaving}
+                disabled={isSavingPassword}
               >
-                {isSaving ? (
+                {isSavingPassword ? (
                   <>
                     <span className="spinner"></span> Saving...
                   </>
                 ) : (
-                  "Update Security Settings"
+                  "Update Password"
                 )}
               </button>
             </div>

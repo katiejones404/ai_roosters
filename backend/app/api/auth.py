@@ -15,7 +15,7 @@ sys.path.insert(0, '/app')
 
 from app.db.main import get_db
 from app.models.models import User
-from app.schema.schemas import UserRegister, UserLogin, UserResponse, Token, ProfilePictureUpdate, DeleteAccountRequest
+from app.schema.schemas import UserRegister, UserLogin, UserResponse, Token, ProfilePictureUpdate, DeleteAccountRequest, UserProfileUpdate, PasswordChange
 from app.core.security import (
     hash_password,
     verify_password,
@@ -193,3 +193,56 @@ async def update_profile_picture(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_profile(
+    data: UserProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update the authenticated user's name, username, and/or phone number"""
+    if data.username is not None:
+        existing = db.query(User).filter(
+            User.username == data.username,
+            User.id != current_user.id
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already taken."
+            )
+        current_user.username = data.username
+    if data.name is not None:
+        current_user.name = data.name
+    if data.phone is not None:
+        current_user.phone = data.phone
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.patch("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    data: PasswordChange,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Change the authenticated user's password"""
+    if not verify_password(data.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect."
+        )
+    if len(data.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters."
+        )
+    if not re.search(r'[0-9!@#$%^&*(),.?\":{}|<>]', data.new_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must contain at least one number or special character."
+        )
+    current_user.password_hash = hash_password(data.new_password)
+    db.commit()
