@@ -19,9 +19,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Lightweight API container - no ML dependencies, fast build.
-  # For Neon: set DATABASE_URL in .env to your Neon connection string.
-  # For local dev: DATABASE_URL defaults to the postgres service above.
   api:
     build:
       context: ./backend
@@ -29,13 +26,12 @@ services:
     container_name: stock_api
     env_file: .env
     environment:
-      INPUT_JSON: /app/data/reliance_news.json
       PG_HOST: postgres
       PG_PORT: 5432
       PG_DB: ${POSTGRES_DB:-stock_db}
       PG_USER: ${POSTGRES_USER:-stock_user}
       PG_PASS: ${POSTGRES_PASSWORD:-stock_pass}
-      NEWS_CSV_PATH: /app/data/reliance_news_sentiment.csv
+      RUN_ARTICLE_INGEST: "1"
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,11 +47,6 @@ services:
       --port 8000
       --reload
 
-  # Heavy ML pipeline container - includes PyTorch, Transformers, XGBoost.
-  # Only starts when explicitly requested:
-  #   docker-compose --profile pipeline up pipeline
-  # To run a specific pipeline:
-  #   docker-compose --profile pipeline run pipeline python -m app.services.sentiment.article_processing
   pipeline:
     build:
       context: ./backend
@@ -64,49 +55,35 @@ services:
     env_file: .env
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
-      INPUT_JSON: /app/data/reliance_news.json
       PG_HOST: postgres
       PG_PORT: 5432
       PG_DB: ${POSTGRES_DB:-stock_db}
       PG_USER: ${POSTGRES_USER:-stock_user}
       PG_PASS: ${POSTGRES_PASSWORD:-stock_pass}
-      NEWS_CSV_PATH: /app/data/reliance_news_sentiment.csv
+
+      # Hugging Face auth + cache
+      HUGGINGFACE_HUB_TOKEN: ${HUGGINGFACE_HUB_TOKEN}
+      HF_TOKEN: ${HUGGINGFACE_HUB_TOKEN}
+      HF_HOME: ${HF_HOME:-/cache/huggingface}
+
+      # DB-first FinBERT controls (optional)
+      FINBERT_FETCH_LIMIT: ${FINBERT_FETCH_LIMIT:-1000}
+      FINBERT_BATCH_SIZE: ${FINBERT_BATCH_SIZE:-8}
+      FINBERT_DB_BATCH_SIZE: ${FINBERT_DB_BATCH_SIZE:-250}
+      FINBERT_ONLY_MISSING: ${FINBERT_ONLY_MISSING:-true}
+      FINBERT_STOCKS: ${FINBERT_STOCKS:-}
+      FINBERT_START_DATE: ${FINBERT_START_DATE:-}
+      FINBERT_END_DATE: ${FINBERT_END_DATE:-}
     profiles:
       - pipeline
     depends_on:
-      - api
-    volumes:
-      - ./backend:/app
-      - ./backend/data:/app/data
-      - ./Testing:/app/Testing
-
-  # Jupyter notebook — uses the full Backend.Dockerfile (unchanged).
-  notebook:
-    build:
-      context: ./backend
-      dockerfile: Backend.Dockerfile
-    container_name: stock_notebook
-    env_file: .env
-    environment:
-      PG_HOST: postgres
-      PG_PORT: 5432
-      PG_DB: ${POSTGRES_DB:-stock_db}
-      PG_USER: ${POSTGRES_USER:-stock_user}
-      PG_PASS: ${POSTGRES_PASSWORD:-stock_pass}
-    depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "8888:8888"
     volumes:
       - ./backend:/app
       - ./backend/data:/app/data
       - ./Testing:/app/Testing
-    command: >
-      sh -c "python -m pip install -U pip &&
-             python -m pip install -U jupyter ipykernel &&
-             jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
-             --ServerApp.token='' --ServerApp.password='' --ServerApp.allow_origin='*'"
+      - hf_cache:${HF_HOME:-/cache/huggingface}
 
   frontend:
     build:
@@ -125,3 +102,4 @@ services:
 
 volumes:
   postgres_data:
+  hf_cache:

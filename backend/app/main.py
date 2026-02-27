@@ -54,6 +54,11 @@ app.include_router(portfolio.router, prefix="/api")
 def ingest_stock_prices_on_startup():
     logger.info("Backend startup initiated...")
 
+    # Feature flags
+    run_article_ingest = os.getenv("RUN_ARTICLE_INGEST", "0") == "1"
+    run_price_ingest = os.getenv("RUN_PRICE_INGEST", "1") == "1"
+    run_ml_pipelines = os.getenv("RUN_ML_PIPELINES", "1") == "1"
+
     try:
         logger.info("Initializing database tables...")
         init_db()
@@ -68,19 +73,51 @@ def ingest_stock_prices_on_startup():
     )
 
     try:
-        logger.info("Ingesting price data...")
-        ingestor = PriceIngestor(db_url)
-        tickers = ["BP", "RELIANCE.NS"]
-        ingestor.ingest_multiple_stocks(
-            tickers=tickers,
-            start_date="2021-10-01",
-            end_date="2022-02-28",
-            period=None,
-            update_existing=False,
-        )
-        logger.info("Finished price ingestion.")
+        # 1) (Optional) Article ingestion (HF -> Postgres)
+        # Guarded to avoid doing this on every boot.
+        if run_article_ingest:
+            logger.info("RUN_ARTICLE_INGEST=1 — running article ingestion pipeline...")
 
-        if ML_AVAILABLE:
+            from app.services.ingesting_pipelines.article_ingest import ArticleIngestor
+
+            top15 = [
+                "KSS", "ALK", "NVS", "AXP", "FCX",
+                "CSX", "DAL", "NTAP", "GPS", "AEO",
+                "MRK", "DFS", "COP", "BHP", "EA",
+            ]
+
+            ArticleIngestor(db_url).ingest_equal_by_year(
+                tickers=top15,
+                start_date="2010-01-01",
+                end_date="2024-12-01",
+                total_per_ticker=5000,   # 5k TOTAL per stock across the whole range
+                batch_size=250,
+            )
+
+            logger.info("Article ingestion complete.")
+        else:
+            logger.info("RUN_ARTICLE_INGEST != 1 — skipping article ingestion.")
+
+        # 2) (Optional) Price ingestion
+        if run_price_ingest:
+            logger.info("RUN_PRICE_INGEST=1 — ingesting price data...")
+            ingestor = PriceIngestor(db_url)
+            tickers = ["BP", "RELIANCE.NS"]
+            ingestor.ingest_multiple_stocks(
+                tickers=tickers,
+                start_date="2021-10-01",
+                end_date="2022-02-28",
+                period=None,
+                update_existing=False,
+            )
+            logger.info("Finished price ingestion.")
+        else:
+            logger.info("RUN_PRICE_INGEST != 1 — skipping price ingestion.")
+
+        # 3) (Optional) ML pipelines
+        if run_ml_pipelines and ML_AVAILABLE:
+            logger.info("RUN_ML_PIPELINES=1 — running ML pipelines...")
+
             logger.info("Running FinBERT pipeline...")
             run_finbert_pipeline_from_env()
             logger.info("FinBERT article processing complete.")
@@ -93,7 +130,10 @@ def ingest_stock_prices_on_startup():
             run_sentiment_snapshot_pipeline_from_env()
             logger.info("Sentiment snapshot pipeline complete.")
         else:
-            logger.info("ML pipeline libraries not installed — skipping FinBERT/sentiment pipelines.")
+            if not run_ml_pipelines:
+                logger.info("RUN_ML_PIPELINES != 1 — skipping ML pipelines.")
+            elif not ML_AVAILABLE:
+                logger.info("ML pipeline libraries not installed — skipping FinBERT/sentiment pipelines.")
 
         logger.info("Backend startup complete.")
 

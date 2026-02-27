@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, List, Callable, Type
-
-from datetime import datetime
+from typing import Any, Dict, List, Callable, Type, Optional, Tuple
 
 import pandas as pd
-import psycopg2
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline as hf_pipeline
+
+from sqlalchemy import create_engine, MetaData, Table, select, and_, or_
+from sqlalchemy.dialects.postgresql import insert
+
 
 logger = logging.getLogger("finbert_pipeline")
 if not logger.handlers:
@@ -20,19 +21,36 @@ logger.setLevel(logging.INFO)
 
 
 # ---------------------------------------------------------------------------
+# DB helpers
+# ---------------------------------------------------------------------------
+
+def build_db_url() -> str:
+    db_url = os.getenv("DATABASE_URL")
+    if db_url:
+        return db_url
+
+    db_user = os.getenv("PG_USER", "stock_user")
+    db_password = os.getenv("PG_PASS", "stock_pass")
+    db_host = os.getenv("PG_HOST", "postgres")
+    db_port = os.getenv("PG_PORT", "5432")
+    db_name = os.getenv("PG_DB", "stock_db")
+    return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+
+def get_articles_table(engine) -> Table:
+    metadata = MetaData()
+    metadata.reflect(engine, only=["articles"])
+    if "articles" not in metadata.tables:
+        raise RuntimeError("Table 'articles' does not exist in the database.")
+    return metadata.tables["articles"]
+
+
+# ---------------------------------------------------------------------------
 # Device selection (prefer CUDA; fallback to CPU)
 # ---------------------------------------------------------------------------
 
 def select_device() -> int:
-    """Return a Hugging Face `pipeline(..., device=...)` id.
-
-    - `0` means CUDA GPU device 0
-    - `-1` means CPU
-
-    Prefers CUDA when available (e.g., NVIDIA Jetson Orin), but falls back to CPU
-    if CUDA isn't available or can't be initialized.
-    """
-
+    """Return HF pipeline device id: 0 for CUDA:0, -1 for CPU."""
     force_cpu = os.getenv("FINBERT_FORCE_CPU", "").strip().lower() in {"1", "true", "yes"}
     if force_cpu:
         return -1
@@ -46,7 +64,6 @@ def select_device() -> int:
     if not getattr(torch, "cuda", None) or not torch.cuda.is_available():
         return -1
 
-    # Some environments report cuda available but fail when actually creating tensors.
     try:
         _ = torch.zeros(1, device="cuda")
         return 0
@@ -82,7 +99,6 @@ def _clear_finbert_pipeline_cache() -> None:
 
 class Artifact(BaseModel):
     def to_json(self) -> Dict[str, Any]:
-        # pydantic v1: dict(), v2: model_dump()
         if hasattr(self, "model_dump"):
             return self.model_dump()
         return self.dict()
@@ -132,9 +148,12 @@ class Pipeline:
 # Artifacts
 # ---------------------------------------------------------------------------
 
-class DataArtifact(Artifact):
-    # Input artifact for the ingest pipeline
-    csv_path: str
+class FetchFromDBArtifact(Artifact):
+    limit: int = 1000
+    stocks_csv: str = ""           # optional: "AAPL,MSFT"
+    start_date: str = ""           # optional ISO like "2018-01-01"
+    end_date: str = ""             # optional ISO like "2024-12-01"
+    only_missing_sentiment: bool = True
 
 
 class IngestArtifact(Artifact):
@@ -142,6 +161,8 @@ class IngestArtifact(Artifact):
     title: List[str]
     description: List[str]
     url: List[str]
+    stock: List[str]
+    source: List[str]
 
 
 class SentimentArtifact(IngestArtifact):
@@ -153,37 +174,127 @@ class SentimentArtifact(IngestArtifact):
 
 
 class DBArtifact(Artifact):
-    num_articles: int
+    num_articles_fetched: int
+    num_articles_scored: int
+    num_rows_written: int
 
 
 # ---------------------------------------------------------------------------
-# Stage 1: Load CSV → IngestArtifact
+# Stage 1: Fetch from DB → IngestArtifact
 # ---------------------------------------------------------------------------
 
-def load_csv_to_articles(artifact: DataArtifact) -> IngestArtifact:
-    logger.info(f"[LoadCSV] Loading CSV from {artifact.csv_path}")
-    df = pd.read_csv(artifact.csv_path)
+def _parse_stocks_csv(stocks_csv: str) -> List[str]:
+    if not stocks_csv:
+        return []
+    parts = [p.strip().upper() for p in stocks_csv.split(",")]
+    return [p for p in parts if p]
 
-    required_cols = ["published_at", "title", "description", "url"]
-    for col in required_cols:
-        if col not in df.columns:
-            raise ValueError(f"CSV must contain columns: {required_cols}")
 
-    df["published_at"] = pd.to_datetime(df["published_at"])
+def fetch_articles_from_db(artifact: FetchFromDBArtifact) -> IngestArtifact:
+    db_url = build_db_url()
+    engine = create_engine(db_url)
+    articles = get_articles_table(engine)
 
+    stocks = _parse_stocks_csv(artifact.stocks_csv)
+
+    where_clauses = []
+
+    if artifact.only_missing_sentiment:
+        # treat "missing" as NULL sentiment (you can expand to score/prob columns too)
+        where_clauses.append(articles.c.sentiment.is_(None))
+
+    if stocks:
+        where_clauses.append(articles.c.stock.in_(stocks))
+
+    # Optional date filters
+    # published_at is timestamptz; we compare using parsed timestamps (UTC)
+    if artifact.start_date:
+        start_dt = pd.to_datetime(artifact.start_date, utc=True, errors="raise")
+        where_clauses.append(articles.c.published_at >= start_dt.to_pydatetime())
+
+    if artifact.end_date:
+        end_dt = pd.to_datetime(artifact.end_date, utc=True, errors="raise")
+        where_clauses.append(articles.c.published_at <= end_dt.to_pydatetime())
+
+    # Build query
+    stmt = (
+        select(
+            articles.c.published_at,
+            articles.c.title,
+            articles.c.description,
+            articles.c.url,
+            articles.c.stock,
+            articles.c.source,
+        )
+        .where(and_(*where_clauses) if where_clauses else True)
+        .order_by(articles.c.published_at.desc())
+        .limit(int(artifact.limit))
+    )
+
+    logger.info(
+        "[FetchFromDB] Querying articles (limit=%s, stocks=%s, start=%s, end=%s, missing_sentiment=%s)",
+        artifact.limit,
+        stocks or "ALL",
+        artifact.start_date or "NONE",
+        artifact.end_date or "NONE",
+        artifact.only_missing_sentiment,
+    )
+
+    rows: List[Tuple] = []
+    with engine.connect() as conn:
+        rows = conn.execute(stmt).fetchall()
+
+    if not rows:
+        logger.info("[FetchFromDB] No matching rows found.")
+        return IngestArtifact(
+            published_at=[],
+            title=[],
+            description=[],
+            url=[],
+            stock=[],
+            source=[],
+        )
+
+    # Normalize + ensure strings
+    published_at_list: List[str] = []
+    title_list: List[str] = []
+    desc_list: List[str] = []
+    url_list: List[str] = []
+    stock_list: List[str] = []
+    source_list: List[str] = []
+
+    for published_at, title, description, url, stock, source in rows:
+        if not url:
+            continue
+
+        # published_at to RFC-ish Z string
+        dt = pd.to_datetime(published_at, utc=True, errors="coerce")
+        if pd.isna(dt):
+            continue
+
+        published_at_list.append(dt.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        title_list.append((title or "").strip())
+        desc_list.append((description or "").strip())
+        url_list.append(str(url).strip())
+        stock_list.append((stock or "").strip().upper())
+        source_list.append((source or "").strip())
+
+    logger.info("[FetchFromDB] Fetched %d rows from DB.", len(url_list))
     return IngestArtifact(
-        published_at=df["published_at"].dt.strftime("%Y-%m-%dT%H:%M:%S %z").tolist(),
-        title=df["title"].fillna("").tolist(),
-        description=df["description"].fillna("").tolist(),
-        url=df["url"].fillna("").tolist(),
+        published_at=published_at_list,
+        title=title_list,
+        description=desc_list,
+        url=url_list,
+        stock=stock_list,
+        source=source_list,
     )
 
 
-LoadStage = Stage(
-    name="LoadCSV",
-    input_schema=DataArtifact,
+FetchStage = Stage(
+    name="FetchFromDB",
+    input_schema=FetchFromDBArtifact,
     output_schema=IngestArtifact,
-    compute_fn=load_csv_to_articles,
+    compute_fn=fetch_articles_from_db,
 )
 
 
@@ -195,19 +306,14 @@ _FINBERT_MODEL_ID = "ProsusAI/finbert"
 
 
 def get_finbert_pipeline(*, force_cpu: bool = False):
-    """
-    Lazily load the FinBERT model. Keeps it in a function attribute so we only load once.
-    """
     if not hasattr(get_finbert_pipeline, "finbert"):
         requested_device_id = -1 if force_cpu else select_device()
 
         def _build(device_id: int):
             logger.info(f"Loading FinBERT model (device_id={device_id})...")
             if device_id != -1:
-                # On Jetson / constrained GPUs, fp16 greatly reduces memory pressure.
                 try:
                     import torch
-
                     model = AutoModelForSequenceClassification.from_pretrained(
                         _FINBERT_MODEL_ID,
                         dtype=torch.float16,
@@ -216,6 +322,7 @@ def get_finbert_pipeline(*, force_cpu: bool = False):
                     model = AutoModelForSequenceClassification.from_pretrained(_FINBERT_MODEL_ID)
             else:
                 model = AutoModelForSequenceClassification.from_pretrained(_FINBERT_MODEL_ID)
+
             tokenizer = AutoTokenizer.from_pretrained(_FINBERT_MODEL_ID)
             return hf_pipeline(
                 task="sentiment-analysis",
@@ -237,6 +344,7 @@ def get_finbert_pipeline(*, force_cpu: bool = False):
                 logger.info("FinBERT model loaded on device_id=-1")
             else:
                 raise
+
     return get_finbert_pipeline.finbert
 
 
@@ -247,16 +355,26 @@ def scores_dict(all_scores: List[Dict[str, float]]) -> Dict[str, float]:
     return d
 
 
+def _compose_text_for_finbert(title: str, description: str) -> str:
+    title = (title or "").strip()
+    description = (description or "").strip()
+    if title and description:
+        return f"{title}. {description}"
+    return title or description
+
+
 def finbert_articles(artifact: IngestArtifact) -> SentimentArtifact:
     logger.info("[FinBERTSentiment] Starting sentiment analysis...")
 
-    if not artifact.description:
-        logger.info("[FinBERTSentiment] No descriptions; returning empty sentiment lists.")
+    if not artifact.url:
+        logger.info("[FinBERTSentiment] No articles provided; returning empty.")
         return SentimentArtifact(
-            published_at=artifact.published_at,
-            title=artifact.title,
-            description=artifact.description,
-            url=artifact.url,
+            published_at=[],
+            title=[],
+            description=[],
+            url=[],
+            stock=[],
+            source=[],
             sentiment=[],
             sentiment_score=[],
             prob_pos=[],
@@ -264,30 +382,52 @@ def finbert_articles(artifact: IngestArtifact) -> SentimentArtifact:
             prob_neu=[],
         )
 
+    inputs = [
+        _compose_text_for_finbert(t, d)
+        for t, d in zip(artifact.title, artifact.description)
+    ]
+
+    # Skip completely empty inputs but keep alignment by url
+    # We'll score empty ones as neutral/0.0 by default.
+    has_any = any(x.strip() for x in inputs)
+    if not has_any:
+        logger.info("[FinBERTSentiment] All inputs empty; scoring as neutral/0.0.")
+        n = len(inputs)
+        return SentimentArtifact(
+            published_at=artifact.published_at,
+            title=artifact.title,
+            description=artifact.description,
+            url=artifact.url,
+            stock=artifact.stock,
+            source=artifact.source,
+            sentiment=["neutral"] * n,
+            sentiment_score=[0.0] * n,
+            prob_pos=[0.0] * n,
+            prob_neg=[0.0] * n,
+            prob_neu=[1.0] * n,
+        )
+
     pipe = get_finbert_pipeline()
 
-    # Default to conservative batching to avoid GPU OOM on Jetson.
     try:
-        batch_size = int(os.getenv("FINBERT_BATCH_SIZE", "1"))
+        batch_size = int(os.getenv("FINBERT_BATCH_SIZE", "8"))
     except Exception:
-        batch_size = 1
+        batch_size = 8
 
     try:
-        results = pipe(artifact.description, batch_size=batch_size)
+        results = pipe(inputs, batch_size=batch_size)
     except Exception as e:
-        # If CUDA runtime fails (OOM, driver mismatch, etc.), retry once on CPU.
         if _is_cuda_related_error(e):
             logger.warning(f"FinBERT inference failed on CUDA; retrying on CPU. error={e!r}")
             try:
                 import torch
-
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
             except Exception:
                 pass
             _clear_finbert_pipeline_cache()
             pipe = get_finbert_pipeline(force_cpu=True)
-            results = pipe(artifact.description, batch_size=batch_size)
+            results = pipe(inputs, batch_size=batch_size)
         else:
             raise
 
@@ -316,6 +456,8 @@ def finbert_articles(artifact: IngestArtifact) -> SentimentArtifact:
         title=artifact.title,
         description=artifact.description,
         url=artifact.url,
+        stock=artifact.stock,
+        source=artifact.source,
         sentiment=sentiments,
         sentiment_score=scores,
         prob_pos=prob_pos,
@@ -333,24 +475,29 @@ FinBERTStage = Stage(
 
 
 # ---------------------------------------------------------------------------
-# Stage 3: Write to DB (articles table)
+# Stage 3: Write sentiment back to DB (upsert by url)
 # ---------------------------------------------------------------------------
 
-def write_articles_to_db(artifact: SentimentArtifact) -> DBArtifact:
-    logger.info("[WriteArticlesToDB] Writing articles with sentiment into 'articles' table...")
+def write_sentiment_to_db(artifact: SentimentArtifact) -> DBArtifact:
+    db_url = build_db_url()
+    engine = create_engine(db_url)
+    articles = get_articles_table(engine)
 
-    dsn = os.getenv(
-        "DATABASE_URL",
-        "postgresql://stock_user:stock_pass@postgres:5432/stock_db",
-    )
-    conn = psycopg2.connect(dsn)
+    n_fetched = len(artifact.url)
+    if n_fetched == 0:
+        return DBArtifact(num_articles_fetched=0, num_articles_scored=0, num_rows_written=0)
 
-    num_articles = 0
+    # If sentiment arrays are empty for some reason, we won't write.
+    if not artifact.sentiment or len(artifact.sentiment) != n_fetched:
+        raise RuntimeError("Sentiment output length mismatch with fetched articles.")
+
     rows = zip(
         artifact.published_at,
         artifact.title,
         artifact.description,
         artifact.url,
+        artifact.stock,
+        artifact.source,
         artifact.sentiment,
         artifact.sentiment_score,
         artifact.prob_pos,
@@ -358,104 +505,135 @@ def write_articles_to_db(artifact: SentimentArtifact) -> DBArtifact:
         artifact.prob_neu,
     )
 
-    with conn.cursor() as cur:
-        for (
-            published_at,
-            title,
-            description,
-            url,
-            sentiment,
-            sentiment_score,
-            prob_pos,
-            prob_neg,
-            prob_neu,
-        ) in rows:
-            num_articles += 1
-            cur.execute(
-                """
-                INSERT INTO articles (
-                    published_at,
-                    title,
-                    description,
-                    url,
-                    sentiment,
-                    sentiment_score,
-                    prob_pos,
-                    prob_neg,
-                    prob_neu
-                )
-                VALUES (
-                    %(published_at)s,
-                    %(title)s,
-                    %(description)s,
-                    %(url)s,
-                    %(sentiment)s,
-                    %(sentiment_score)s,
-                    %(prob_pos)s,
-                    %(prob_neg)s,
-                    %(prob_neu)s
-                )
-                ON CONFLICT (url) DO UPDATE SET
-                    published_at    = EXCLUDED.published_at,
-                    title           = EXCLUDED.title,
-                    description     = EXCLUDED.description,
-                    sentiment       = EXCLUDED.sentiment,
-                    sentiment_score = EXCLUDED.sentiment_score,
-                    prob_pos        = EXCLUDED.prob_pos,
-                    prob_neg        = EXCLUDED.prob_neg,
-                    prob_neu        = EXCLUDED.prob_neu;
-                """,
-                {
-                    "published_at": published_at,
-                    "title": title,
-                    "description": description,
-                    "url": url,
-                    "sentiment": sentiment,
-                    "sentiment_score": sentiment_score,
-                    "prob_pos": prob_pos,
-                    "prob_neg": prob_neg,
-                    "prob_neu": prob_neu,
+    records: List[Dict[str, Any]] = []
+    for (
+        published_at,
+        title,
+        description,
+        url,
+        stock,
+        source,
+        sentiment,
+        sentiment_score,
+        prob_pos,
+        prob_neg,
+        prob_neu,
+    ) in rows:
+        if not url:
+            continue
+
+        dt = pd.to_datetime(published_at, utc=True, errors="coerce")
+        if pd.isna(dt):
+            continue
+
+        records.append(
+            {
+                "url": url,
+                # keep metadata consistent
+                "published_at": dt.to_pydatetime(),
+                "title": title or None,
+                "description": description or None,
+                "source": source or None,
+                "stock": stock or None,
+                # sentiment fields
+                "sentiment": sentiment or None,
+                "sentiment_score": float(sentiment_score) if sentiment_score is not None else None,
+                "prob_pos": float(prob_pos) if prob_pos is not None else None,
+                "prob_neg": float(prob_neg) if prob_neg is not None else None,
+                "prob_neu": float(prob_neu) if prob_neu is not None else None,
+            }
+        )
+
+    if not records:
+        return DBArtifact(num_articles_fetched=n_fetched, num_articles_scored=0, num_rows_written=0)
+
+    batch_size = int(os.getenv("FINBERT_DB_BATCH_SIZE", "250"))
+    written = 0
+
+    for i in range(0, len(records), batch_size):
+        batch = records[i : i + batch_size]
+        with engine.begin() as conn:
+            stmt = insert(articles).values(batch)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["url"],
+                set_={
+                    "published_at": stmt.excluded.published_at,
+                    "title": stmt.excluded.title,
+                    "description": stmt.excluded.description,
+                    "source": stmt.excluded.source,
+                    "stock": stmt.excluded.stock,
+                    "sentiment": stmt.excluded.sentiment,
+                    "sentiment_score": stmt.excluded.sentiment_score,
+                    "prob_pos": stmt.excluded.prob_pos,
+                    "prob_neg": stmt.excluded.prob_neg,
+                    "prob_neu": stmt.excluded.prob_neu,
                 },
             )
+            conn.execute(stmt)
 
-    conn.commit()
-    conn.close()
+        written += len(batch)
+        logger.info(f"[WriteSentimentToDB] Processed {written}/{len(records)}")
 
-    logger.info(f"[WriteArticlesToDB] Finished. num_articles={num_articles}")
-    return DBArtifact(num_articles=num_articles)
+    return DBArtifact(
+        num_articles_fetched=n_fetched,
+        num_articles_scored=n_fetched,
+        num_rows_written=len(records),
+    )
 
 
 DBStage = Stage(
-    name="WriteArticlesToDB",
+    name="WriteSentimentToDB",
     input_schema=SentimentArtifact,
     output_schema=DBArtifact,
-    compute_fn=write_articles_to_db,
+    compute_fn=write_sentiment_to_db,
 )
 
 
 # ---------------------------------------------------------------------------
-# Pipeline definition + helper for FastAPI startup
+# Pipeline definition + helper runner
 # ---------------------------------------------------------------------------
 
-finbert_ingest_pipeline = Pipeline(
-    "FinbertCSVtoArticlesDB",
-    [LoadStage, FinBERTStage, DBStage],
+finbert_db_pipeline = Pipeline(
+    "FinbertDBtoArticlesDB",
+    [FetchStage, FinBERTStage, DBStage],
 )
 
 
 def run_finbert_pipeline_from_env() -> Dict[str, Any]:
     """
-    Run the FinBERT ingest pipeline using NEWS_CSV_PATH env var.
-    This is what you'll call from FastAPI startup.
+    Run FinBERT over articles in Postgres that are missing sentiment.
+    Environment variables:
+      FINBERT_FETCH_LIMIT (default 1000)
+      FINBERT_STOCKS (optional "AAPL,MSFT")
+      FINBERT_START_DATE (optional "2018-01-01")
+      FINBERT_END_DATE (optional "2024-12-01")
+      FINBERT_ONLY_MISSING (default true)
+      FINBERT_BATCH_SIZE (default 8)
+      FINBERT_DB_BATCH_SIZE (default 250)
     """
-    csv_path = os.getenv("NEWS_CSV_PATH", "/app/data/reliance_news_sentiment.csv")
-    logger.info(f"Running FinBERT ingest pipeline with csv_path={csv_path!r} ...")
+    limit = int(os.getenv("FINBERT_FETCH_LIMIT", "1000"))
+    stocks = os.getenv("FINBERT_STOCKS", "")
+    start_date = os.getenv("FINBERT_START_DATE", "")
+    end_date = os.getenv("FINBERT_END_DATE", "")
+    only_missing = os.getenv("FINBERT_ONLY_MISSING", "true").strip().lower() in {"1", "true", "yes"}
 
-    result = finbert_ingest_pipeline.run({"csv_path": csv_path})
-    logger.info(f"FinBERT pipeline result: {result}")
+    logger.info(
+        "Running FinBERT DB pipeline with limit=%s stocks=%r start=%r end=%r only_missing=%s",
+        limit, stocks, start_date, end_date, only_missing
+    )
+
+    result = finbert_db_pipeline.run(
+        {
+            "limit": limit,
+            "stocks_csv": stocks,
+            "start_date": start_date,
+            "end_date": end_date,
+            "only_missing_sentiment": only_missing,
+        }
+    )
+    logger.info(f"FinBERT DB pipeline result: {result}")
     return result
 
 
 if __name__ == "__main__":
-    # CLI usage (optional)
     run_finbert_pipeline_from_env()
