@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./app-header.css";
 import "./stocks.css";
 import axios from "axios";
+import { TICKER_NAMES } from "./utils/stockNames";
 
 import {
   fetchAllStockIndicators,
@@ -112,6 +113,12 @@ const Dashboard: React.FC = () => {
   const [searchTicker, setSearchTicker] = useState("");
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
+  // Auto-load all stocks on mount
+  useEffect(() => {
+    handleLoadAll();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const fetchLatestForTicker = async (ticker: string): Promise<StockCard | null> => {
     try {
       const res = await axios.get<StockPriceRow[]>(`${API_BASE}/api/stocks/${ticker}/prices`);
@@ -177,6 +184,16 @@ const Dashboard: React.FC = () => {
     navigate("/portfolio");
   };
 
+  // Live-filter cards by partial ticker OR company name
+  const q = searchTicker.trim();
+  const filteredCards = q
+    ? cards.filter(
+        (c: StockCard) =>
+          c.ticker.toUpperCase().includes(q.toUpperCase()) ||
+          (TICKER_NAMES[c.ticker] || "").toLowerCase().includes(q.toLowerCase())
+      )
+    : cards;
+
   return (
     <div className="app-container">
       <div className="home-background-shapes">
@@ -194,7 +211,7 @@ const Dashboard: React.FC = () => {
           <div className="dashboard-controls">
             <input
               type="text"
-              placeholder="Search ticker"
+              placeholder="Search by ticker or company name"
               value={searchTicker}
               onChange={(e) => setSearchTicker(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -213,15 +230,15 @@ const Dashboard: React.FC = () => {
             </div>
           )}
 
-          {!loading && !error && hasLoadedOnce && cards.length === 0 && (
+          {!loading && !error && hasLoadedOnce && filteredCards.length === 0 && (
             <div className="dashboard-empty">
               <p>No results found.</p>
             </div>
           )}
 
-          {!loading && !error && cards.length > 0 && (
+          {!loading && !error && filteredCards.length > 0 && (
             <div className="stock-grid">
-              {cards.map((stock) => (
+              {filteredCards.map((stock: StockCard) => (
                 <StockMiniCard
                   key={stock.ticker}
                   data={stock}

@@ -102,6 +102,30 @@ export const updateProfilePicture = async (base64: string): Promise<void> => {
   );
 };
 
+export const updateProfile = async (data: {
+  name?: string;
+  username?: string;
+  phone?: string;
+}): Promise<any> => {
+  const token = getToken();
+  const response = await axios.patch(`${API_URL}/api/auth/me`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string
+): Promise<void> => {
+  const token = getToken();
+  await axios.patch(
+    `${API_URL}/api/auth/me/password`,
+    { current_password: currentPassword, new_password: newPassword },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+};
+
 axios.interceptors.request.use(
   (config) => {
     const token = getToken();

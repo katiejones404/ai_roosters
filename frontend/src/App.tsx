@@ -12,7 +12,6 @@ import Login from "./login";
 import Settings from "./settings";
 import Dashboard from "./Dashboard";
 import Portfolio from "./portfolio";
-import Layout from "./layout";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./ProtectedRoute";
 import StockDetail from "./StockDetail";
@@ -160,14 +159,12 @@ function AppContent() {
         <Route path="/signup" element={<CreateAccount />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Authenticated Layout Routes */}
+        {/* Authenticated Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
-            <Route path="/portfolio" element={<Portfolio />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/stock/:ticker" element={<StockDetail />} />
-          </Route>
+          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/stock/:ticker" element={<StockDetail />} />
         </Route>
 
         {/* Fallback */}

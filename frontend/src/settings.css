@@ -215,6 +215,16 @@
   font-size: 1.5rem;
 }
 
+.error-banner {
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  color: #991b1b;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  animation: slideDown 0.3s ease-out;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
