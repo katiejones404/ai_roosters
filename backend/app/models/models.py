@@ -22,6 +22,8 @@ class User(Base):
     password_hash = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     profile_picture = Column(Text, nullable=True)
+    name = Column(Text, nullable=True)
+    phone = Column(Text, nullable=True)
 
     portfolio_items = relationship("Portfolio", back_populates="user", cascade="all, delete-orphan")
 
