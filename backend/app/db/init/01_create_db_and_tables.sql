@@ -128,6 +128,7 @@ CREATE INDEX IF NOT EXISTS idx_snapshot_ticker
 
 CREATE TABLE IF NOT EXISTS article_ticker_sentiment (
   id SERIAL PRIMARY KEY,
+  article_id UUID NOT NULL,
   article_url TEXT NOT NULL,
   ticker VARCHAR(20) NOT NULL,
   relevance_score NUMERIC,

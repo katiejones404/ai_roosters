@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { getToken } from "./utils/auth";
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip,
-    LineChart, Line, CartesianGrid, ResponsiveContainer, Cell, Legend
+    LineChart, Line, CartesianGrid, ResponsiveContainer, Cell, Legend,
 } from "recharts";
 import './portfolio.css';
 
@@ -108,9 +108,10 @@ const Portfolio = () => {
             });
             setPortfolioData(response.data);
             setError(null);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error fetching portfolio:', err);
-            if (err.response?.status === 404) {
+            const axiosErr = err as { response?: { status?: number } };
+            if (axiosErr.response?.status === 404) {
                 setPortfolioData({
                     portfolio_items: [],
                     summary: {
@@ -122,7 +123,7 @@ const Portfolio = () => {
                     }
                 });
                 setError(null);
-            } else if (err.response?.status === 401) {
+            } else if (axiosErr.response?.status === 401) {
                 navigate('/dashboard');
             } else {
                 setError('Failed to load portfolio data');
@@ -214,7 +215,7 @@ const Portfolio = () => {
         });
 
         return baseSlice.map((point: PricePoint) => {
-            const row: Record<string, any> = { date: point.date.slice(5) }; // MM-DD
+            const row: Record<string, string | number> = { date: point.date.slice(5) }; // MM-DD
             tickers.forEach((ticker: string) => {
                 const slice = (compareData[ticker] || []).slice(-days);
                 const match = slice.find((p: PricePoint) => p.date === point.date);
@@ -484,7 +485,7 @@ const Portfolio = () => {
                                         <BarChart data={trendingData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                                             <XAxis dataKey="ticker" tick={{ fontSize: 12, fill: '#94a3b8' }} />
                                             <YAxis tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                                            <Tooltip formatter={(v: any) => [`${v}%`, '1D Return']} />
+                                            <Tooltip formatter={(v) => [`${v as number}%`, '1D Return']} />
                                             <Bar dataKey="return" radius={[4, 4, 0, 0]}>
                                                 {trendingData.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={entry.return >= 0 ? '#10b981' : '#ef4444'} />
@@ -550,8 +551,8 @@ const Portfolio = () => {
                                                     tickFormatter={(v: number) => compareView === 'pct' ? `${v}%` : `$${v}`}
                                                 />
                                                 <Tooltip
-                                                    formatter={(v: any, name: any) =>
-                                                        compareView === 'pct' ? [`${v}%`, name] : [`$${v}`, name]
+                                                    formatter={(v, name) =>
+                                                        compareView === 'pct' ? [`${v as number}%`, name] : [`$${v as number}`, name]
                                                     }
                                                     contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
                                                     labelStyle={{ color: '#94a3b8', fontSize: 11 }}
