@@ -82,3 +82,17 @@ export async function deleteStockIndicator(ticker: string): Promise<void> {
     );
   }
 }
+
+
+export async function fetchLatestStockIndicator(
+  ticker: string
+): Promise<StockIndicators | null> {
+  const arr = await fetchStockIndicatorsByTicker(ticker);
+  if (!Array.isArray(arr) || arr.length === 0) return null;
+
+  // If API returns multiple snapshots, pick the newest
+  const sorted = [...arr].sort(
+    (a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime()
+  );
+  return sorted[0] ?? null;
+}
