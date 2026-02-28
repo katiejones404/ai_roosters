@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from collections import defaultdict, Counter
 from typing import Any, Dict, List, Optional, Tuple
 
-from datasets import load_dataset
+from datasets import load_dataset, interleave_datasets
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.dialects.postgresql import insert
 
@@ -224,13 +224,29 @@ class ArticleIngestor:
 
     def load_dataset_any(self, streaming: bool):
         token = get_hf_token_optional()
-        # Passing token=None is fine for public datasets
-        return load_dataset(
-            "Brianferrell787/financial-news-multisource",
-            split="train",
-            streaming=streaming,
-            token=token,
-        )
+        # Load specific sub-dataset configs instead of the full combined dataset.
+        # The full combined load (no name= arg) triggers a 20-min pre-processing
+        # phase and can download ~90GB to Colab/production disk.
+        # These configs are all financial-domain and cover 2020-2024.
+        configs = [
+            "sp500_daily_headlines",       # S&P 500 headlines 2008-2024
+            "yahoo_finance_articles",       # Yahoo Finance 2025
+            "yahoo_finance_felixdrinkall",  # Yahoo Finance 2017-2023
+            "cnbc_headlines",               # CNBC financial news 2017-2020
+        ]
+        datasets_list = [
+            load_dataset(
+                "Brianferrell787/financial-news-multisource",
+                name=cfg,
+                split="train",
+                streaming=streaming,
+                token=token,
+            )
+            for cfg in configs
+        ]
+        if len(datasets_list) == 1:
+            return datasets_list[0]
+        return interleave_datasets(datasets_list)
 
     def _store_articles(self, records: List[Dict[str, Any]]) -> None:
         if not records:
@@ -252,7 +268,7 @@ class ArticleIngestor:
         years: List[int],
         per_year: int = 1000,
         end_date: str = "2024-12-01",
-        max_scanned: int = 50_000_000,  # lower default; 200M is brutal
+        max_scanned: int = 5_000_000,  # lower default; 200M is brutal
         max_desc_chars: int = 280,
         flush_batch_size: int = 2000,   # fewer DB round-trips
         progress_every: int = 200_000,
