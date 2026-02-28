@@ -144,9 +144,10 @@ CREATE TABLE IF NOT EXISTS article_ticker_sentiment (
   CONSTRAINT uq_article_ticker UNIQUE (article_id, ticker)
 );
 
+ALTER TABLE article_ticker_sentiment ADD COLUMN IF NOT EXISTS article_id UUID;
+
 CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_ticker
   ON article_ticker_sentiment (ticker);
-
 
 CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_article
   ON article_ticker_sentiment (article_id);
