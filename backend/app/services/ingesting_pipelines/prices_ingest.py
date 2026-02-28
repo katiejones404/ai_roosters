@@ -290,14 +290,12 @@ if __name__ == "__main__":
         )
         logger.info("Removed old tickers from database (kept only current tickers).")
 
-    # Align prices exactly to your article window (2019-01-01 -> 2024-07-30 in your DB)
     ingestor.ingest_multiple_stocks(
         tickers=stocks,
-        start_date=None,
-        end_date=None,
-        period=None,                 # not used when start/end are determined
+        start_date="2020-01-01",
+        end_date=str(date.today()),
+        period=None,
         update_existing=True,
-        use_article_window_if_missing=True,
     )
 
     logger.info("Manual price ingestion complete.")
