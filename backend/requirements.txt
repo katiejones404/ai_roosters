@@ -38,3 +38,5 @@ dotenv
 datasets
 pandas 
 matplotlib
+
+openai>=1.0.0

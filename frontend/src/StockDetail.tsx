@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import AddToPortfolioModal from "./components/AddToPortfolio";
@@ -31,22 +31,23 @@ interface PriceData {
 }
 
 const formatCurrency = (value: number | null | undefined): string => {
-  if (value == null) return "N/A";
+  if (value == null || Number.isNaN(value)) return "N/A";
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 };
 
 const formatPercent = (value: number | null | undefined): string => {
-  if (value == null) return "N/A";
+  if (value == null || Number.isNaN(value)) return "N/A";
   return `${value >= 0 ? "+" : ""}${(value * 100).toFixed(2)}%`;
 };
 
 const getReturnColor = (value: number | null | undefined): string => {
-  if (value == null) return "#6b7280";
+  if (value == null || Number.isNaN(value)) return "#6b7280";
   return value >= 0 ? "#16a34a" : "#dc2626";
 };
 
 const calcReturn = (from: number | null, to: number | null): number | null => {
   if (from == null || to == null) return null;
+  if (Number.isNaN(from) || Number.isNaN(to)) return null;
   if (from === 0) return null;
   return (to - from) / from;
 };
@@ -73,6 +74,36 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
+// ---- helpers to harden backend responses ----
+
+const toNumOrNull = (v: any): number | null => {
+  if (v == null) return null;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+const normalizeAndSortPrices = (raw: any[], ticker?: string): PriceData[] => {
+  const cleaned: PriceData[] = (raw || [])
+    .map((d: any) => {
+      const dateStr = typeof d?.date === "string" ? d.date : "";
+      return {
+        ticker: (d?.ticker ?? ticker ?? "").toString(),
+        date: dateStr,
+        close: toNumOrNull(d?.close),
+        adjusted_close: toNumOrNull(d?.adjusted_close),
+        return_1d: toNumOrNull(d?.return_1d),
+        return_30d: toNumOrNull(d?.return_30d),
+        return_120d: toNumOrNull(d?.return_120d),
+        return_360d: toNumOrNull(d?.return_360d),
+      };
+    })
+    .filter((d) => d.date && !Number.isNaN(new Date(d.date).getTime()));
+
+  // CRITICAL: sort ASC by date so "oldest" and "latest" logic is correct
+  cleaned.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  return cleaned;
+};
+
 const StockDetail: React.FC = () => {
   const { ticker } = useParams<{ ticker: string }>();
   const navigate = useNavigate();
@@ -95,9 +126,10 @@ const StockDetail: React.FC = () => {
     setLoading(true);
 
     axios
-      .get<PriceData[]>(`${API_BASE}/api/stocks/${ticker}/prices`)
+      .get<any[]>(`${API_BASE}/api/stocks/${ticker}/prices`)
       .then((res) => {
-        setAllData(res.data);
+        const normalized = normalizeAndSortPrices(res.data, ticker);
+        setAllData(normalized);
         setError(null);
       })
       .catch(() => setError("Failed to load stock data"))
@@ -124,7 +156,7 @@ const StockDetail: React.FC = () => {
   const oldest = allData.length ? allData[0] : null;
 
   // chart data relative to LAST available data point
-  const chartData = (() => {
+  const chartData = useMemo(() => {
     if (!allData.length || !latest) return [];
     const days = parseInt(timeRange, 10);
     const lastDate = new Date(latest.date);
@@ -134,7 +166,7 @@ const StockDetail: React.FC = () => {
     return allData
       .filter((d) => d.close != null && new Date(d.date) >= cutoff)
       .map((d) => ({ date: d.date, close: d.close as number }));
-  })();
+  }, [allData, latest, timeRange]);
 
   const getPriceNDaysAgo = (days: number): number | null => {
     if (!latest) return null;
@@ -147,16 +179,21 @@ const StockDetail: React.FC = () => {
     return candidates[candidates.length - 1].close;
   };
 
-  const ret1d = calcReturn(getPriceNDaysAgo(1), latest?.close ?? null);
-  const ret30d = calcReturn(getPriceNDaysAgo(30), latest?.close ?? null);
-  const ret120d = calcReturn(getPriceNDaysAgo(120), latest?.close ?? null);
-  const ret360d = calcReturn(getPriceNDaysAgo(360), latest?.close ?? null);
+  // Prefer backend-provided returns if present; fallback to computed returns.
+  const ret1d = latest?.return_1d ?? calcReturn(getPriceNDaysAgo(1), latest?.close ?? null);
+  const ret30d = latest?.return_30d ?? calcReturn(getPriceNDaysAgo(30), latest?.close ?? null);
+  const ret120d = latest?.return_120d ?? calcReturn(getPriceNDaysAgo(120), latest?.close ?? null);
+  const ret360d = latest?.return_360d ?? calcReturn(getPriceNDaysAgo(360), latest?.close ?? null);
 
   const rangeFirst = chartData[0]?.close ?? null;
   const rangeLast = chartData[chartData.length - 1]?.close ?? null;
   const rangeChange = calcReturn(rangeFirst, rangeLast);
   const isPositive = (rangeChange ?? 0) >= 0;
   const accentColor = isPositive ? "#16a34a" : "#dc2626";
+
+  // Chart range dates (for the header badge context)
+  const chartStartDate = chartData.length ? chartData[0].date : null;
+  const chartEndDate = chartData.length ? chartData[chartData.length - 1].date : null;
 
   if (loading) {
     return (
@@ -208,7 +245,11 @@ const StockDetail: React.FC = () => {
             <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
               <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em" }}>{ticker}</h1>
 
-              {latest?.close != null && <span style={{ fontSize: 22, fontWeight: 600, color: "#475569" }}>{formatCurrency(latest.close)}</span>}
+              {latest?.close != null && (
+                <span style={{ fontSize: 22, fontWeight: 600, color: "#475569" }}>
+                  {formatCurrency(latest.close)}
+                </span>
+              )}
 
               {rangeChange != null && (
                 <span style={{ fontSize: 13, fontWeight: 600, color: accentColor, background: isPositive ? "#dcfce7" : "#fee2e2", padding: "3px 10px", borderRadius: 20 }}>
@@ -217,9 +258,15 @@ const StockDetail: React.FC = () => {
               )}
             </div>
 
+            {/* Show full history range, plus chart range */}
             {oldest && latest && (
               <p style={{ margin: "2px 0 0", fontSize: 12, color: "#94a3b8" }}>
                 Data from {new Date(oldest.date).toLocaleDateString()} – {new Date(latest.date).toLocaleDateString()}
+                {chartStartDate && chartEndDate && (
+                  <>
+                    {" "}• Chart: {new Date(chartStartDate).toLocaleDateString()} – {new Date(chartEndDate).toLocaleDateString()}
+                  </>
+                )}
               </p>
             )}
           </div>
@@ -237,7 +284,8 @@ const StockDetail: React.FC = () => {
             { label: "Current Price", value: formatCurrency(latest?.close), color: "#0f172a" },
             { label: "1-Day Return", value: formatPercent(ret1d), color: getReturnColor(ret1d) },
             { label: "30-Day Return", value: formatPercent(ret30d), color: getReturnColor(ret30d) },
-            { label: "1-Year Return", value: formatPercent(ret360d), color: getReturnColor(ret360d) },
+            { label: "120-Day Return", value: formatPercent(ret120d), color: getReturnColor(ret120d) },
+            { label: "360-Day Return", value: formatPercent(ret360d), color: getReturnColor(ret360d) },
           ].map(({ label, value, color }) => (
             <div key={label} className="stat-card" style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: "20px 22px" }}>
               <p style={{ margin: 0, fontSize: 11, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</p>
@@ -262,7 +310,12 @@ const StockDetail: React.FC = () => {
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>Price History</h2>
             <div style={{ display: "flex", gap: 6 }}>
               {(["7", "30", "120", "360"] as const).map((d) => (
-                <button key={d} className="range-btn" onClick={() => setTimeRange(d)} style={{ background: timeRange === d ? accentColor : "#f1f5f9", color: timeRange === d ? "#fff" : "#64748b" }}>
+                <button
+                  key={d}
+                  className="range-btn"
+                  onClick={() => setTimeRange(d)}
+                  style={{ background: timeRange === d ? accentColor : "#f1f5f9", color: timeRange === d ? "#fff" : "#64748b" }}
+                >
                   {d === "7" ? "1W" : d === "30" ? "1M" : d === "120" ? "4M" : "1Y"}
                 </button>
               ))}

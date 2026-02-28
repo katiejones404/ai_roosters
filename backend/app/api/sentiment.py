@@ -1,37 +1,53 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from typing import List, Optional
-from decimal import Decimal, InvalidOperation
+from typing import List, Optional, Literal
+from decimal import InvalidOperation
 import math
 
 import sys
 sys.path.insert(0, "/app")
 
+from pydantic import BaseModel
 from app.db.main import get_db
-from app.schema.schemas import StockIndicatorsOut, TimeRangeIndicators, SentimentLabel
 
 router = APIRouter(prefix="/sentiment", tags=["sentiment"])
 
+SentimentLabel = Literal["bullish", "neutral", "bearish"]
+
+
+class TimeRangeIndicators(BaseModel):
+    d30: SentimentLabel
+    d120: SentimentLabel
+    d360: SentimentLabel
+
+
+class GPTExplanations(BaseModel):
+    d30: Optional[str] = None
+    d120: Optional[str] = None
+    d360: Optional[str] = None
+
+
+class StockIndicatorsOut(BaseModel):
+    id: str
+    ticker: str
+    snapshot_date: str
+    close_price: Optional[float] = None
+    indicators: TimeRangeIndicators
+    explanations: Optional[GPTExplanations] = None
+    gpt_model: Optional[str] = None
+    gpt_generated_at: Optional[str] = None
+
 
 def label_from_return(value: Optional[float]) -> SentimentLabel:
-    """
-    Map numeric return (possibly Decimal/NaN) to bullish / neutral / bearish.
-    Thresholds can be tuned later.
-    """
     if value is None:
         return "neutral"
-
-    # Convert Decimal/NUMERIC and guard against NaN/inf
     try:
         v = float(value)
     except (TypeError, ValueError, InvalidOperation):
         return "neutral"
-
     if math.isnan(v) or math.isinf(v):
         return "neutral"
-
-    # 2% thresholds
     if v > 0.02:
         return "bullish"
     if v < -0.02:
@@ -39,17 +55,11 @@ def label_from_return(value: Optional[float]) -> SentimentLabel:
     return "neutral"
 
 
-
 @router.get("/indicators", response_model=List[StockIndicatorsOut])
 def get_sentiment_indicators(
     ticker: Optional[str] = Query(None, description="If provided, filter by ticker"),
     db: Session = Depends(get_db),
 ):
-    """
-    Return latest 30d/120d/360d indicators for each ticker.
-    If `ticker` is provided, returns only that ticker.
-    """
-
     base_sql = """
         SELECT DISTINCT ON (ticker)
             id,
@@ -58,7 +68,12 @@ def get_sentiment_indicators(
             close_price,
             return_30d,
             return_120d,
-            return_360d
+            return_360d,
+            gpt_expl_30d,
+            gpt_expl_120d,
+            gpt_expl_360d,
+            gpt_model,
+            gpt_generated_at
         FROM sentiment_snapshots
         {where_clause}
         ORDER BY ticker, snapshot_date DESC;
@@ -66,44 +81,41 @@ def get_sentiment_indicators(
 
     if ticker:
         sql = base_sql.format(where_clause="WHERE ticker ILIKE :ticker")
-        rows = db.execute(
-            text(sql),
-            {"ticker": f"%{ticker}%"},
-        ).fetchall()
+        rows = db.execute(text(sql), {"ticker": f"%{ticker}%"}).mappings().all()
     else:
         sql = base_sql.format(where_clause="")
-        rows = db.execute(text(sql)).fetchall()
+        rows = db.execute(text(sql)).mappings().all()
 
-    # Debug: see how many rows we actually fetched
-    print(f"[DEBUG] /api/sentiment/indicators fetched {len(rows)} rows")
-
-    # If nothing found, just return [] instead of 404
     if not rows:
         return []
 
     results: List[StockIndicatorsOut] = []
-
     for row in rows:
-        t = row["ticker"]
-        snapshot_date = row["snapshot_date"]
-        close_price = row["close_price"]
-        r30 = row["return_30d"]
-        r120 = row["return_120d"]
-        r360 = row["return_360d"]
-
         indicators = TimeRangeIndicators(
-            d30=label_from_return(r30),
-            d120=label_from_return(r120),
-            d360=label_from_return(r360),
+            d30=label_from_return(row.get("return_30d")),
+            d120=label_from_return(row.get("return_120d")),
+            d360=label_from_return(row.get("return_360d")),
         )
+
+        expl_any = row.get("gpt_expl_30d") or row.get("gpt_expl_120d") or row.get("gpt_expl_360d")
+        explanations = None
+        if expl_any:
+            explanations = GPTExplanations(
+                d30=row.get("gpt_expl_30d"),
+                d120=row.get("gpt_expl_120d"),
+                d360=row.get("gpt_expl_360d"),
+            )
 
         results.append(
             StockIndicatorsOut(
                 id=str(row["id"]),
-                ticker=t,
-                snapshot_date=snapshot_date,
-                close_price=float(close_price) if close_price is not None else None,
+                ticker=row["ticker"],
+                snapshot_date=str(row["snapshot_date"]),
+                close_price=float(row["close_price"]) if row.get("close_price") is not None else None,
                 indicators=indicators,
+                explanations=explanations,
+                gpt_model=row.get("gpt_model"),
+                gpt_generated_at=str(row["gpt_generated_at"]) if row.get("gpt_generated_at") is not None else None,
             )
         )
 
@@ -111,26 +123,8 @@ def get_sentiment_indicators(
 
 
 @router.delete("/indicators/{ticker}")
-def delete_ticker_indicators(
-    ticker: str,
-    db: Session = Depends(get_db),
-):
-    """
-    Delete all sentiment_snapshots rows for a given ticker.
-    Used by the dashboard delete button.
-    """
-    sql = text(
-        """
-        DELETE FROM sentiment_snapshots
-        WHERE ticker = :ticker
-        """
-    )
+def delete_ticker_indicators(ticker: str, db: Session = Depends(get_db)):
+    sql = text("DELETE FROM sentiment_snapshots WHERE ticker = :ticker")
     result = db.execute(sql, {"ticker": ticker})
     db.commit()
-
-    if result.rowcount == 0:
-        # nothing to delete, but this is fine for the dashboard
-        # you *could* return 404, but 200 is more user-friendly
-        return {"status": "ok", "deleted": 0}
-
     return {"status": "ok", "deleted": result.rowcount}

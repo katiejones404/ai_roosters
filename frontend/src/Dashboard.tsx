@@ -5,13 +5,6 @@ import "./Stocks.css";
 import axios from "axios";
 import { TICKER_NAMES } from "./utils/stockNames";
 
-import {
-  fetchAllStockIndicators,
-  fetchStockIndicatorsByTicker,
-  deleteStockIndicator,
-} from "./utils/sentiment";
-import type { StockIndicators } from "./utils/sentiment";
-import { StockSentimentCard } from "./SentimentIndicators";
 import AddToPortfolioModal from "./components/AddToPortfolio";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
@@ -34,6 +27,14 @@ interface StockCard {
   return_30d: number | null;
 }
 
+interface ArticleSentimentSummary {
+  total: number;
+  positive: number;
+  negative: number;
+  neutral: number;
+  unknown: number;
+}
+
 const getReturnColor = (value: number | null): string => {
   if (value == null) return "#6b7280";
   return value >= 0 ? "#16a34a" : "#dc2626";
@@ -42,6 +43,57 @@ const getReturnColor = (value: number | null): string => {
 const formatPercent = (value: number | null): string => {
   if (value == null) return "N/A";
   return `${value >= 0 ? "+" : ""}${(value * 100).toFixed(2)}%`;
+};
+
+const StatCard: React.FC<{ label: string; value: number | string }> = ({ label, value }) => {
+  const getAccentColor = () => {
+    if (label.toLowerCase().includes("positive")) return "#16a34a";
+    if (label.toLowerCase().includes("negative")) return "#dc2626";
+    if (label.toLowerCase().includes("neutral")) return "#f59e0b";
+    return "#6366f1";
+  };
+
+  return (
+    <div
+      style={{
+        padding: "18px",
+        borderRadius: "14px",
+        background: "rgba(255,255,255,0.07)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        transition: "all 0.2s ease",
+        cursor: "default",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget.style.transform = "translateY(-3px)");
+        (e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.25)");
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget.style.transform = "translateY(0)");
+        (e.currentTarget.style.boxShadow = "none");
+      }}
+    >
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#9ca3af",
+          marginBottom: "6px",
+          letterSpacing: "0.5px",
+        }}
+      >
+        {label}
+      </div>
+
+      <div
+        style={{
+          fontSize: "26px",
+          fontWeight: 700,
+          color: getAccentColor(),
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
 };
 
 const StockMiniCard: React.FC<{
@@ -68,7 +120,9 @@ const StockMiniCard: React.FC<{
             style={{
               color: returnColor,
               background: data.return_1d >= 0 ? "rgba(22,163,74,0.1)" : "rgba(220,38,38,0.1)",
-              border: `1px solid ${data.return_1d >= 0 ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"}`,
+              border: `1px solid ${
+                data.return_1d >= 0 ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"
+              }`,
             }}
           >
             {formatPercent(data.return_1d)}
@@ -103,16 +157,31 @@ const StockMiniCard: React.FC<{
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [cards, setCards] = useState<StockCard[]>([]);
-  const [indicators, setIndicators] = useState<StockIndicators[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTicker, setSearchTicker] = useState("");
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-  // Auto-load all stocks on mount
+  // Articles sentiment summary
+  const [articleSummary, setArticleSummary] = useState<ArticleSentimentSummary | null>(null);
+
+  const fetchArticleSummary = async () => {
+    try {
+      const res = await axios.get<ArticleSentimentSummary>(
+        `${API_BASE}/api/articles/sentiment/summary`
+      );
+      setArticleSummary(res.data);
+    } catch {
+      // non-fatal; dashboard still works without this panel
+      setArticleSummary(null);
+    }
+  };
+
+  // Auto-load all stocks + summary on mount
   useEffect(() => {
     handleLoadAll();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchArticleSummary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchLatestForTicker = async (ticker: string): Promise<StockCard | null> => {
@@ -132,7 +201,9 @@ const Dashboard: React.FC = () => {
   };
 
   // Add stocks
-  const [modalStock, setModalStock] = useState<{ ticker: string; currentPrice: number } | null>(null);
+  const [modalStock, setModalStock] = useState<{ ticker: string; currentPrice: number } | null>(
+    null
+  );
 
   const handleSearch = async () => {
     const trimmed = searchTicker.trim().toUpperCase();
@@ -201,6 +272,47 @@ const Dashboard: React.FC = () => {
           <h1>Dashboard</h1>
           <p>Overview of your tracked stocks and sentiment predictions.</p>
 
+          {/* Article sentiment counts */}
+          {articleSummary && (
+            <div
+              style={{
+                marginTop: "24px",
+                marginBottom: "24px",
+                padding: "24px",
+                borderRadius: "18px",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                backdropFilter: "blur(10px)",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+              }}
+            >
+              <h3
+                style={{
+                  marginBottom: "18px",
+                  fontSize: "20px",
+                  fontWeight: 700,
+                  letterSpacing: "0.5px",
+                  color: "#6366f1", // matches Dashboard purple
+                }}
+              >
+                Article Sentiment Overview
+              </h3>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: "16px",
+                }}
+              >
+                <StatCard label="Total Articles" value={articleSummary.total} />
+                <StatCard label="Positive" value={articleSummary.positive} />
+                <StatCard label="Neutral" value={articleSummary.neutral} />
+                <StatCard label="Negative" value={articleSummary.negative} />
+              </div>
+            </div>
+          )}
+
           {/* Search + Load All controls */}
           <div className="dashboard-controls">
             <input
@@ -210,11 +322,17 @@ const Dashboard: React.FC = () => {
               onChange={(e) => setSearchTicker(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
-            <button className="btn-primary" onClick={handleSearch}>Search</button>
-            <button className="btn-ghost" onClick={handleLoadAll}>Load All</button>
+            <button className="btn-primary" onClick={handleSearch}>
+              Search
+            </button>
+            <button className="btn-ghost" onClick={handleLoadAll}>
+              Load All
+            </button>
           </div>
 
-          {loading && <p style={{ color: "#6b7280", textAlign: "center", padding: "40px" }}>Loading...</p>}
+          {loading && (
+            <p style={{ color: "#6b7280", textAlign: "center", padding: "40px" }}>Loading...</p>
+          )}
           {error && <p style={{ color: "#ef4444" }}>{error}</p>}
 
           {!loading && !error && !hasLoadedOnce && (
@@ -244,6 +362,7 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
+
       {modalStock && (
         <AddToPortfolioModal
           ticker={modalStock.ticker}

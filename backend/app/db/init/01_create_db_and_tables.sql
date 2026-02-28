@@ -113,6 +113,13 @@ CREATE TABLE IF NOT EXISTS sentiment_snapshots (
   prob_pos_max numeric,
   prob_neg_max numeric,
 
+  gpt_expl_30d  text,
+  gpt_expl_120d text,
+  gpt_expl_360d text,
+
+  gpt_model text,
+  gpt_generated_at timestamptz,
+
   created_at timestamptz DEFAULT now(),
 
   CONSTRAINT uq_snapshots_ticker_date UNIQUE (ticker, snapshot_date)

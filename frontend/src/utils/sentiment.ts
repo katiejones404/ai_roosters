@@ -1,4 +1,6 @@
 // frontend/src/utils/sentiment.ts
+import axios from "axios";
+
 export type SentimentLabel = "bullish" | "neutral" | "bearish";
 
 export interface TimeRangeIndicators {
@@ -7,92 +9,45 @@ export interface TimeRangeIndicators {
   d360: SentimentLabel;
 }
 
+export interface GPTExplanations {
+  d30?: string | null;
+  d120?: string | null;
+  d360?: string | null;
+}
+
 export interface StockIndicators {
+  // ✅ REQUIRED by backend + used by UI keys
+  id: string;
+
   ticker: string;
   snapshot_date: string;
-  close_price: number | null;
+
+  close_price?: number | null;
+
   indicators: TimeRangeIndicators;
+
+  // ✅ present in /sentiment/indicators when available
+  explanations?: GPTExplanations | null;
+
+  gpt_model?: string | null;
+  gpt_generated_at?: string | null;
 }
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
-function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+export async function fetchLatestStockIndicator(ticker: string): Promise<StockIndicators> {
+  const url = `${API_BASE}/api/sentiment/indicators?ticker=${encodeURIComponent(ticker)}`;
+  const res = await axios.get<StockIndicators[]>(url);
+
+  const first = res.data?.[0];
+  if (!first) {
+    throw new Error(`No sentiment indicator found for ${ticker}`);
+  }
+  return first;
 }
 
-
-/** GET /api/sentiment/indicators[?ticker=...] */
-export async function fetchAllStockIndicators(
-  ticker?: string
-): Promise<StockIndicators[]> {
-  const url = new URL(`${API_BASE}/api/sentiment/indicators`);
-  if (ticker && ticker.trim() !== "") {
-    url.searchParams.set("ticker", ticker.trim());
-  }
-
-  const res = await fetch(url.toString(), {
-    headers: getAuthHeaders(),
-  });
-  if (!res.ok) {
-    throw new Error(
-      `Failed to fetch indicators: ${res.status} ${res.statusText}`
-    );
-  }
-  return res.json();
-}
-
-export async function fetchStockIndicatorsByTicker(
-  ticker: string
-): Promise<StockIndicators[]> {
-  const trimmed = ticker.trim();
-  if (!trimmed) {
-    return [];
-  }
-
-  const res = await fetch(
-    `${API_BASE}/api/sentiment/indicators?ticker=${encodeURIComponent(
-      trimmed
-    )}`,
-    {
-      headers: getAuthHeaders(),
-    }
-  );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch indicators for ticker " + trimmed);
-  }
-
-  return res.json();
-}
-
-
-/** DELETE /api/sentiment/indicators/{ticker} */
-export async function deleteStockIndicator(ticker: string): Promise<void> {
-  const res = await fetch(
-    `${API_BASE}/api/sentiment/indicators/${encodeURIComponent(ticker)}`,
-    {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-    }
-  );
-  if (!res.ok) {
-    throw new Error(
-      `Failed to delete ${ticker}: ${res.status} ${res.statusText}`
-    );
-  }
-}
-
-
-export async function fetchLatestStockIndicator(
-  ticker: string
-): Promise<StockIndicators | null> {
-  const arr = await fetchStockIndicatorsByTicker(ticker);
-  if (!Array.isArray(arr) || arr.length === 0) return null;
-
-  // If API returns multiple snapshots, pick the newest
-  const sorted = [...arr].sort(
-    (a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime()
-  );
-  return sorted[0] ?? null;
+export async function fetchAllStockIndicators(): Promise<StockIndicators[]> {
+  const url = `${API_BASE}/api/sentiment/indicators`;
+  const res = await axios.get<StockIndicators[]>(url);
+  return res.data ?? [];
 }

@@ -1,137 +1,97 @@
-// frontend/src/SentimentIndicators.tsx
 import React from "react";
-import type { SentimentLabel, StockIndicators } from "./utils/sentiment";
+import type { StockIndicators, SentimentLabel } from "./utils/sentiment";
 
-interface StockCardProps {
+type StockCardProps = {
   data: StockIndicators;
-  onDelete?: (ticker: string) => void | Promise<void>;
-  onAddToPortfolio?: (ticker: string, currentPrice: number) => void;
-}
-
-/**
- * Simple 3-slice “pie chart” using SVG.
- * Only the slice for the current sentiment label is colored;
- * the other two are light gray.
- */
-const SentimentPie: React.FC<{ label: SentimentLabel }> = ({ label }) => {
-  const size = 64;
-  const radius = 26;
-  const center = size / 2;
-  const circumference = 2 * Math.PI * radius;
-  const segment = circumference / 3;
-
-  const segments: { key: SentimentLabel; offset: number }[] = [
-    { key: "bullish", offset: 0 },
-    { key: "neutral", offset: segment },
-    { key: "bearish", offset: 2 * segment },
-  ];
-
-  const colorMap: Record<SentimentLabel, string> = {
-    bullish: "#16a34a", // green
-    neutral: "#6b7280", // gray
-    bearish: "#dc2626", // red
-  };
-
-  return (
-    <svg
-      className="sentiment-pie"
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-    >
-      {segments.map((seg) => {
-        const active = seg.key === label;
-        return (
-          <circle
-            key={seg.key}
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="transparent"
-            stroke={active ? colorMap[seg.key] : "#e5e7eb"}
-            strokeWidth={10}
-            strokeDasharray={`${segment} ${circumference - segment}`}
-            strokeDashoffset={-seg.offset}
-            strokeLinecap="round"
-          />
-        );
-      })}
-    </svg>
-  );
 };
 
-export const StockSentimentCard: React.FC<StockCardProps> = ({
-  data,
-  onDelete,
-  onAddToPortfolio,
-}) => {
-  const { ticker, snapshot_date, close_price, indicators } = data;
-  const dateStr = new Date(snapshot_date).toISOString().slice(0, 10);
+const labelColor = (label: SentimentLabel): string => {
+  if (label === "bullish") return "#16a34a";
+  if (label === "bearish") return "#dc2626";
+  return "#64748b";
+};
 
-  const prettyLabel = (l: SentimentLabel) =>
-    l.charAt(0).toUpperCase() + l.slice(1); // "bullish" -> "Bullish"
+const labelBg = (label: SentimentLabel): string => {
+  if (label === "bullish") return "#dcfce7";
+  if (label === "bearish") return "#fee2e2";
+  return "#f1f5f9";
+};
+
+const prettyRange = (k: "d30" | "d120" | "d360") => {
+  if (k === "d30") return "30D";
+  if (k === "d120") return "120D";
+  return "360D";
+};
+
+const prettyLabel = (l: SentimentLabel) => {
+  if (l === "bullish") return "Bullish";
+  if (l === "bearish") return "Bearish";
+  return "Neutral";
+};
+
+export const StockSentimentCard: React.FC<StockCardProps> = ({ data }) => {
+  const ranges: Array<"d30" | "d120" | "d360"> = ["d30", "d120", "d360"];
 
   return (
-    <div className="sentiment-card">
-      <div className="sentiment-card-header">
-        <div>
-          <h3>{ticker}</h3>
-          <div className="sentiment-meta">
-            <span>{dateStr}</span>
-            {close_price != null && (
-              <span className="sentiment-price">
-                ${close_price.toFixed(2)}
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+      {ranges.map((k) => {
+        const label = data.indicators[k];
+        const expl = data.explanations?.[k] ?? null;
+
+        return (
+          <div
+            key={k}
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 14,
+              padding: 16,
+              background: "#fff",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 700, letterSpacing: "0.08em" }}>
+                {prettyRange(k)} SENTIMENT
+              </div>
+
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: "4px 10px",
+                  borderRadius: 999,
+                  color: labelColor(label),
+                  background: labelBg(label),
+                  border: "1px solid #e2e8f0",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                {prettyLabel(label)}
               </span>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              {expl ? (
+                <p style={{ margin: 0, color: "#334155", fontSize: 13, lineHeight: 1.45 }}>
+                  {expl}
+                </p>
+              ) : (
+                <p style={{ margin: 0, color: "#94a3b8", fontSize: 13 }}>
+                  No GPT explanation available.
+                </p>
+              )}
+            </div>
+
+            {(data.gpt_model || data.gpt_generated_at) && (
+              <div style={{ marginTop: 12, fontSize: 11, color: "#94a3b8" }}>
+                {data.gpt_model ? <span style={{ fontWeight: 600 }}>{data.gpt_model}</span> : null}
+                {data.gpt_model && data.gpt_generated_at ? " • " : null}
+                {data.gpt_generated_at ? <span>{data.gpt_generated_at}</span> : null}
+              </div>
             )}
           </div>
-        </div>
-
-        {onDelete && (
-          <button
-            className="sentiment-delete-btn"
-            onClick={() => onDelete(ticker)}
-            aria-label={`Remove ${ticker}`}
-          >
-            ×
-          </button>
-        )}
-      </div>
-
-      <div className="sentiment-pies">
-        <div className="sentiment-pie-group">
-          <SentimentPie label={indicators.d30} />
-          <span className="sentiment-pie-label">30 days</span>
-          <span className="sentiment-pie-value">
-            {prettyLabel(indicators.d30)}
-          </span>
-        </div>
-        <div className="sentiment-pie-group">
-          <SentimentPie label={indicators.d120} />
-          <span className="sentiment-pie-label">120 days</span>
-          <span className="sentiment-pie-value">
-            {prettyLabel(indicators.d120)}
-          </span>
-        </div>
-        <div className="sentiment-pie-group">
-          <SentimentPie label={indicators.d360} />
-          <span className="sentiment-pie-label">360 days</span>
-          <span className="sentiment-pie-value">
-            {prettyLabel(indicators.d360)}
-          </span>
-        </div>
-      </div>
-
-      {/* Add to Portfolio Button */}
-      {onAddToPortfolio && close_price != null && (
-        <button
-          className="add-portfolio-btn"
-          onClick={() => onAddToPortfolio(ticker, close_price)}
-          title="Add To Portfolio"
-        >
-          <span className="add-portfolio-icon">➕</span>
-          Add to Portfolio 
-        </button>
-      )}
+        );
+      })}
     </div>
   );
 };

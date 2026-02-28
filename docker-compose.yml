@@ -32,6 +32,13 @@ services:
       PG_USER: ${POSTGRES_USER:-stock_user}
       PG_PASS: ${POSTGRES_PASSWORD:-stock_pass}
       RUN_ARTICLE_INGEST: "1"
+
+      # --- GPT explanations (server-side only) ---
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ENABLE_GPT_EXPLANATIONS: ${ENABLE_GPT_EXPLANATIONS:-0}
+      GPT_EXPL_MODEL: ${GPT_EXPL_MODEL:-gpt-4o-mini}
+      GPT_EXPL_MAX_TICKERS: ${GPT_EXPL_MAX_TICKERS:-50}
+
     depends_on:
       postgres:
         condition: service_healthy
@@ -74,6 +81,13 @@ services:
       FINBERT_STOCKS: ${FINBERT_STOCKS:-}
       FINBERT_START_DATE: ${FINBERT_START_DATE:-}
       FINBERT_END_DATE: ${FINBERT_END_DATE:-}
+
+      # --- GPT explanations (pipeline stage) ---
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ENABLE_GPT_EXPLANATIONS: ${ENABLE_GPT_EXPLANATIONS:-0}
+      GPT_EXPL_MODEL: ${GPT_EXPL_MODEL:-gpt-4o-mini}
+      GPT_EXPL_MAX_TICKERS: ${GPT_EXPL_MAX_TICKERS:-50}
+
     profiles:
       - pipeline
     depends_on:
