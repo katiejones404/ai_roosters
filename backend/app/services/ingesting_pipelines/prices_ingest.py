@@ -272,10 +272,16 @@ class PriceIngestor:
 if __name__ == "__main__":
     ingestor = PriceIngestor()
     stocks = [
-        "KSS","ALK", "NVS", "AXP", "FCX", "CSX", "DAL", "NTAP", "AMZN", "AEO",
-        "MRK", "NVDA", "COP", "BHP", "EA"
+        "AAPL", "TSLA", "MSFT", "GOOGL", "AMZN",
+        "META", "NVDA", "JPM", "BP", "RELIANCE.NS",
+        "KSS", "ALK", "NVS", "AXP",
     ]
 
+    ''' 
+    Original stocks before additions/deletions:
+        "KSS","ALK", "NVS", "AXP", "FCX", "CSX", "DAL", "NTAP", "AMZN", "AEO",
+        "MRK", "NVDA", "COP", "BHP", "EA"
+        '''
     # Remove old tickers safely
     with ingestor.engine.begin() as conn:
         conn.execute(
