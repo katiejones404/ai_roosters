@@ -229,10 +229,11 @@ class ArticleIngestor:
         # phase and can download ~90GB to Colab/production disk.
         # These configs are all financial-domain and cover 2020-2024.
         configs = [
-            "sp500_daily_headlines",       # S&P 500 headlines 2008-2024
-            "yahoo_finance_articles",       # Yahoo Finance 2025
-            "yahoo_finance_felixdrinkall",  # Yahoo Finance 2017-2023
-            "cnbc_headlines",               # CNBC financial news 2017-2020
+            # NOTE: sp500_daily_headlines is excluded — it has ~57M rows (500
+            # companies × multiple headlines/day × 16 years) and is too large.
+            "yahoo_finance_articles",       # Yahoo Finance 2025, ~446MB
+            "yahoo_finance_felixdrinkall",  # Yahoo Finance 2017-2023, ~78MB
+            "cnbc_headlines",               # CNBC financial news 2017-2020, small
         ]
         datasets_list = [
             load_dataset(
@@ -273,8 +274,8 @@ class ArticleIngestor:
         flush_batch_size: int = 2000,   # fewer DB round-trips
         progress_every: int = 200_000,
         streaming: bool = True,
-        fallback_to_non_streaming_after: int = 1_000_000,
-        fallback_if_target_year_share_below: float = 0.0005,  # 0.05% of rows
+        fallback_to_non_streaming_after: int = 100_000_000,  # effectively disabled
+        fallback_if_target_year_share_below: float = 0.0,    # effectively disabled
         min_rows_for_share_check: int = 2_000_000,
     ) -> None:
         years_set = set(years)
