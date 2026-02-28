@@ -4,6 +4,7 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-router-dom": "^7.10.0",
+    "rechart": "^0.0.1",
     "recharts": "^3.7.0"
   },
   "devDependencies": {

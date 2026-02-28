@@ -286,7 +286,7 @@ if __name__ == "__main__":
     ingestor.ingest_multiple_stocks(
         tickers=stocks,
         start_date="2020-01-01",
-        end_date=str(date.today()),
+        end_date="2024-07-30",
         period=None,
         update_existing=True,
     )
