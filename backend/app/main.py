@@ -6,6 +6,7 @@ from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
 from app.db_init import init_db
 import logging
 import os
+from datetime import date
 
 # ML pipeline imports — only available in the pipeline container (not the slim API container)
 try:
@@ -102,11 +103,15 @@ def ingest_stock_prices_on_startup():
         if run_price_ingest:
             logger.info("RUN_PRICE_INGEST=1 — ingesting price data...")
             ingestor = PriceIngestor(db_url)
-            tickers = ["BP", "RELIANCE.NS"]
+            tickers = [
+                "AAPL", "TSLA", "MSFT", "GOOGL", "AMZN",
+                "META", "NVDA", "JPM", "BP", "RELIANCE.NS",
+                "KSS", "ALK", "NVS", "AXP",
+            ]
             ingestor.ingest_multiple_stocks(
                 tickers=tickers,
-                start_date="2021-10-01",
-                end_date="2022-02-28",
+                start_date="2020-01-01",
+                end_date=str(date.today()),
                 period=None,
                 update_existing=False,
             )
