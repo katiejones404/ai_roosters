@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AddToPortfolioModal from './components/AddToPortfolio';
+
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid
@@ -232,7 +233,7 @@ const StockDetail: React.FC = () => {
               ))}
             </div>
           </div>
-
+        /*
           {chartData.length === 0 ? (
             <div style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
               No data for this range
