@@ -140,14 +140,22 @@ ENABLE_GPT_EXPLANATIONS=0         # set to 1 to run GPT when pipeline runs
 
 Make sure Docker Desktop is open on your computer
 
+If you want to fully wipe everything including the local postgres database volume and start completely fresh:
+'''bash
+docker-compose down -v
+docker rm -f stock_postgres stock_api stock_frontend
+'''
+
+Then to start up:
+
 ```bash
-docker compose up api frontend
+docker-compose up api frontend
 ```
 
 On first run (or after changing `requirements-api.txt` or the Dockerfile), add `--build` to rebuild the images:
 
 ```bash
-docker compose up api frontend --build
+docker-compose up api frontend --build
 ```
 
 The first build takes 3–5 minutes (downloading images and installing packages). Subsequent runs start quickly.
@@ -168,6 +176,7 @@ On first startup, the API automatically:
 > **If you have not ran the pipeline before**, you will need to run the pipeline (see below) to populate sentiment data.
 
 ### Step 4 - Stop the app
+Use Ctrl+C to stop the container running in the terminal.
 
 ```bash
 # Stop containers, keep database data
