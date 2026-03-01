@@ -275,13 +275,14 @@ if __name__ == "__main__":
         "KSS","ALK", "NVS", "AXP", "FCX", "CSX", "DAL", "NTAP", "AMZN", "AEO",
         "MRK", "NVDA", "COP", "BHP", "EA"
     ]
-    # Remove old tickers safely
-    with ingestor.engine.begin() as conn:
-        conn.execute(
-            text("DELETE FROM stocks WHERE NOT (ticker = ANY(:tickers));"),
-            {"tickers": stocks},
-        )
-        logger.info("Removed old tickers from database (kept only current tickers).")
+    # --Do not remove old tickers, it doesn't hurt anything to keep them in the database--
+    # -- "old" tickers may be used later, don't remove them --
+    # with ingestor.engine.begin() as conn:
+    #     conn.execute(
+    #         text("DELETE FROM stocks WHERE NOT (ticker = ANY(:tickers));"),
+    #         {"tickers": stocks},
+    #     )
+    #     logger.info("Removed old tickers from database (kept only current tickers).")
 
     ingestor.ingest_multiple_stocks(
         tickers=stocks,

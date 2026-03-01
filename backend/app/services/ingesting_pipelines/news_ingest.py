@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from collections import defaultdict, Counter
 from typing import Any, Dict, List, Optional, Tuple
 
-from datasets import load_dataset, interleave_datasets
+from datasets import load_dataset
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.dialects.postgresql import insert
 
@@ -224,30 +224,12 @@ class ArticleIngestor:
 
     def load_dataset_any(self, streaming: bool):
         token = get_hf_token_optional()
-        # Load specific sub-dataset configs instead of the full combined dataset.
-        # The full combined load (no name= arg) triggers a 20-min pre-processing
-        # phase and can download ~90GB to Colab/production disk.
-        # These configs are all financial-domain and cover 2020-2024.
-        configs = [
-            # NOTE: sp500_daily_headlines is excluded — it has ~57M rows (500
-            # companies × multiple headlines/day × 16 years) and is too large.
-            "yahoo_finance_articles",       # Yahoo Finance 2025, ~446MB
-            "yahoo_finance_felixdrinkall",  # Yahoo Finance 2017-2023, ~78MB
-            "cnbc_headlines",               # CNBC financial news 2017-2020, small
-        ]
-        datasets_list = [
-            load_dataset(
-                "Brianferrell787/financial-news-multisource",
-                name=cfg,
-                split="train",
-                streaming=streaming,
-                token=token,
-            )
-            for cfg in configs
-        ]
-        if len(datasets_list) == 1:
-            return datasets_list[0]
-        return interleave_datasets(datasets_list)
+        return load_dataset(
+            "Brianferrell787/financial-news-multisource",
+            split="train",
+            streaming=streaming,
+            token=token,
+        )
 
     def _store_articles(self, records: List[Dict[str, Any]]) -> None:
         if not records:
@@ -269,13 +251,13 @@ class ArticleIngestor:
         years: List[int],
         per_year: int = 1000,
         end_date: str = "2024-12-01",
-        max_scanned: int = 5_000_000,  # lower default; 200M is brutal
+        max_scanned: int = 50_000_000,  # lower default; 200M is brutal
         max_desc_chars: int = 280,
         flush_batch_size: int = 2000,   # fewer DB round-trips
         progress_every: int = 200_000,
         streaming: bool = True,
-        fallback_to_non_streaming_after: int = 100_000_000,  # effectively disabled
-        fallback_if_target_year_share_below: float = 0.0,    # effectively disabled
+        fallback_to_non_streaming_after: int = 1_000_000,
+        fallback_if_target_year_share_below: float = 0.0005,  # 0.05% of rows
         min_rows_for_share_check: int = 2_000_000,
     ) -> None:
         years_set = set(years)
