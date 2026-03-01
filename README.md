@@ -1,7 +1,7 @@
 # StockSense - AI-Powered Stock Sentiment Dashboard
-live website: [https://ai-roosters-frontend.onrender.com/](https://ai-roosters-webpage.vercel.app/)
+live website: https://ai-roosters-webpage.vercel.app/
 
-To see backend/API health: [https://ai-roosters.onrender.com/](https://stocksense-api-7go1.onrender.com/)
+To see backend/API health: https://stocksense-api-7go1.onrender.com/
 ## About Stock Sense 
 
 StockSense is a full-stack web application that helps investors understand how financial news sentiment relates to stock performance. Users can build a personal portfolio, track real price data and historical returns, and read AI-generated summaries that explain what the news sentiment means and why the stock may be performing a certain way.
