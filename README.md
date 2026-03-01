@@ -1,5 +1,5 @@
 (Not fully integrated with Beta Milestone features as of 02/26/2026)
-frontend: [https://ai-roosters-frontend.onrender.com/](https://ai-roosters-webpage.vercel.app/)
+frontend: [[https://ai-roosters-frontend.onrender.com/](https://ai-roosters-webpage.vercel.app/)](https://ai-roosters-webpage.vercel.app/)
 
 To see backend/API health:
 backend: [https://ai-roosters.onrender.com/](https://stocksense-api-7go1.onrender.com/)
