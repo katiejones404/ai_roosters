@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine, text as sa_text
 
 from app.api import auth, sentiment, portfolio, news, stocks
 from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
 from app.db_init import init_db
 import logging
 import os
-from datetime import date
+from datetime import date, timedelta
 
 # ML pipeline imports — only available in the pipeline container (not the slim API container)
 try:
@@ -79,20 +80,22 @@ def ingest_stock_prices_on_startup():
         if run_article_ingest:
             logger.info("RUN_ARTICLE_INGEST=1 — running article ingestion pipeline...")
 
-            from app.services.ingesting_pipelines.article_ingest import ArticleIngestor
-
+            from app.services.ingesting_pipelines.news_ingest import ArticleIngestor
+            ''' Not implemented yet. ingest_all_years_one_pass doesn't have a tickers parameter
             top15 = [
                 "KSS", "ALK", "NVS", "AXP", "FCX",
                 "CSX", "DAL", "NTAP", "GPS", "AEO",
                 "MRK", "DFS", "COP", "BHP", "EA",
             ]
-
-            ArticleIngestor(db_url).ingest_equal_by_year(
-                tickers=top15,
-                start_date="2010-01-01",
-                end_date="2024-12-01",
-                total_per_ticker=5000,   # 5k TOTAL per stock across the whole range
-                batch_size=250,
+            logger.info(f"Ingesting financial news for tickers: {top15}")
+            '''
+            ArticleIngestor(db_url).ingest_all_years_one_pass(
+                years=[2020, 2021, 2022, 2023],
+                per_year=500,
+                end_date="2023-12-31",
+                max_scanned=50_000_000,
+                flush_batch_size=2000,
+                streaming=True,
             )
 
             logger.info("Article ingestion complete.")
@@ -108,9 +111,25 @@ def ingest_stock_prices_on_startup():
                 "META", "NVDA", "JPM", "BP", "RELIANCE.NS",
                 "KSS", "ALK", "NVS", "AXP",
             ]
+
+            # Full history on first-time setup; recent refresh otherwise.
+            # Checks if any rows older than 1000 days exist - if so, DB is already populated.
+            # Saves time during API start up if data already exists
+            _engine = create_engine(db_url)
+            cutoff = date.today() - timedelta(days=1000)
+            with _engine.connect() as _conn:
+                _count = _conn.execute(
+                    sa_text("SELECT COUNT(*) FROM stocks WHERE date < :d"),
+                    {"d": str(cutoff)}
+                ).scalar()
+            _engine.dispose()
+            has_history = (_count or 0) > 0
+            price_start = str(date.today() - timedelta(days=30)) if has_history else "2020-01-01"
+            logger.info(f"Price ingest start_date={price_start} (has_history={has_history})")
+
             ingestor.ingest_multiple_stocks(
                 tickers=tickers,
-                start_date="2020-01-01",
+                start_date=price_start,
                 end_date=str(date.today()),
                 period=None,
                 update_existing=False,

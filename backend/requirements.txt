@@ -32,8 +32,6 @@ behave
 
 #Article ingestion
 requests
-beautifulsoup4
-tqdm
 dotenv
 datasets
 pandas 
