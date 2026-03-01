@@ -33,10 +33,10 @@ Underlined points are items that need to be improved in the next release (covere
 
 ### Sentiment Analysis Pipeline (fully run, data in Neon)
 - **Article ingestion:** ~40,000+ financial news articles ingested from a HuggingFace dataset (2019–2023) into PostgreSQL
-- **FinBERT scoring:** Every article scored with finbert (positive / negative / neutral + confidence probabilities)
+- **FinBERT scoring:** _Every article scored with finbert (positive / negative / neutral + confidence probabilities)_
 - **Stock returns pipeline:** 5+ years of daily price data fetched from yfinance; forward returns (1D/30D/120D/360D) calculated for every trading day
-- **Snapshot aggregator:** ~31,000 sentiment snapshots written - one per (ticker, date) - joining article sentiment with stock return data, with XGBoost-predicted returns
-- **GPT explanations:** One GPT-4o-mini explanation per ticker, referencing the actual FinBERT sentiment score and realized returns for the 30D / 120D / 360D horizons
+- **Snapshot aggregator:** _~31,000 sentiment snapshots written - one per (ticker, date) - joining article sentiment with stock return data, with XGBoost-predicted returns_
+- **GPT explanations:** _One GPT-4o-mini explanation per ticker, referencing the actual FinBERT sentiment score and realized returns for the 30D / 120D / 360D horizons_
 
 ### Supported Tickers
 AAPL, TSLA, MSFT, GOOGL, AMZN, META, NVDA, JPM, BP, RELIANCE.NS, KSS, ALK, NVS, AXP, MRK
