@@ -31,7 +31,10 @@ services:
       PG_DB: ${POSTGRES_DB:-stock_db}
       PG_USER: ${POSTGRES_USER:-stock_user}
       PG_PASS: ${POSTGRES_PASSWORD:-stock_pass}
-      RUN_ARTICLE_INGEST: "1"
+      # Keep 0 - article ingest runs via pipeline container, not the API.
+      # To ingest articles (in backend folder): 
+      #docker compose --profile pipeline run --rm pipeline python -m app.services.ingesting_pipelines.news_ingest
+      RUN_ARTICLE_INGEST: "0"
 
       # --- GPT explanations (server-side only) ---
       OPENAI_API_KEY: ${OPENAI_API_KEY}

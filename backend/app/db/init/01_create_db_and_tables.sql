@@ -162,3 +162,9 @@ CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_article
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+
+ALTER TABLE sentiment_snapshots ADD COLUMN IF NOT EXISTS gpt_expl_30d text;
+ALTER TABLE sentiment_snapshots ADD COLUMN IF NOT EXISTS gpt_expl_120d text;
+ALTER TABLE sentiment_snapshots ADD COLUMN IF NOT EXISTS gpt_expl_360d text;
+ALTER TABLE sentiment_snapshots ADD COLUMN IF NOT EXISTS gpt_model text;
+ALTER TABLE sentiment_snapshots ADD COLUMN IF NOT EXISTS gpt_generated_at timestamptz;

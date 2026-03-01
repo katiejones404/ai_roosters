@@ -16,8 +16,5 @@ requests
 httpx==0.24.1
 python-dotenv
 email-validator
-beautifulsoup4
-tqdm
 pytest
 behave
-openai>=1.0.0
