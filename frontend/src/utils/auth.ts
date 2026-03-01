@@ -67,7 +67,7 @@ export const logout = async (): Promise<void> => {
   }
 
   removeToken();
-  window.location.href = "/login";
+  //window.location.href = "/login";
 };
 
 export const getCurrentUser = async (): Promise<any> => {

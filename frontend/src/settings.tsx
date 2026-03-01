@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { getCurrentUser, logout, deleteAccount, updateProfilePicture, updateProfile, changePassword } from "./utils/auth";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./settings.css";
 
 type TabType = "account" | "security";
@@ -29,6 +29,7 @@ interface NotificationSettings {
 }
 
 const Settings: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("account");
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -168,10 +169,10 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      logout();
-    }
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

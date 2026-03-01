@@ -109,6 +109,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     setDropdownOpen(false);
     await logout();
+    navigate('/');
   };
 
   const isActive = (path: string) =>
