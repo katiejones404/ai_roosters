@@ -110,6 +110,8 @@ def ingest_stock_prices_on_startup():
                 "AAPL", "TSLA", "MSFT", "GOOGL", "AMZN",
                 "META", "NVDA", "JPM", "BP", "RELIANCE.NS",
                 "KSS", "ALK", "NVS", "AXP",
+                "FCX", "CSX", "DAL", "NTAP", "AEO",
+                "MRK", "COP", "BHP", "EA",
             ]
 
             # Full history on first-time setup; recent refresh otherwise.

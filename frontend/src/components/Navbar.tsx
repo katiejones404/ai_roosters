@@ -55,6 +55,16 @@ const Navbar = () => {
     fetchTickers();
   }, []);
 
+  // Sync profile picture when updated from Settings
+  useEffect(() => {
+    const handlePictureUpdate = (e: Event) => {
+      const { picture } = (e as CustomEvent<{ picture: string }>).detail;
+      setUser((prev: CurrentUser | null) => prev ? { ...prev, profile_picture: picture } : prev);
+    };
+    window.addEventListener('profilePictureUpdated', handlePictureUpdate);
+    return () => window.removeEventListener('profilePictureUpdated', handlePictureUpdate);
+  }, []);
+
   // Close dropdown/suggestions when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

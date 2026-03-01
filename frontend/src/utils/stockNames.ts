@@ -14,6 +14,15 @@ export const TICKER_NAMES: Record<string, string> = {
   ALK: "Alaska Air Group",
   NVS: "Novartis AG",
   AXP: "American Express",
+  FCX: "Freeport-McMoRan",
+  CSX: "CSX Corporation",
+  DAL: "Delta Air Lines",
+  NTAP: "NetApp",
+  AEO: "American Eagle Outfitters",
+  MRK: "Merck & Co.",
+  COP: "ConocoPhillips",
+  BHP: "BHP Group",
+  EA: "Electronic Arts",
 };
 
 export const ALL_TICKERS = Object.keys(TICKER_NAMES);

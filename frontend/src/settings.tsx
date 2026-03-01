@@ -196,6 +196,7 @@ const Settings: React.FC = () => {
       try {
         await updateProfilePicture(base64);
         setProfileImage(base64);
+        window.dispatchEvent(new CustomEvent('profilePictureUpdated', { detail: { picture: base64 } }));
         setSuccessMessage("Profile picture updated!");
         setTimeout(() => setSuccessMessage(""), 3000);
       } catch {

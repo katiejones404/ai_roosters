@@ -2,6 +2,9 @@
 .env
 .env.*
 !.env.example
+!.env.backend.example
+!.env.production.example
+.env.production
 
 ./backend/data/masterfilelist.txt
 venv1

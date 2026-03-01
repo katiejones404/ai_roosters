@@ -58,6 +58,9 @@ const Portfolio = () => {
     const [compareView, setCompareView] = useState<'pct' | 'price'>('pct');
     const [compareRange, setCompareRange] = useState<'30' | '120' | '360'>('30');
     const [compareLoading, setCompareLoading] = useState(false);
+    const [actionTicker, setActionTicker] = useState<string | null>(null);
+    const [sellQty, setSellQty] = useState<string>('');
+    const [actionError, setActionError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchPortfolioSummary();
@@ -86,8 +89,8 @@ const Portfolio = () => {
                     newData[ticker] = results[i].data;
                 });
                 setCompareData(newData);
-            } catch (err) {
-                console.error('Error fetching price data:', err);
+            } catch {
+                // price fetch failed silently; chart will show empty
             } finally {
                 setCompareLoading(false);
             }
@@ -109,7 +112,6 @@ const Portfolio = () => {
             setPortfolioData(response.data);
             setError(null);
         } catch (err: unknown) {
-            console.error('Error fetching portfolio:', err);
             const axiosErr = err as { response?: { status?: number } };
             if (axiosErr.response?.status === 404) {
                 setPortfolioData({
@@ -133,18 +135,56 @@ const Portfolio = () => {
         }
     };
 
+    const openActionPanel = (ticker: string) => {
+        setActionTicker(ticker);
+        setSellQty('');
+        setActionError(null);
+    };
+
+    const closeActionPanel = () => {
+        setActionTicker(null);
+        setSellQty('');
+        setActionError(null);
+    };
+
     const removeStock = async (ticker: string) => {
-        if (!confirm(`Remove ${ticker} from portfolio?`)) return;
         try {
             const token = getToken();
             await axios.delete(`${API_BASE}/api/portfolio/${ticker}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setSelectedTickers(prev => prev.filter(t => t !== ticker));
+            closeActionPanel();
             fetchPortfolioSummary();
-        } catch (err) {
-            console.error('Error removing stock:', err);
-            alert('Failed to remove stock from portfolio');
+        } catch {
+            setActionError('Failed to remove position. Please try again.');
+        }
+    };
+
+    const sellShares = async (ticker: string, currentQty: number) => {
+        const qty = parseFloat(sellQty);
+        if (isNaN(qty) || qty <= 0) {
+            setActionError('Enter a valid number of shares to sell.');
+            return;
+        }
+        try {
+            const token = getToken();
+            if (qty >= currentQty) {
+                await axios.delete(`${API_BASE}/api/portfolio/${ticker}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setSelectedTickers((prev: string[]) => prev.filter((t: string) => t !== ticker));
+            } else {
+                await axios.put(
+                    `${API_BASE}/api/portfolio/${ticker}`,
+                    { quantity: parseFloat((currentQty - qty).toFixed(6)) },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+            }
+            closeActionPanel();
+            fetchPortfolioSummary();
+        } catch {
+            setActionError('Failed to update position. Please try again.');
         }
     };
 
@@ -401,9 +441,9 @@ const Portfolio = () => {
                                                             <span className="quantity-badge">{item.quantity} shares</span>
                                                         </div>
                                                         <button
-                                                            onClick={() => removeStock(item.ticker)}
+                                                            onClick={() => openActionPanel(item.ticker)}
                                                             className="remove-btn"
-                                                            title="Remove from Portfolio"
+                                                            title="Manage Position"
                                                         >
                                                             ✕
                                                         </button>
@@ -466,6 +506,48 @@ const Portfolio = () => {
                                                             </span>
                                                         </div>
                                                     </div>
+
+                                                    {/* Inline action panel */}
+                                                    {actionTicker === item.ticker && (
+                                                        <div className="action-panel">
+                                                            <span className="action-panel-title">Manage {item.ticker}</span>
+                                                            {actionError && (
+                                                                <div className="action-error">{actionError}</div>
+                                                            )}
+                                                            <input
+                                                                type="number"
+                                                                className="action-qty-input"
+                                                                min="0.001"
+                                                                step="any"
+                                                                placeholder={`Shares to sell (max ${item.quantity})`}
+                                                                value={sellQty}
+                                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                                    setSellQty(e.target.value);
+                                                                    setActionError(null);
+                                                                }}
+                                                            />
+                                                            <div className="action-btn-row">
+                                                                <button
+                                                                    className="action-sell-btn"
+                                                                    onClick={() => sellShares(item.ticker, item.quantity)}
+                                                                >
+                                                                    Sell
+                                                                </button>
+                                                                <button
+                                                                    className="action-remove-all-btn"
+                                                                    onClick={() => removeStock(item.ticker)}
+                                                                >
+                                                                    Remove All
+                                                                </button>
+                                                                <button
+                                                                    className="action-cancel-btn"
+                                                                    onClick={closeActionPanel}
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             );
                                         })}
