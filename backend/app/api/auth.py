@@ -44,7 +44,7 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
         )
 
     # Check if email already exists
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    existing_user = db.query(User).filter(User.email == user_data.email.lower()).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -75,7 +75,7 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
     hashed_password = hash_password(user_data.password)
     new_user = User(
         username=user_data.username,
-        email=user_data.email,
+        email=user_data.email.lower(),
         password_hash=hashed_password
     )
 
@@ -90,7 +90,7 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
 async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """Login user and return JWT token"""
     # Find user
-    user = db.query(User).filter(User.email == user_data.email).first()
+    user = db.query(User).filter(User.email == user_data.email.lower()).first()
 
     if not user or not verify_password(user_data.password, user.password_hash):
         # --- Feature #3: Delay on failed login to slow brute-force attacks ---
