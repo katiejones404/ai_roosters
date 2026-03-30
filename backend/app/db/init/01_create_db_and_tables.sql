@@ -11,6 +11,38 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 
+-- News Article GPT Explanation 
+CREATE TABLE IF NOT EXISTS stock_news_articles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticker text NOT NULL,
+  url text NOT NULL,
+  title text,
+  source text,
+  description text,
+  snippet text,
+  image_url text,
+  language text,
+  published_at timestamptz,
+  inserted_at timestamptz DEFAULT now(),
+  relevance_score numeric,
+  UNIQUE (ticker, url)
+);
+
+CREATE INDEX IF NOT EXISTS idx_stock_news_articles_ticker_published
+  ON stock_news_articles (ticker, published_at DESC);
+
+CREATE TABLE IF NOT EXISTS stock_news_summaries (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticker text NOT NULL,
+  window_days int NOT NULL,
+  summary_text text NOT NULL,
+  article_count int NOT NULL DEFAULT 0,
+  latest_article_at timestamptz,
+  generated_at timestamptz NOT NULL DEFAULT now(),
+  model text,
+  UNIQUE (ticker, window_days)
+);
+
 -- Articles
 
 CREATE TABLE IF NOT EXISTS articles (
