@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 import requests
-from sqlalchemy import MetaData, Table, create_engine, select
+from sqlalchemy import MetaData, Table, create_engine, func, select
 from sqlalchemy.dialects.postgresql import insert
 
 # Optional: project root on path
@@ -23,7 +23,7 @@ logger.setLevel(logging.INFO)
 # Keep this aligned with the stocks shown on the website
 TARGET_TICKERS = [
     "KSS", "ALK", "NVS", "AXP", "FCX",
-    "CSX", "DAL", "NTAP", "AMZN", "AEO",
+    "CSX", "DAL", "NTAP", "AMZN", "AAPL",
     "MRK", "NVDA", "COP", "BHP", "EA",
 ]
 
@@ -250,7 +250,7 @@ class StockNewsSummaryGenerator:
         return TARGET_TICKERS.copy()
 
     def resolve_windows(self) -> List[int]:
-        raw = (os.getenv("NEWS_SUMMARY_WINDOWS") or "7").strip()
+        raw = (os.getenv("NEWS_SUMMARY_WINDOWS") or "7,30").strip()
         windows: List[int] = []
         for x in raw.split(","):
             x = x.strip()
@@ -264,13 +264,40 @@ class StockNewsSummaryGenerator:
                 continue
 
         windows = dedupe_keep_order([str(w) for w in windows])
-        return [int(w) for w in windows] if windows else [7]
+        return [int(w) for w in windows] if windows else [7, 30]
 
     # ---------------------------
     # Article loading
     # ---------------------------
 
-    def load_recent_articles(
+    def load_recent_article_stats(
+        self,
+        ticker: str,
+        window_days: int,
+    ) -> Dict[str, Any]:
+        cutoff = utc_now() - timedelta(days=window_days)
+
+        stmt = (
+            select(
+                func.count().label("article_count"),
+                func.max(self.stock_news_articles.c.published_at).label("latest_article_at"),
+            )
+            .where(
+                self.stock_news_articles.c.ticker == ticker,
+                self.stock_news_articles.c.published_at.is_not(None),
+                self.stock_news_articles.c.published_at >= cutoff,
+            )
+        )
+
+        with self.engine.begin() as conn:
+            row = conn.execute(stmt).one()
+
+        return {
+            "article_count": int(row.article_count or 0),
+            "latest_article_at": parse_datetime_utc(row.latest_article_at),
+        }
+
+    def load_recent_articles_for_prompt(
         self,
         ticker: str,
         window_days: int,
@@ -307,11 +334,7 @@ class StockNewsSummaryGenerator:
         with self.engine.begin() as conn:
             rows = conn.execute(stmt).fetchall()
 
-        articles: List[Dict[str, Any]] = []
-        for row in rows:
-            articles.append(dict(row._mapping))
-
-        return articles
+        return [dict(row._mapping) for row in rows]
 
     # ---------------------------
     # Prompting + model call
@@ -439,16 +462,14 @@ class StockNewsSummaryGenerator:
         window_days: int,
         max_articles: int,
     ) -> None:
-        articles = self.load_recent_articles(
+        stats = self.load_recent_article_stats(
             ticker=ticker,
             window_days=window_days,
-            max_articles=max_articles,
         )
+        article_count = int(stats["article_count"])
+        latest_article_at = stats["latest_article_at"]
 
-        article_count = len(articles)
-        latest_article_at = articles[0]["published_at"] if articles else None
-
-        if not articles:
+        if article_count == 0:
             summary_text = "No recent stock-specific articles were found for this window."
             written = self.upsert_summary(
                 ticker=ticker,
@@ -462,6 +483,12 @@ class StockNewsSummaryGenerator:
                 f"articles=0 upserted={written}"
             )
             return
+
+        articles = self.load_recent_articles_for_prompt(
+            ticker=ticker,
+            window_days=window_days,
+            max_articles=max_articles,
+        )
 
         messages = self.build_prompts(
             ticker=ticker,
@@ -481,7 +508,7 @@ class StockNewsSummaryGenerator:
 
         logger.info(
             f"[STOCK-NEWS-SUMMARY] ticker={ticker} window_days={window_days} "
-            f"articles={article_count} upserted={written}"
+            f"articles={article_count} prompt_articles={len(articles)} upserted={written}"
         )
 
     def run(
@@ -541,6 +568,6 @@ if __name__ == "__main__":
 
     gen.run(
         tickers=None,   # uses NEWS_SUMMARY_TICKERS or hardcoded TARGET_TICKERS
-        windows=None,   # uses NEWS_SUMMARY_WINDOWS or default [7]
+        windows=None,   # uses NEWS_SUMMARY_WINDOWS or default [7, 30]
         max_articles_per_summary=max_articles_per_summary,
     )

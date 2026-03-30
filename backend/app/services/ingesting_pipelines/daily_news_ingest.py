@@ -23,7 +23,7 @@ logger.setLevel(logging.INFO)
 # Keep this aligned with the stocks shown on the website
 TARGET_TICKERS = [
     "KSS", "ALK", "NVS", "AXP", "FCX",
-    "CSX", "DAL", "NTAP", "AMZN", "AEO",
+    "CSX", "DAL", "NTAP", "AMZN", "AAPL",
     "MRK", "NVDA", "COP", "BHP", "EA",
 ]
 
