@@ -18,7 +18,6 @@ export const TICKER_NAMES: Record<string, string> = {
   CSX: "CSX Corporation",
   DAL: "Delta Air Lines",
   NTAP: "NetApp",
-  AEO: "American Eagle Outfitters",
   MRK: "Merck & Co.",
   COP: "ConocoPhillips",
   BHP: "BHP Group",
