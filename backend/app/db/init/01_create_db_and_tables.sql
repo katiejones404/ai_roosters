@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 
--- News Article GPT Explanation 
+-- News Articles
 CREATE TABLE IF NOT EXISTS stock_news_articles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   ticker text NOT NULL,
@@ -65,7 +65,6 @@ CREATE TABLE IF NOT EXISTS articles (
   prob_neu numeric
 );
 
-
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at);
 CREATE INDEX IF NOT EXISTS idx_articles_url ON articles (url);
 CREATE INDEX IF NOT EXISTS idx_articles_sentiment ON articles (sentiment);
@@ -87,7 +86,6 @@ CREATE TABLE IF NOT EXISTS portfolio (
 );
 
 -- Stocks
-
 CREATE TABLE IF NOT EXISTS stocks (
   id SERIAL PRIMARY KEY,
   ticker VARCHAR(20) NOT NULL,
@@ -102,69 +100,56 @@ CREATE TABLE IF NOT EXISTS stocks (
   return_1d   NUMERIC,
   return_30d  NUMERIC,
   return_120d NUMERIC,
-  return_360d NUMERIC, 
+  return_360d NUMERIC,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  
+
   CONSTRAINT uq_ticker_date UNIQUE (ticker, date)
 );
 
--- Kevin: Sentiment database 
-
+-- Kevin: Sentiment database
 CREATE TABLE IF NOT EXISTS sentiment_snapshots (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
-  -- Which stock this snapshot for 
-  ticker text NOT NULL, 
-  -- The date of the snapshot 
+  ticker text NOT NULL,
   snapshot_date date NOT NULL,
-  
-  close_price numeric, 
-  return_1d numeric, 
-  return_30d numeric, 
-  return_120d numeric, 
-  return_360d numeric, 
 
-  -- Sentiment stats 
+  close_price numeric,
+  return_1d numeric,
+  return_30d numeric,
+  return_120d numeric,
+  return_360d numeric,
 
-  sentiment_mean numeric, 
-  sentiment_max numeric, 
-  sentiment_min numeric, 
+  sentiment_mean numeric,
+  sentiment_max numeric,
+  sentiment_min numeric,
 
-  num_articles integer, 
-  num_pos_articles integer, 
-  num_neg_articles integer, 
+  num_articles integer,
+  num_pos_articles integer,
+  num_neg_articles integer,
 
-  pos_share numeric, 
-  neg_share numeric, 
+  pos_share numeric,
+  neg_share numeric,
 
-  prob_pos_mean numeric, 
-  prob_neg_mean numeric, 
+  prob_pos_mean numeric,
+  prob_neg_mean numeric,
   prob_neu_mean numeric,
 
   prob_pos_max numeric,
   prob_neg_max numeric,
-
-  gpt_expl_30d  text,
-  gpt_expl_120d text,
-  gpt_expl_360d text,
-
-  gpt_model text,
-  gpt_generated_at timestamptz,
 
   created_at timestamptz DEFAULT now(),
 
   CONSTRAINT uq_snapshots_ticker_date UNIQUE (ticker, snapshot_date)
 );
 
-CREATE INDEX IF NOT EXISTS idx_snapshots_ticker_date 
+CREATE INDEX IF NOT EXISTS idx_snapshots_ticker_date
   ON sentiment_snapshots (ticker, snapshot_date);
 
-CREATE INDEX IF NOT EXISTS idx_snapshot_ticker 
+CREATE INDEX IF NOT EXISTS idx_snapshot_ticker
   ON sentiment_snapshots (ticker);
 
 -- Article Ticker Sentiment table
-
 CREATE TABLE IF NOT EXISTS article_ticker_sentiment (
   id SERIAL PRIMARY KEY,
   article_id UUID NOT NULL,
@@ -174,7 +159,7 @@ CREATE TABLE IF NOT EXISTS article_ticker_sentiment (
   ticker_sentiment_score NUMERIC,
   ticker_sentiment_label VARCHAR(50),
   published_at TIMESTAMPTZ,
-  
+
   CONSTRAINT fk_article
     FOREIGN KEY (article_id)
     REFERENCES articles(id)
@@ -194,9 +179,3 @@ CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_article
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
-
-ALTER TABLE sentiment_snapshots ADD COLUMN IF NOT EXISTS gpt_expl_30d text;
-ALTER TABLE sentiment_snapshots ADD COLUMN IF NOT EXISTS gpt_expl_120d text;
-ALTER TABLE sentiment_snapshots ADD COLUMN IF NOT EXISTS gpt_expl_360d text;
-ALTER TABLE sentiment_snapshots ADD COLUMN IF NOT EXISTS gpt_model text;
-ALTER TABLE sentiment_snapshots ADD COLUMN IF NOT EXISTS gpt_generated_at timestamptz;

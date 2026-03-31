@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, List, Callable, Type, Optional, Tuple
+from typing import Any, Dict, List, Callable, Type, Optional
 from datetime import date, datetime
 import math
 
@@ -47,8 +47,10 @@ class Artifact(BaseModel):
             return self.dict()
         return self.__dict__.copy()
 
+
 # --------------------------------------------------------------------------------------
 # Core Stage / Pipeline
+# --------------------------------------------------------------------------------------
 
 class Stage:
     def __init__(
@@ -89,9 +91,10 @@ class Pipeline:
         logger.info(f"Pipeline '{self.name}' completed.")
         return data
 
-# ------------------------------------------------------
+
+# --------------------------------------------------------------------------------------
 # DB Artifacts
-# ----------------------------------------------------
+# --------------------------------------------------------------------------------------
 
 class SnapshotRequestArtifact(Artifact):
     ticker: Optional[str] = None
@@ -146,9 +149,10 @@ class SentimentAggregateArtifact(Artifact):
 class DBArtifact(Artifact):
     num_snapshots: int
 
-# -------------------------------------------------------
+
+# --------------------------------------------------------------------------------------
 # Helpers
-# -------------------------------------------------------
+# --------------------------------------------------------------------------------------
 
 def _get_dsn() -> str:
     return os.getenv(
@@ -159,23 +163,6 @@ def _get_dsn() -> str:
 
 def _parse_date(s: str) -> date:
     return datetime.fromisoformat(s).date()
-
-
-def _mean(values: List[Optional[float]]) -> Optional[float]:
-    nums = [float(v) for v in values if v is not None and math.isfinite(float(v))]
-    if not nums:
-        return None
-    return float(sum(nums) / len(nums))
-
-
-def _safe_max(values: List[Optional[float]]) -> Optional[float]:
-    nums = [float(v) for v in values if v is not None and math.isfinite(float(v))]
-    return max(nums) if nums else None
-
-
-def _safe_min(values: List[Optional[float]]) -> Optional[float]:
-    nums = [float(v) for v in values if v is not None and math.isfinite(float(v))]
-    return min(nums) if nums else None
 
 
 def _truthy_env(name: str, default: str = "0") -> bool:
@@ -209,6 +196,7 @@ def _safe_num(x: Optional[float]) -> float:
     if not math.isfinite(v):
         return 0.0
     return v
+
 
 # --------------------------------------------------------------------------------------
 # Stage 1: Load stocks + returns
@@ -291,8 +279,9 @@ LoadStocksStage = Stage(
     compute_fn=load_stock_rows,
 )
 
+
 # --------------------------------------------------------------------------------------
-# Step 2: Aggregate article sentiment per DATE (ALL articles apply to ALL stocks)
+# Stage 2: Aggregate article sentiment per DATE (ALL articles apply to ALL stocks)
 # --------------------------------------------------------------------------------------
 
 def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact:
@@ -397,15 +386,12 @@ def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact
             "num_neg_articles": nn_,
             "pos_share": (float(np_) / nl) if nl > 0 else None,
             "neg_share": (float(nn_) / nl) if nl > 0 else None,
-
             "sentiment_mean": float(mean_score) if mean_score is not None else None,
             "sentiment_max": float(max_score) if max_score is not None else None,
             "sentiment_min": float(min_score) if min_score is not None else None,
-
             "prob_pos_mean": float(pp_mean) if pp_mean is not None else None,
             "prob_neg_mean": float(pn_mean) if pn_mean is not None else None,
             "prob_neu_mean": float(pneu_mean) if pneu_mean is not None else None,
-
             "prob_pos_max": float(pp_max) if pp_max is not None else None,
             "prob_neg_max": float(pn_max) if pn_max is not None else None,
         }
@@ -518,6 +504,7 @@ AggregateStage = Stage(
     output_schema=SentimentAggregateArtifact,
     compute_fn=aggregate_sentiment,
 )
+
 
 # --------------------------------------------------------------------------------------
 # Stage 3: XGBoost on returns using sentiment features
@@ -673,6 +660,7 @@ XGBoostStage = Stage(
     output_schema=SentimentAggregateArtifact,
     compute_fn=run_xgboost_models,
 )
+
 
 # --------------------------------------------------------------------------------------
 # Stage 4: Write to sentiment_snapshots
@@ -846,6 +834,7 @@ WriteSnapshotsStage = Stage(
     compute_fn=write_snapshots_to_db,
 )
 
+
 # --------------------------------------------------------------------------------------
 # Pipeline
 # --------------------------------------------------------------------------------------
@@ -859,6 +848,7 @@ sentiment_snapshot_pipeline = Pipeline(
         WriteSnapshotsStage,
     ],
 )
+
 
 # --------------------------------------------------------------------------------------
 # Public helper for FastAPI startup
@@ -878,235 +868,8 @@ def run_sentiment_snapshot_pipeline_from_env() -> Dict[str, Any]:
 
 
 # --------------------------------------------------------------------------------------
-# GPT explanation helper (adds explanations to existing snapshot rows)
-# --------------------------------------------------------------------------------------
-
-def generate_gpt_explanations(row: Dict[str, Any]) -> Dict[str, Optional[str]]:
-    default_out: Dict[str, Optional[str]] = {"d30": None, "d120": None, "d360": None}
-
-    if os.getenv("ENABLE_GPT_EXPLANATIONS", "0") != "1":
-        return default_out
-
-    api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
-    if not api_key:
-        logger.warning("OPENAI_API_KEY missing, skipping GPT stage.")
-        return default_out
-
-    import json
-    import time
-    import re
-    import requests
-
-    model = os.getenv("GPT_EXPL_MODEL", "gpt-4o-mini")
-
-    '''
-    02/28/2026
-    Potential new prompt for next pipeline run 
-    - Returns formatted percents- easier for GPT to reason with
-    - Added sentiment_mean (the finbert score)
-    - Article counts replaced with pos/neg percents
-
-    def _fmt_return(val):
-        if val is None:
-            return "no data"
-        return f"{float(val) * 100:+.1f}%"
-
-    num_articles = row.get("num_articles") or 0
-    num_pos = row.get("num_pos_articles") or 0
-    num_neg = row.get("num_neg_articles") or 0
-    pos_pct = f"{(num_pos / num_articles * 100):.0f}%" if num_articles > 0 else "N/A"
-    neg_pct = f"{(num_neg / num_articles * 100):.0f}%" if num_articles > 0 else "N/A"
-    raw_score = row.get("sentiment_mean")
-    score_str = f"{float(raw_score):+.3f}" if raw_score is not None else "N/A"
-
-    prompt = (
-        "You are a finance dashboard assistant writing brief, factual summaries.\n"
-        "Summarize what the news sentiment suggests about each return horizon for this stock.\n"
-        "Rules: 1-2 sentences each. No buy/sell/hold advice. Use cautious language. "
-        "If num_articles is 0, note that no scored news was available for this period.\n\n"
-        f"Ticker: {row.get('ticker')}\n"
-        f"Snapshot date: {row.get('snapshot_date')}\n\n"
-        "Actual returns:\n"
-        f"- 30-day:  {_fmt_return(row.get('return_30d'))}\n"
-        f"- 120-day: {_fmt_return(row.get('return_120d'))}\n"
-        f"- 360-day: {_fmt_return(row.get('return_360d'))}\n\n"
-        f"News sentiment ({num_articles} scored articles):\n"
-        f"- FinBERT score (mean, -1 to +1): {score_str}\n"
-        f"- Positive: {pos_pct}  |  Negative: {neg_pct}\n"
-    )
-
-    )'''
-    prompt = (
-        "You are a finance dashboard assistant.\n"
-        "Write short explanations that summarize how article sentiment relates to 30-day / 120-day / 360-day horizons.\n"
-        "Do NOT give investment advice (no buy/sell/hold). Avoid hype and certainty words.\n"
-        "Each value must be 1–2 sentences, cautious if uncertain.\n\n"
-        f"Ticker: {row.get('ticker')}\n"
-        f"Snapshot date: {row.get('snapshot_date')}\n\n"
-        "Returns:\n"
-        f"- 30-day: {row.get('return_30d')}\n"
-        f"- 120-day: {row.get('return_120d')}\n"
-        f"- 360-day: {row.get('return_360d')}\n\n"
-        "Articles:\n"
-        f"- total: {row.get('num_articles')}\n"
-        f"- positive: {row.get('num_pos_articles')}\n"
-        f"- negative: {row.get('num_neg_articles')}\n"
-    )
-
-    schema = {
-        "type": "object",
-        "additionalProperties": False,
-        "properties": {
-            "d30": {"type": ["string", "null"]},
-            "d120": {"type": ["string", "null"]},
-            "d360": {"type": ["string", "null"]},
-        },
-        "required": ["d30", "d120", "d360"],
-    }
-
-    payload: Dict[str, Any] = {
-        "model": model,
-        "input": prompt,
-        "text": {
-            "format": {
-                "type": "json_schema",
-                "name": "sentiment_explanations",
-                "strict": True,
-                "schema": schema,
-            }
-        },
-    }
-
-    url = "https://api.openai.com/v1/responses"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-
-    for attempt in range(1, 4):
-        try:
-            r = requests.post(url, headers=headers, json=payload, timeout=45)
-            if r.status_code >= 300:
-                logger.warning(f"OpenAI error {r.status_code}: {(r.text or '')[:600]}")
-                return default_out
-            try:
-                resp_json = r.json()
-            except Exception:
-                logger.warning(f"OpenAI returned non-JSON body: {(r.text or '')[:600]}")
-                return default_out
-
-            text_out = ""
-            out = resp_json.get("output")
-            if isinstance(out, list):
-                for item in out:
-                    if not isinstance(item, dict) or item.get("type") != "message":
-                        continue
-                    content = item.get("content")
-                    if not isinstance(content, list):
-                        continue
-                    for c in content:
-                        if isinstance(c, dict) and isinstance(c.get("text"), str):
-                            text_out = c["text"].strip()
-                            break
-
-            if not text_out:
-                text_out = (resp_json.get("output_text") or "").strip()
-
-            s = text_out.strip()
-            if not s.startswith("{"):
-                m = re.search(r"\{.*\}", s, flags=re.DOTALL)
-                s = m.group(0).strip() if m else ""
-            try:
-                parsed = json.loads(s) if s else None
-            except Exception:
-                parsed = None
-
-            if not parsed:
-                logger.warning(f"GPT returned unparsable output: {text_out[:250]!r}")
-                return default_out
-
-            return {"d30": parsed.get("d30"), "d120": parsed.get("d120"), "d360": parsed.get("d360")}
-
-        except Exception as e:
-            logger.warning(f"GPT request failed (attempt {attempt}/3): {e}")
-            if attempt < 3:
-                time.sleep(1.5 * attempt)
-                continue
-            return default_out
-
-    return default_out
-
-
-def run_gpt_explanations(ticker_filter: Optional[str] = None) -> None:
-    """Add GPT explanations to existing sentiment_snapshots rows (requires ENABLE_GPT_EXPLANATIONS=1)."""
-    if os.getenv("ENABLE_GPT_EXPLANATIONS", "0") != "1":
-        logger.info("ENABLE_GPT_EXPLANATIONS != 1 - skipping GPT explanations.")
-        return
-
-    dsn = _get_dsn()
-    conn = psycopg2.connect(dsn)
-    cur = conn.cursor()
-
-    extra_and = ""
-    params: List[Any] = []
-    if ticker_filter:
-        extra_and = "AND ticker ILIKE %s"
-        params.append(f"%{ticker_filter}%")
-
-    cur.execute(
-        f"""
-        SELECT DISTINCT ON (ticker)
-            ticker, snapshot_date, return_30d, return_120d, return_360d,
-            num_articles, num_pos_articles, num_neg_articles
-        FROM sentiment_snapshots
-        WHERE (gpt_expl_30d IS NULL OR gpt_expl_120d IS NULL OR gpt_expl_360d IS NULL)
-        {extra_and}
-        ORDER BY ticker, snapshot_date DESC;
-        """,
-        params,
-    )
-    rows = cur.fetchall()
-    logger.info(f"[GPT] {len(rows)} snapshots need GPT explanations")
-
-    model_name = os.getenv("GPT_EXPL_MODEL", "gpt-4o-mini")
-    written = skipped = 0
-
-    for (ticker, snapshot_date, r30, r120, r360, num_articles, num_pos, num_neg) in rows:
-        expl = generate_gpt_explanations({
-            "ticker": ticker, "snapshot_date": str(snapshot_date),
-            "return_30d": r30, "return_120d": r120, "return_360d": r360,
-            "num_articles": num_articles, "num_pos_articles": num_pos, "num_neg_articles": num_neg,
-        })
-
-        if not (expl.get("d30") and expl.get("d120") and expl.get("d360")):
-            skipped += 1
-            continue
-
-        cur.execute(
-            """
-            UPDATE sentiment_snapshots
-            SET gpt_expl_30d = COALESCE(%s, gpt_expl_30d),
-                gpt_expl_120d = COALESCE(%s, gpt_expl_120d),
-                gpt_expl_360d = COALESCE(%s, gpt_expl_360d),
-                gpt_model = %s,
-                gpt_generated_at = %s
-            WHERE ticker = %s AND snapshot_date = %s;
-            """,
-            (expl["d30"], expl["d120"], expl["d360"], model_name, datetime.utcnow(), ticker, snapshot_date),
-        )
-        written += 1
-
-    conn.commit()
-    cur.close()
-    conn.close()
-    logger.info(f"[GPT] Done. Updated {written} snapshots. Skipped {skipped}.")
-
-
-# --------------------------------------------------------------------------------------
 # CLI entry point
 # --------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
     run_sentiment_snapshot_pipeline_from_env()
-    run_gpt_explanations(ticker_filter=os.getenv("AGG_TICKER") or None)
