@@ -11,7 +11,7 @@
 .alerts-title {
   font-size: 2rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #6D28D9 0%, #4F46E5 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -27,7 +27,7 @@
 /* Form card */
 .alert-form-card {
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.25);
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 2.5rem;
@@ -36,7 +36,7 @@
 .alert-form-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #e2e8f0;
+  color: #4F46E5;
   margin: 0 0 1.25rem;
 }
 
@@ -63,7 +63,7 @@
 
 .alert-label {
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(109, 40, 217, 0.75);
   font-weight: 500;
   letter-spacing: 0.03em;
 }
@@ -71,8 +71,8 @@
 .alert-select,
 .alert-input {
   background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #e2e8f0;
+  border: 1px solid rgba(78, 70, 229, 0.67);
+  color:  #000000d3;
   border-radius: 10px;
   padding: 0.55rem 0.85rem;
   font-size: 0.875rem;
@@ -82,11 +82,12 @@
 
 .alert-select:focus,
 .alert-input:focus {
-  border-color: rgba(16, 185, 129, 0.5);
+  border-color: rgba(79, 70, 229, 0.75);
 }
 
 .alert-select option {
-  background: #1e293b;
+  background: #000000c7;
+  color: #ffffff;
 }
 
 .alert-input::placeholder {
@@ -135,9 +136,8 @@
 }
 
 .alerts-section-title {
-  font-size: 1rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(79, 70, 229, 0.75);
   margin: 0 0 1rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -160,7 +160,7 @@
 .alerts-table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(78, 70, 229, 0.253);
 }
 
 .alerts-table {
@@ -172,19 +172,19 @@
 .alerts-table th {
   padding: 0.75rem 1rem;
   text-align: left;
-  color: rgba(255, 255, 255, 0.4);
+  color: #000000c7;
   font-weight: 500;
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(78, 70, 229, 0.434);
+  background: rgba(78, 70, 229, 0.433);
 }
 
 .alerts-table td {
   padding: 0.85rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: #e2e8f0;
+  color: rgba(78, 70, 229, 0.816);
 }
 
 .alerts-table tr:last-child td {
@@ -207,9 +207,9 @@
 }
 
 .alert-ticker-badge.muted {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.4);
+  background: rgba(109, 40, 217, 0.1);
+  border-color: rgba(109, 40, 217, 0.25);
+  color: rgba(109, 40, 217, 0.7);
 }
 
 .alert-price {
@@ -218,11 +218,11 @@
 }
 
 .alert-price.muted {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(109, 40, 217, 0.65);
 }
 
 .alert-direction {
-  color: #94a3b8;
+  color: #4F46E5;
 }
 
 .alert-date {

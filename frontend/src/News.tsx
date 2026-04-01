@@ -44,7 +44,7 @@ export default function News() {
     try {
       const params: Record<string, string | number> = { limit: LIMIT, offset: newOffset };
       if (newTicker) params.ticker = newTicker;
-      const res = await axios.get<NewsArticle[]>(`${API_BASE}/api/news/articles`, { params });
+      const res = await axios.get<NewsArticle[]>(`${API_BASE}/api/articles`, { params });
       if (replace) {
         setArticles(res.data);
       } else {
