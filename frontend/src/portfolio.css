@@ -508,6 +508,29 @@
   margin-bottom: 0;
 }
 
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.csv-export-btn {
+  padding: 0.625rem 1.25rem;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.csv-export-btn:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
 .compare-btn {
   padding: 0.625rem 1.25rem;
   background: rgba(102, 126, 234, 0.15);
