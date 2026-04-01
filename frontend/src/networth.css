@@ -1,0 +1,421 @@
+/* ============================================================
+   Net Worth page styles
+   Follows the same dark-theme conventions as portfolio.css
+   ============================================================ */
+
+.nw-card {
+  max-width: 1100px;
+  width: 100%;
+}
+
+/* ---- Header ---- */
+.nw-header {
+  margin-bottom: 2rem;
+}
+
+.nw-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 0.25rem 0;
+}
+
+.nw-header p {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ---- Summary stat cards ---- */
+.nw-summary-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 900px) {
+  .nw-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.nw-stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  transition: transform 0.2s ease;
+}
+
+.nw-stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.nw-stat-primary {
+  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.nw-stat-primary.positive {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.nw-stat-primary.negative {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.nw-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin-bottom: 0.4rem;
+}
+
+.nw-stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.nw-stat-large {
+  font-size: 1.9rem;
+}
+
+.nw-stat-value.positive { color: #10b981; }
+.nw-stat-value.negative { color: #ef4444; }
+
+.nw-stat-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.3rem;
+}
+
+/* ---- Charts row ---- */
+.nw-charts-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 900px) {
+  .nw-charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nw-chart-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+}
+
+.nw-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.nw-chart-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.nw-range-btns {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.nw-range-btns button {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nw-range-btns button.active,
+.nw-range-btns button:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+}
+
+.nw-chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 140px;
+  color: #475569;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+/* ---- Chart tooltips ---- */
+.nw-chart-tooltip {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+}
+
+.nw-tooltip-date {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 0.2rem;
+}
+
+.nw-tooltip-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+/* ---- Donut chart legend ---- */
+.nw-pie-legend {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.nw-pie-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.nw-pie-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.nw-pie-label {
+  color: #cbd5e1;
+  flex: 1;
+}
+
+.nw-pie-pct {
+  color: #64748b;
+  min-width: 38px;
+  text-align: right;
+}
+
+.nw-pie-amount {
+  color: #94a3b8;
+  min-width: 85px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Asset / liability lists ---- */
+.nw-lists-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .nw-lists-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nw-list-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nw-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.nw-section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ---- Entry rows ---- */
+.nw-entry-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  transition: background 0.15s ease;
+}
+
+.nw-entry-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nw-portfolio-row {
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.nw-category-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nw-badge-portfolio {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+.nw-badge-liability {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.nw-entry-name {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nw-entry-balance {
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #f1f5f9;
+  white-space: nowrap;
+}
+
+.nw-entry-balance.positive { color: #10b981; }
+.nw-entry-balance.negative { color: #ef4444; }
+
+.nw-entry-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  min-width: 68px;
+  justify-content: flex-end;
+}
+
+.nw-edit-btn {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  color: #a5b4fc;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.nw-edit-btn:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+.nw-delete-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.nw-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* ---- Total row ---- */
+.nw-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.nw-total-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.nw-total-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  font-variant-numeric: tabular-nums;
+}
+
+.nw-total-value.positive { color: #10b981; }
+.nw-total-value.negative { color: #ef4444; }
+
+/* ---- Empty hint ---- */
+.nw-empty-hint {
+  font-size: 0.8rem;
+  color: #475569;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+/* ---- Modal select override ---- */
+.nw-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  cursor: pointer;
+}
+
+.nw-select option {
+  background: #1e293b;
+  color: #f1f5f9;
+}

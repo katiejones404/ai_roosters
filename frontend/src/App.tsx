@@ -12,6 +12,7 @@ import Login from "./login";
 import Settings from "./settings";
 import Dashboard from "./Dashboard";
 import Portfolio from "./portfolio";
+import NetWorth from "./NetWorth";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./ProtectedRoute";
 import StockDetail from "./StockDetail";
@@ -163,6 +164,7 @@ function AppContent() {
         <Route element={<ProtectedRoute />}>
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/networth" element={<NetWorth />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/stock/:ticker" element={<StockDetail />} />
         </Route>

@@ -139,3 +139,68 @@ class StockIndicatorsOut(BaseModel):
     snapshot_date: Union[date, datetime]
     close_price: Optional[float]  # may be null if not present
     indicators: TimeRangeIndicators
+
+
+# ============ NET WORTH SCHEMAS ============
+
+class NetworthAssetCreate(BaseModel):
+    name: str
+    category: str  # cash | checking | savings | real_estate | vehicle | other
+    balance: float
+
+
+class NetworthAssetUpdate(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    balance: Optional[float] = None
+
+
+class NetworthAssetOut(BaseModel):
+    id: str
+    name: str
+    category: str
+    balance: float
+    updated_at: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
+class NetworthLiabilityCreate(BaseModel):
+    name: str
+    category: str  # credit_card | student_loan | auto_loan | mortgage | other
+    balance: float
+
+
+class NetworthLiabilityUpdate(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    balance: Optional[float] = None
+
+
+class NetworthLiabilityOut(BaseModel):
+    id: str
+    name: str
+    category: str
+    balance: float
+    updated_at: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+
+class NetworthSummary(BaseModel):
+    portfolio_value: float
+    total_assets: float        # portfolio_value + manual assets
+    total_liabilities: float
+    net_worth: float           # total_assets - total_liabilities
+    assets: list[NetworthAssetOut]
+    liabilities: list[NetworthLiabilityOut]
+
+
+class NetworthSnapshotOut(BaseModel):
+    snapshot_date: str
+    net_worth: float
+    portfolio_value: float
+    total_assets: float
+    total_liabilities: float
