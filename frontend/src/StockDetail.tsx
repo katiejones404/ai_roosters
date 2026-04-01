@@ -16,6 +16,7 @@ import {
 import { StockSentimentCard } from "./SentimentIndicators";
 import { fetchLatestStockIndicator } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
+import LoadingScreen from "./components/LoadingScreen";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
@@ -188,12 +189,8 @@ const StockDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#6366f1", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
-          <p style={{ color: "#94a3b8", marginTop: 16 }}>Loading {ticker}...</p>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <LoadingScreen message={`Loading ${ticker}...`} />
       </div>
     );
   }

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import os
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
+from sqlalchemy.orm import Session
+
+from app.db.main import get_db
+from app.models.models import StockNewsArticle
 
 router = APIRouter()
 
@@ -91,3 +95,54 @@ def get_article_sentiment_summary(
 
     total = sum(counts.values())
     return ArticleSentimentSummary(total=total, **counts)
+
+
+class NewsArticleOut(BaseModel):
+    id: str
+    ticker: str
+    url: str
+    title: Optional[str]
+    source: Optional[str]
+    description: Optional[str]
+    image_url: Optional[str]
+    published_at: Optional[str]
+    relevance_score: Optional[float]
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/articles", response_model=List[NewsArticleOut])
+def get_news_articles(
+    ticker: Optional[str] = Query(default=None, description="Filter by ticker symbol"),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+) -> List[NewsArticleOut]:
+    """
+    Returns recent articles from stock_news_articles, newest first.
+    Optionally filter by ticker.
+    """
+    query = db.query(StockNewsArticle)
+    if ticker:
+        query = query.filter(StockNewsArticle.ticker == ticker.upper())
+    rows = (
+        query.order_by(StockNewsArticle.published_at.desc().nulls_last())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return [
+        NewsArticleOut(
+            id=str(row.id),
+            ticker=row.ticker,
+            url=row.url,
+            title=row.title,
+            source=row.source,
+            description=row.description,
+            image_url=row.image_url,
+            published_at=row.published_at.isoformat() if row.published_at else None,
+            relevance_score=float(row.relevance_score) if row.relevance_score is not None else None,
+        )
+        for row in rows
+    ]

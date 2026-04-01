@@ -2,12 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text as sa_text
 
-from app.api import auth, sentiment, portfolio, news, stocks
+from app.api import auth, sentiment, portfolio, news, stocks, alerts as alerts_router
 from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
 from app.db_init import init_db
+import asyncio
 import logging
 import os
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 try:
     from app.services.sentiment.article_processing import run_finbert_pipeline_from_env
@@ -55,6 +56,7 @@ app.include_router(sentiment.router, prefix="/api")
 app.include_router(stocks.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")
 app.include_router(news.router, prefix="/api")
+app.include_router(alerts_router.router, prefix="/api/alerts")
 
 
 @app.on_event("startup")
@@ -150,9 +152,94 @@ def ingest_stock_prices_on_startup():
         logger.warning("Backend will start anyway, but data pipelines did not complete.")
 
 
+def run_alert_checks() -> None:
+    """Check all active price alerts against latest stock prices and email on trigger."""
+    from sqlalchemy import create_engine, text as _text
+    from sqlalchemy.orm import sessionmaker
+    from app.models.models import PriceAlert
+    from app.services.email_service import send_price_alert_email
+
+
+    db_url = os.getenv("DATABASE_URL", "postgresql://stock_user:stock_pass@postgres:5432/stock_db")
+    _engine = create_engine(db_url)
+    Session = sessionmaker(bind=_engine)
+    db = Session()
+    try:
+
+        alerts = db.query(PriceAlert).filter(PriceAlert.is_active == True).all()  # noqa: E712
+        if not alerts:
+            return
+        tickers = list({a.ticker for a in alerts})
+        rows = db.execute(
+            _text(
+                "SELECT DISTINCT ON (ticker) ticker, close FROM stocks "
+                "WHERE ticker = ANY(:tickers) AND close IS NOT NULL "
+                "ORDER BY ticker, date DESC"
+            ),
+            {"tickers": tickers},
+        ).fetchall()
+        latest_prices = {row[0]: float(row[1]) for row in rows}
+
+        for alert in alerts:
+
+            current = latest_prices.get(alert.ticker)
+            if current is None:
+                continue
+            target = float(alert.target_price)
+            triggered = (
+                (alert.direction == "above" and current >= target)
+                or (alert.direction == "below" and current <= target)
+            )
+            if triggered:
+
+                try:
+                    send_price_alert_email(
+                        to_email=alert.user.email,
+                        ticker=alert.ticker,
+                        direction=alert.direction,
+                        target_price=target,
+                        current_price=current,
+                    )
+
+                    logger.info(f"Alert email sent: {alert.ticker} {alert.direction} {target}")
+                except Exception as email_err:
+
+                    logger.warning(f"Alert email failed for {alert.ticker}: {email_err}")
+                alert.is_active = False
+                alert.triggered_at = datetime.now(timezone.utc)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Alert check failed: {e}", exc_info=True)
+    finally:
+
+        db.close()
+        _engine.dispose()
+
+
+async def _alert_check_loop() -> None:
+    """Run alert checks daily (every 24 hours)."""
+    await asyncio.sleep(3600)  # initial 1-hour delay after startup
+    while True:
+        try:
+            run_alert_checks()
+        except Exception as e:
+            logger.error(f"Daily alert check error: {e}", exc_info=True)
+        await asyncio.sleep(24 * 3600)
+
+
+
+
+@app.on_event("startup")
+
+async def start_alert_scheduler() -> None:
+    asyncio.create_task(_alert_check_loop())
+    logger.info("Price alert scheduler started (daily check).")
+
+
 @app.get("/")
 def root():
     return {"message": "Backend is working!", "status": "healthy"}
+
 
 
 @app.get("/health")
