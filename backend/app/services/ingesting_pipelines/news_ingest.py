@@ -4,7 +4,7 @@ import os
 import sys
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from collections import defaultdict, Counter
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -12,7 +12,6 @@ from datasets import load_dataset
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.dialects.postgresql import insert
 
-# Optional: project root on path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 logger = logging.getLogger("article_ingestor")
@@ -22,10 +21,6 @@ if not logger.handlers:
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-
-# ---------------------------
-# DB helpers
-# ---------------------------
 
 def build_db_url() -> str:
     db_url = os.getenv("DATABASE_URL")
@@ -40,34 +35,18 @@ def build_db_url() -> str:
     return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
 
-# ---------------------------
-# HF helpers
-# ---------------------------
-
 def get_hf_token_optional() -> Optional[str]:
-    """
-    Token is optional. If your dataset is private/gated, set HF_TOKEN or HUGGINGFACE_HUB_TOKEN.
-    If it's public, this returns None and load_dataset will still work.
-    """
     token = (os.getenv("HUGGINGFACE_HUB_TOKEN") or os.getenv("HF_TOKEN") or "").strip()
     return token or None
 
 
 def parse_extras_any(extra_fields: Any) -> dict:
-    """
-    extra_fields in this dataset is often:
-      - dict
-      - JSON string
-      - None
-    Keep this cheap and safe.
-    """
     if not extra_fields:
         return {}
     if isinstance(extra_fields, dict):
         return extra_fields
     if isinstance(extra_fields, str):
         s = extra_fields.strip()
-        # quick reject: not JSON-like
         if not s or (s[0] not in "{["):
             return {}
         try:
@@ -103,23 +82,16 @@ def pick_source(extras: Dict[str, Any]) -> Optional[str]:
     )
 
 
-# ---------------------------
-# Date extraction
-# ---------------------------
-
 DATE_KEYS = ["date", "published_at", "publishedAt", "published", "datetime", "time", "timestamp"]
-
 EXTRA_DATE_KEYS = ["date", "published_at", "publishedAt", "published", "published_time", "pub_date", "created_at"]
 
 
 def pick_raw_date(row: Dict[str, Any]) -> Any:
-    # 1) direct keys
     for k in DATE_KEYS:
         v = row.get(k)
         if v:
             return v
 
-    # 2) try inside extra_fields (only if we must)
     extras = parse_extras_any(row.get("extra_fields"))
     for k in EXTRA_DATE_KEYS:
         v = extras.get(k)
@@ -130,28 +102,17 @@ def pick_raw_date(row: Dict[str, Any]) -> Any:
 
 
 def safe_date_prefix(raw_date: Any) -> str:
-    # We only need YYYY-MM-DD for window check
     s = str(raw_date or "").strip()
     return s[:10] if len(s) >= 10 else ""
 
 
 def fast_parse_datetime_utc(raw_date: Any) -> Optional[datetime]:
-    """
-    Faster than pandas.to_datetime per row.
-    Supports:
-      - ISO8601 strings (with 'Z' or offset)
-      - 'YYYY-MM-DD'
-      - epoch seconds/millis (int/float)
-    Returns tz-aware datetime in UTC.
-    """
     if raw_date is None:
         return None
 
-    # epoch
     if isinstance(raw_date, (int, float)):
         try:
             x = float(raw_date)
-            # heuristic: millis if huge
             if x > 1e12:
                 x = x / 1000.0
             return datetime.fromtimestamp(x, tz=timezone.utc)
@@ -162,14 +123,10 @@ def fast_parse_datetime_utc(raw_date: Any) -> Optional[datetime]:
     if not s:
         return None
 
-    # YYYY-MM-DD
     if len(s) >= 10 and s[4] == "-" and s[7] == "-" and (len(s) == 10 or s[10] in ("T", " ")):
-        # ISO-ish
         try:
-            # normalize Z
             if s.endswith("Z"):
                 s = s[:-1] + "+00:00"
-            # allow space instead of T
             if len(s) > 10 and s[10] == " ":
                 s = s[:10] + "T" + s[11:]
             dt = datetime.fromisoformat(s if "T" in s else s[:10])
@@ -181,7 +138,6 @@ def fast_parse_datetime_utc(raw_date: Any) -> Optional[datetime]:
         except Exception:
             return None
 
-    # last resort
     try:
         if s.endswith("Z"):
             s = s[:-1] + "+00:00"
@@ -195,9 +151,29 @@ def fast_parse_datetime_utc(raw_date: Any) -> Optional[datetime]:
         return None
 
 
-# ---------------------------
-# Core ingestor
-# ---------------------------
+def _resolve_years() -> List[int]:
+    raw = (os.getenv("NEWS_INGEST_YEARS") or "").strip()
+    if raw:
+        out = []
+        for part in raw.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                out.append(int(part))
+            except Exception:
+                continue
+        if out:
+            return sorted(dict.fromkeys(out))
+
+    start_year = int(os.getenv("NEWS_INGEST_START_YEAR", "2020"))
+    current_year = date.today().year
+    return list(range(start_year, current_year + 1))
+
+
+def _resolve_end_date() -> str:
+    return (os.getenv("NEWS_INGEST_END_DATE") or date.today().isoformat()).strip()
+
 
 class ArticleIngestor:
     def __init__(self, db_url: Optional[str] = None):
@@ -235,7 +211,6 @@ class ArticleIngestor:
         if not records:
             return
 
-        # only columns that exist
         filtered = [{k: v for k, v in r.items() if k in self.article_cols} for r in records]
         filtered = [r for r in filtered if r]
         if not filtered:
@@ -243,23 +218,26 @@ class ArticleIngestor:
 
         with self.engine.begin() as conn:
             stmt = insert(self.articles).values(filtered)
-            stmt = stmt.on_conflict_do_nothing(index_elements=["url"])  # UNIQUE(url)
+            stmt = stmt.on_conflict_do_nothing(index_elements=["url"])
             conn.execute(stmt)
 
     def ingest_all_years_one_pass(
         self,
         years: List[int],
         per_year: int = 1000,
-        end_date: str = "2024-12-01",
-        max_scanned: int = 50_000_000,  # lower default; 200M is brutal
+        end_date: Optional[str] = None,
+        max_scanned: int = 50_000_000,
         max_desc_chars: int = 280,
-        flush_batch_size: int = 2000,   # fewer DB round-trips
+        flush_batch_size: int = 2000,
         progress_every: int = 200_000,
         streaming: bool = True,
         fallback_to_non_streaming_after: int = 1_000_000,
-        fallback_if_target_year_share_below: float = 0.0005,  # 0.05% of rows
+        fallback_if_target_year_share_below: float = 0.0005,
         min_rows_for_share_check: int = 2_000_000,
     ) -> None:
+        if not end_date:
+            end_date = date.today().isoformat()
+
         years_set = set(years)
         if not years_set:
             raise ValueError("years list is empty")
@@ -337,7 +315,6 @@ class ArticleIngestor:
                 bad_date += 1
                 continue
 
-            # stats
             try:
                 y_str = date_prefix[:4]
                 year_seen[y_str] += 1
@@ -349,7 +326,6 @@ class ArticleIngestor:
             if y in years_set:
                 target_year_seen += 1
 
-            # fallback checks (avoid infinite scans in streaming)
             if streaming and scanned >= fallback_to_non_streaming_after and in_window == 0:
                 logger.warning(
                     f"[INGEST-ALL] scanned={scanned:,} but still in_window=0 for years={sorted(years_set)}. "
@@ -392,7 +368,6 @@ class ArticleIngestor:
                         min_rows_for_share_check=min_rows_for_share_check,
                     )
 
-            # window check (cheap)
             if y not in years_set:
                 continue
             if y == end_year and date_prefix > end_day:
@@ -400,21 +375,18 @@ class ArticleIngestor:
 
             in_window += 1
 
-            # quota check
             if accepted_per_year[y] >= per_year:
                 if all_done():
                     logger.info(f"[INGEST-ALL] Quotas met. accepted={accepted:,} scanned={scanned:,}. Stopping.")
                     break
                 continue
 
-            # Parse extras only when row passes window/quota
             extras = parse_extras_any(row.get("extra_fields"))
             url = pick_url(extras)
             if not url:
                 missing_url += 1
                 continue
 
-            # avoid duplicates inside the batch (saves DB conflict checks)
             if url in buffer_urls:
                 continue
 
@@ -460,16 +432,22 @@ class ArticleIngestor:
 if __name__ == "__main__":
     ing = ArticleIngestor()
 
-    years = [2019, 2020, 2021, 2022, 2023]
-    end_date = "2023-12-31"
+    years = _resolve_years()
+    end_date = _resolve_end_date()
+
+    per_year = int(os.getenv("NEWS_INGEST_PER_YEAR", "1000"))
+    max_scanned = int(os.getenv("NEWS_INGEST_MAX_SCANNED", "50000000"))
+    flush_batch_size = int(os.getenv("NEWS_INGEST_FLUSH_BATCH_SIZE", "2000"))
+    progress_every = int(os.getenv("NEWS_INGEST_PROGRESS_EVERY", "200000"))
+    streaming = os.getenv("NEWS_INGEST_STREAMING", "1").strip().lower() in {"1", "true", "yes", "y", "on"}
 
     ing.ingest_all_years_one_pass(
         years=years,
-        per_year=1000,
+        per_year=per_year,
         end_date=end_date,
-        max_scanned=50_000_000,
-        flush_batch_size=2000,
-        progress_every=200_000,
-        streaming=True,
+        max_scanned=max_scanned,
+        flush_batch_size=flush_batch_size,
+        progress_every=progress_every,
+        streaming=streaming,
         fallback_to_non_streaming_after=1_000_000,
     )

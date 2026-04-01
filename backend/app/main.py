@@ -9,7 +9,6 @@ import logging
 import os
 from datetime import date, timedelta
 
-# ML pipeline imports — only available in the pipeline container (not the slim API container)
 try:
     from app.services.sentiment.article_processing import run_finbert_pipeline_from_env
     from app.services.sentiment.stock_processing import run_returns_pipeline
@@ -19,6 +18,12 @@ except ImportError:
     ML_AVAILABLE = False
 
 logger = logging.getLogger("startup")
+
+WEBSITE_TICKERS = [
+    "KSS", "ALK", "NVS", "AXP", "FCX",
+    "CSX", "DAL", "NTAP", "AMZN", "AAPL",
+    "MRK", "NVDA", "COP", "BHP", "EA",
+]
 
 app = FastAPI(
     title="Stock Portfolio API",
@@ -45,18 +50,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
 app.include_router(auth.router, prefix="/api")
 app.include_router(sentiment.router, prefix="/api")
 app.include_router(stocks.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")
 app.include_router(news.router, prefix="/api")
 
+
 @app.on_event("startup")
 def ingest_stock_prices_on_startup():
     logger.info("Backend startup initiated...")
 
-    # Feature flags
     run_article_ingest = os.getenv("RUN_ARTICLE_INGEST", "0") == "1"
     run_price_ingest = os.getenv("RUN_PRICE_INGEST", "1") == "1"
     run_ml_pipelines = os.getenv("RUN_ML_PIPELINES", "1") == "1"
@@ -75,58 +79,37 @@ def ingest_stock_prices_on_startup():
     )
 
     try:
-        # 1) (Optional) Article ingestion (HF -> Postgres)
-        # Guarded to avoid doing this on every boot.
         if run_article_ingest:
             logger.info("RUN_ARTICLE_INGEST=1 — running article ingestion pipeline...")
-
             from app.services.ingesting_pipelines.news_ingest import ArticleIngestor
-            ''' Not implemented yet. ingest_all_years_one_pass doesn't have a tickers parameter
-            top15 = [
-                "KSS", "ALK", "NVS", "AXP", "FCX",
-                "CSX", "DAL", "NTAP", "GPS", "AEO",
-                "MRK", "DFS", "COP", "BHP", "EA",
-            ]
-            logger.info(f"Ingesting financial news for tickers: {top15}")
-            '''
             ArticleIngestor(db_url).ingest_all_years_one_pass(
-                years=[2020, 2021, 2022, 2023],
-                per_year=500,
-                end_date="2023-12-31",
+                years=list(range(2020, date.today().year + 1)),
+                per_year=1000,
+                end_date=date.today().isoformat(),
                 max_scanned=50_000_000,
                 flush_batch_size=2000,
                 streaming=True,
             )
-
             logger.info("Article ingestion complete.")
         else:
             logger.info("RUN_ARTICLE_INGEST != 1 — skipping article ingestion.")
 
-        # 2) (Optional) Price ingestion
         if run_price_ingest:
             logger.info("RUN_PRICE_INGEST=1 — ingesting price data...")
             ingestor = PriceIngestor(db_url)
-            tickers = [
-                "AAPL", "TSLA", "MSFT", "GOOGL", "AMZN",
-                "META", "NVDA", "JPM", "BP", "RELIANCE.NS",
-                "KSS", "ALK", "NVS", "AXP",
-                "FCX", "CSX", "DAL", "NTAP", "AEO",
-                "MRK", "COP", "BHP", "EA",
-            ]
+            tickers = WEBSITE_TICKERS.copy()
 
-            # Full history on first-time setup; recent refresh otherwise.
-            # Checks if any rows older than 1000 days exist - if so, DB is already populated.
-            # Saves time during API start up if data already exists
             _engine = create_engine(db_url)
             cutoff = date.today() - timedelta(days=1000)
             with _engine.connect() as _conn:
                 _count = _conn.execute(
-                    sa_text("SELECT COUNT(*) FROM stocks WHERE date < :d"),
-                    {"d": str(cutoff)}
+                    sa_text("SELECT COUNT(*) FROM stocks WHERE date < :d AND ticker = ANY(:tickers)"),
+                    {"d": str(cutoff), "tickers": tickers}
                 ).scalar()
             _engine.dispose()
             has_history = (_count or 0) > 0
             price_start = str(date.today() - timedelta(days=30)) if has_history else "2020-01-01"
+            logger.info(f"Price ingest tickers={tickers}")
             logger.info(f"Price ingest start_date={price_start} (has_history={has_history})")
 
             ingestor.ingest_multiple_stocks(
@@ -140,7 +123,6 @@ def ingest_stock_prices_on_startup():
         else:
             logger.info("RUN_PRICE_INGEST != 1 — skipping price ingestion.")
 
-        # 3) (Optional) ML pipelines
         if run_ml_pipelines and ML_AVAILABLE:
             logger.info("RUN_ML_PIPELINES=1 — running ML pipelines...")
 
@@ -167,9 +149,11 @@ def ingest_stock_prices_on_startup():
         logger.error(f"Startup pipeline failed: {e}", exc_info=True)
         logger.warning("Backend will start anyway, but data pipelines did not complete.")
 
+
 @app.get("/")
 def root():
     return {"message": "Backend is working!", "status": "healthy"}
+
 
 @app.get("/health")
 def health_check():

@@ -1,5 +1,5 @@
 import React from "react";
-import type { StockIndicators, SentimentLabel } from "./utils/sentiment";
+import type { StockIndicators, SentimentLabel, StockNewsExplanations } from "./utils/sentiment";
 
 type StockCardProps = {
   data: StockIndicators;
@@ -29,69 +29,150 @@ const prettyLabel = (l: SentimentLabel) => {
   return "Neutral";
 };
 
+const formatDate = (value?: string | null): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
+
+const getPreferredNews = (news?: StockNewsExplanations | null) => {
+  if (!news) return null;
+  if (news.d7 && news.d7.article_count > 0) {
+    return { label: "7D News Summary", windowDays: 7, window: news.d7, isFallback: false };
+  }
+  if (news.d30 && news.d30.article_count > 0) {
+    return { label: "30D News Summary", windowDays: 30, window: news.d30, isFallback: true };
+  }
+  if (news.d7) {
+    return { label: "7D News Summary", windowDays: 7, window: news.d7, isFallback: false };
+  }
+  if (news.d30) {
+    return { label: "30D News Summary", windowDays: 30, window: news.d30, isFallback: true };
+  }
+  return null;
+};
+
 export const StockSentimentCard: React.FC<StockCardProps> = ({ data }) => {
   const ranges: Array<"d30" | "d120" | "d360"> = ["d30", "d120", "d360"];
+  const preferredNews = getPreferredNews(data.news_explanations);
+  const latestArticleDate = formatDate(preferredNews?.window.latest_article_at);
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
-      {ranges.map((k) => {
-        const label = data.indicators[k];
-        const expl = data.explanations?.[k] ?? null;
+    <div style={{ display: "grid", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
+        {ranges.map((k) => {
+          const label = data.indicators[k];
 
-        return (
-          <div
-            key={k}
-            style={{
-              border: "1px solid #e2e8f0",
-              borderRadius: 14,
-              padding: 16,
-              background: "#fff",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+          return (
+            <div
+              key={k}
+              style={{
+                border: "1px solid #e2e8f0",
+                borderRadius: 14,
+                padding: 16,
+                background: "#fff",
+              }}
+            >
               <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 700, letterSpacing: "0.08em" }}>
                 {prettyRange(k)} SENTIMENT
               </div>
+
+              <div style={{ marginTop: 12 }}>
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    padding: "6px 12px",
+                    borderRadius: 999,
+                    color: labelColor(label),
+                    background: labelBg(label),
+                    border: "1px solid #e2e8f0",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {prettyLabel(label)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div
+        style={{
+          border: "1px solid #e2e8f0",
+          borderRadius: 14,
+          padding: 18,
+          background: "#fff",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 700, letterSpacing: "0.08em" }}>
+              AI NEWS EXPLANATION
+            </div>
+            <div style={{ marginTop: 6, fontSize: 18, fontWeight: 700, color: "#0f172a" }}>
+              {preferredNews?.label ?? "News Summary"}
+            </div>
+          </div>
+
+          {preferredNews && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: "5px 10px",
+                  borderRadius: 999,
+                  color: preferredNews.isFallback ? "#7c3aed" : "#0369a1",
+                  background: preferredNews.isFallback ? "#f3e8ff" : "#e0f2fe",
+                  border: "1px solid #e2e8f0",
+                }}
+              >
+                {preferredNews.isFallback ? "30D fallback" : "7D primary"}
+              </span>
 
               <span
                 style={{
                   fontSize: 12,
                   fontWeight: 700,
-                  padding: "4px 10px",
+                  padding: "5px 10px",
                   borderRadius: 999,
-                  color: labelColor(label),
-                  background: labelBg(label),
+                  color: "#334155",
+                  background: "#f8fafc",
                   border: "1px solid #e2e8f0",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
                 }}
               >
-                {prettyLabel(label)}
+                {preferredNews.window.article_count} article{preferredNews.window.article_count === 1 ? "" : "s"}
               </span>
             </div>
+          )}
+        </div>
 
-            <div style={{ marginTop: 10 }}>
-              {expl ? (
-                <p style={{ margin: 0, color: "#334155", fontSize: 13, lineHeight: 1.45 }}>
-                  {expl}
-                </p>
-              ) : (
-                <p style={{ margin: 0, color: "#94a3b8", fontSize: 13 }}>
-                  No GPT explanation available.
-                </p>
-              )}
-            </div>
+        <div style={{ marginTop: 12 }}>
+          {preferredNews?.window.summary_text ? (
+            <p style={{ margin: 0, color: "#334155", fontSize: 14, lineHeight: 1.6 }}>
+              {preferredNews.window.summary_text}
+            </p>
+          ) : (
+            <p style={{ margin: 0, color: "#94a3b8", fontSize: 14 }}>
+              No AI news explanation available.
+            </p>
+          )}
+        </div>
 
-            {(data.gpt_model || data.gpt_generated_at) && (
-              <div style={{ marginTop: 12, fontSize: 11, color: "#94a3b8" }}>
-                {data.gpt_model ? <span style={{ fontWeight: 600 }}>{data.gpt_model}</span> : null}
-                {data.gpt_model && data.gpt_generated_at ? " • " : null}
-                {data.gpt_generated_at ? <span>{data.gpt_generated_at}</span> : null}
-              </div>
-            )}
+        {(latestArticleDate || data.news_explanations?.gpt_model || data.news_explanations?.gpt_generated_at) && (
+          <div style={{ marginTop: 14, fontSize: 12, color: "#94a3b8", display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {latestArticleDate ? <span>Latest article: {latestArticleDate}</span> : null}
+            {data.news_explanations?.gpt_model ? <span>Model: {data.news_explanations.gpt_model}</span> : null}
+            {data.news_explanations?.gpt_generated_at ? (
+              <span>Generated: {formatDate(data.news_explanations.gpt_generated_at) ?? data.news_explanations.gpt_generated_at}</span>
+            ) : null}
           </div>
-        );
-      })}
+        )}
+      </div>
     </div>
   );
 };
