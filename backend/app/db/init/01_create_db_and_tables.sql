@@ -179,3 +179,48 @@ CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_article
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+
+-- Net Worth: manual assets
+CREATE TABLE IF NOT EXISTS networth_assets (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL,
+  name        text NOT NULL,
+  category    text NOT NULL,
+  balance     numeric NOT NULL DEFAULT 0,
+  updated_at  timestamptz DEFAULT now(),
+  created_at  timestamptz DEFAULT now(),
+  CONSTRAINT fk_nw_assets_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_networth_assets_user ON networth_assets (user_id);
+
+-- Net Worth: manual liabilities
+CREATE TABLE IF NOT EXISTS networth_liabilities (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL,
+  name        text NOT NULL,
+  category    text NOT NULL,
+  balance     numeric NOT NULL DEFAULT 0,
+  updated_at  timestamptz DEFAULT now(),
+  created_at  timestamptz DEFAULT now(),
+  CONSTRAINT fk_nw_liabilities_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_networth_liabilities_user ON networth_liabilities (user_id);
+
+-- Net Worth: daily snapshots for history chart
+CREATE TABLE IF NOT EXISTS networth_snapshots (
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id           uuid NOT NULL,
+  snapshot_date     date NOT NULL,
+  portfolio_value   numeric NOT NULL DEFAULT 0,
+  total_assets      numeric NOT NULL DEFAULT 0,
+  total_liabilities numeric NOT NULL DEFAULT 0,
+  net_worth         numeric NOT NULL DEFAULT 0,
+  created_at        timestamptz DEFAULT now(),
+  CONSTRAINT fk_nw_snapshots_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT uq_networth_snapshot UNIQUE (user_id, snapshot_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_networth_snapshots_user_date
+  ON networth_snapshots (user_id, snapshot_date DESC);

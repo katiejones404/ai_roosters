@@ -6,6 +6,7 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip,
     LineChart, Line, CartesianGrid, ResponsiveContainer, Cell, Legend,
 } from "recharts";
+import AddToPortfolioModal from "./components/AddToPortfolio";
 import './portfolio.css';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
@@ -61,6 +62,8 @@ const Portfolio = () => {
     const [actionTicker, setActionTicker] = useState<string | null>(null);
     const [sellQty, setSellQty] = useState<string>('');
     const [actionError, setActionError] = useState<string | null>(null);
+    const [addSharesTicker, setAddSharesTicker] = useState<string | null>(null);
+    const [addSharesPrice, setAddSharesPrice] = useState<number>(0);
 
     useEffect(() => {
         fetchPortfolioSummary();
@@ -440,13 +443,25 @@ const Portfolio = () => {
                                                             </Link>
                                                             <span className="quantity-badge">{item.quantity} shares</span>
                                                         </div>
-                                                        <button
-                                                            onClick={() => openActionPanel(item.ticker)}
-                                                            className="remove-btn"
-                                                            title="Manage Position"
-                                                        >
-                                                            ✕
-                                                        </button>
+                                                        <div className="holding-card-actions">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setAddSharesTicker(item.ticker);
+                                                                    setAddSharesPrice(item.current_price ?? item.avg_price);
+                                                                }}
+                                                                className="add-shares-btn"
+                                                                title="Add more shares"
+                                                            >
+                                                                + Add
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openActionPanel(item.ticker)}
+                                                                className="remove-btn"
+                                                                title="Manage Position"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
                                                     </div>
 
                                                     <div className="holding-price-section">
@@ -660,7 +675,7 @@ const Portfolio = () => {
                         </div>
                     </div>
 
-                    {/* Comparison table — full width, below 2-col */}
+                    {/* Comparison table full width, below 2-col */}
                     {compareMode && comparedItems.length >= 2 && (
                         <div className="comparison-section">
                             <h3 className="comparison-title">Side-by-Side Comparison</h3>
@@ -755,8 +770,18 @@ const Portfolio = () => {
                     )}
                 </div>
             </div>
-        </div>
-    );
+        {addSharesTicker && (
+            <AddToPortfolioModal
+                ticker={addSharesTicker}
+                currentPrice={addSharesPrice}
+                onClose={() => setAddSharesTicker(null)}
+                onSuccess={() => {
+                    setAddSharesTicker(null);
+                    fetchPortfolioSummary();
+                }}
+            />
+        )}
+    </div>
+);
 };
-
 export default Portfolio;
