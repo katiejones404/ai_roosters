@@ -224,3 +224,20 @@ CREATE TABLE IF NOT EXISTS networth_snapshots (
 
 CREATE INDEX IF NOT EXISTS idx_networth_snapshots_user_date
   ON networth_snapshots (user_id, snapshot_date DESC);
+
+
+-- Price Alerts
+CREATE TABLE IF NOT EXISTS price_alerts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  ticker text NOT NULL,
+  target_price numeric NOT NULL,
+  direction text NOT NULL,
+  is_active boolean NOT NULL DEFAULT true,
+  triggered_at timestamptz,
+  created_at timestamptz DEFAULT now(),
+  CONSTRAINT fk_price_alerts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_price_alerts_user ON price_alerts (user_id);
+CREATE INDEX IF NOT EXISTS idx_price_alerts_active ON price_alerts (is_active) WHERE is_active = true;

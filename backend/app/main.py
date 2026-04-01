@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text as sa_text
 
-from app.api import auth, sentiment, portfolio, news, stocks, alerts as alerts_router
+from app.api import auth, sentiment, portfolio, news, stocks, alerts as alerts_router, networth
 from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
 from app.db_init import init_db
 import asyncio
@@ -57,6 +57,7 @@ app.include_router(stocks.router, prefix="/api")
 app.include_router(portfolio.router, prefix="/api")
 app.include_router(news.router, prefix="/api")
 app.include_router(alerts_router.router, prefix="/api/alerts")
+app.include_router(networth.router, prefix="/api")
 
 
 @app.on_event("startup")
