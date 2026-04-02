@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import sys
 import logging
@@ -21,6 +23,12 @@ if not logger.handlers:
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
+WEBSITE_TICKERS = [
+    "KSS", "ALK", "NVS", "AXP", "FCX",
+    "CSX", "DAL", "NTAP", "AMZN", "AAPL",
+    "MRK", "NVDA", "COP", "BHP", "EA",
+]
+
 
 def build_db_url() -> str:
     db_url = os.getenv("DATABASE_URL")
@@ -34,6 +42,16 @@ def build_db_url() -> str:
     db_name = os.getenv("PG_DB", "stock_db")
 
     return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+
+def dedupe_keep_order(values: List[str]) -> List[str]:
+    seen = set()
+    out: List[str] = []
+    for v in values:
+        if v not in seen:
+            seen.add(v)
+            out.append(v)
+    return out
 
 
 class PriceIngestor:
@@ -55,6 +73,17 @@ class PriceIngestor:
 
         self.stocks: Table = self.metadata.tables["stocks"]
         logger.info("Successfully reflected 'stocks' table.")
+
+    def resolve_target_tickers(self) -> List[str]:
+        raw = (os.getenv("PRICE_TICKERS") or "").strip()
+        if raw:
+            tickers = [x.strip().upper() for x in raw.split(",") if x.strip()]
+            tickers = dedupe_keep_order(tickers)
+            logger.info(f"Using PRICE_TICKERS override with {len(tickers)} ticker(s).")
+            return tickers
+
+        logger.info(f"Using default website ticker universe with {len(WEBSITE_TICKERS)} ticker(s).")
+        return WEBSITE_TICKERS.copy()
 
     # ------------------------------------------------------------
     # Article date window helpers
@@ -96,7 +125,6 @@ class PriceIngestor:
             return start_date, end_date
 
         if not use_article_window_if_missing:
-            # fallback to a sensible default
             today = date.today()
             return str(today - timedelta(days=365)), str(today)
 
@@ -110,8 +138,8 @@ class PriceIngestor:
     def fetch_stock_data(
         self,
         ticker: str,
-        start_date: Optional[str] = None,   # YYYY-MM-DD
-        end_date: Optional[str] = None,     # YYYY-MM-DD (inclusive intent)
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
         period: Optional[str] = None,
     ) -> pd.DataFrame:
         """
@@ -126,7 +154,6 @@ class PriceIngestor:
             stock = yf.Ticker(ticker)
 
             if start_date and end_date:
-                # make end inclusive
                 end_plus_one = (pd.to_datetime(end_date) + pd.Timedelta(days=1)).date()
                 df = stock.history(start=start_date, end=str(end_plus_one))
             else:
@@ -137,7 +164,6 @@ class PriceIngestor:
                 return pd.DataFrame()
 
             df = df.reset_index()
-
             df = df.rename(
                 columns={
                     "Date": "date",
@@ -163,11 +189,8 @@ class PriceIngestor:
                 "volume",
             ]
             df = df[columns]
-
-            # Ensure 'date' is a Python date, not Timestamp
             df["date"] = pd.to_datetime(df["date"]).dt.date
 
-            # If the caller provided an intended window, hard-filter to it
             if start_date and end_date:
                 s = pd.to_datetime(start_date).date()
                 e = pd.to_datetime(end_date).date()
@@ -192,7 +215,7 @@ class PriceIngestor:
         try:
             records = df.to_dict("records")
             total_records = len(records)
-            batch_size = 500  # a bit bigger is fine
+            batch_size = 500
             records_processed = 0
 
             for i in range(0, total_records, batch_size):
@@ -240,11 +263,6 @@ class PriceIngestor:
         update_existing: bool = False,
         use_article_window_if_missing: bool = True,
     ) -> None:
-        """
-        Fetch and store prices for multiple tickers.
-
-        If start/end not provided, defaults to articles' min/max published_at dates.
-        """
         start_date, end_date = self.normalize_price_window(
             start_date=start_date,
             end_date=end_date,
@@ -267,29 +285,21 @@ class PriceIngestor:
                 logger.warning(f"Skipping {ticker} - no data retrieved")
 
 
-# to rerun the stock ingestion use this command
-# docker compose exec api python -m app.services.ingesting_pipelines.prices_ingest
 if __name__ == "__main__":
     ingestor = PriceIngestor()
-    stocks = [
-        "KSS","ALK", "NVS", "AXP", "FCX", "CSX", "DAL", "NTAP", "AMZN", "AEO",
-        "MRK", "NVDA", "COP", "BHP", "EA"
-    ]
-    # --Do not remove old tickers, it doesn't hurt anything to keep them in the database--
-    # -- "old" tickers may be used later, don't remove them --
-    # with ingestor.engine.begin() as conn:
-    #     conn.execute(
-    #         text("DELETE FROM stocks WHERE NOT (ticker = ANY(:tickers));"),
-    #         {"tickers": stocks},
-    #     )
-    #     logger.info("Removed old tickers from database (kept only current tickers).")
+    tickers = ingestor.resolve_target_tickers()
+
+    start_date = os.getenv("PRICE_START_DATE") or "2020-01-01"
+    end_date = os.getenv("PRICE_END_DATE") or str(date.today())
+    update_existing = (os.getenv("PRICE_UPDATE_EXISTING", "1").strip().lower() in {"1", "true", "yes", "on"})
 
     ingestor.ingest_multiple_stocks(
-        tickers=stocks,
-        start_date="2020-01-01",
-        end_date="2024-07-30",
+        tickers=tickers,
+        start_date=start_date,
+        end_date=end_date,
         period=None,
-        update_existing=True,
+        update_existing=update_existing,
+        use_article_window_if_missing=False,
     )
 
     logger.info("Manual price ingestion complete.")

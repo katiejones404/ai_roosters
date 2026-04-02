@@ -1,20 +1,19 @@
+
 from __future__ import annotations
 
 import logging
 import os
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline as hf_pipeline
 
-from sqlalchemy import create_engine, MetaData, Table, select, and_
+from sqlalchemy import create_engine, MetaData, Table, select, and_, text
 from sqlalchemy.dialects.postgresql import insert
 
 
-# --------------------------------------------------------------------------------------
-# Logging
-# --------------------------------------------------------------------------------------
 logger = logging.getLogger("finbert_pipeline")
 if not logger.handlers:
     _handler = logging.StreamHandler()
@@ -22,32 +21,15 @@ if not logger.handlers:
     logger.addHandler(_handler)
 logger.setLevel(logging.INFO)
 
-
-# --------------------------------------------------------------------------------------
-# Defaults pinned to your price window (AMZN/NVDA):
-# prices: 2019-01-02 -> 2024-07-30
-# --------------------------------------------------------------------------------------
-DEFAULT_START_DATE = "2019-01-02"
-DEFAULT_END_DATE = "2024-07-30"
-
-# Total number of articles to process in one run (looped batches)
 DEFAULT_TOTAL_TO_PROCESS = 5000
-
-# Fetch batch size per DB query (keep this moderate for RAM/CPU)
 DEFAULT_FETCH_BATCH = 500
-
-# FinBERT inference batch size (HF pipeline batching)
 DEFAULT_FINBERT_BATCH = 8
-
-# DB write batch size
 DEFAULT_DB_BATCH = 250
+DEFAULT_TABLES = "articles,stock_news_articles"
 
 _FINBERT_MODEL_ID = "ProsusAI/finbert"
 
 
-# --------------------------------------------------------------------------------------
-# DB helpers
-# --------------------------------------------------------------------------------------
 def build_db_url() -> str:
     db_url = os.getenv("DATABASE_URL")
     if db_url:
@@ -61,23 +43,66 @@ def build_db_url() -> str:
     return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
 
-def get_articles_table(engine) -> Tuple[Table, List[str]]:
-    """
-    Reflect articles table and return (table, column_names).
-    """
+def reflect_table(engine, table_name: str) -> Tuple[Table, List[str]]:
     metadata = MetaData()
-    metadata.reflect(engine, only=["articles"])
-    if "articles" not in metadata.tables:
-        raise RuntimeError("Table 'articles' does not exist in the database.")
-    tbl = metadata.tables["articles"]
+    metadata.reflect(engine, only=[table_name])
+    if table_name not in metadata.tables:
+        raise RuntimeError(f"Table '{table_name}' does not exist in the database.")
+    tbl = metadata.tables[table_name]
     return tbl, list(tbl.c.keys())
 
 
-# --------------------------------------------------------------------------------------
-# Device selection (prefer CUDA; fallback to CPU)
-# --------------------------------------------------------------------------------------
+def ensure_sentiment_columns(engine, table_name: str) -> Tuple[Table, List[str]]:
+    desired = {
+        "sentiment": "TEXT",
+        "sentiment_score": "DOUBLE PRECISION",
+        "prob_pos": "DOUBLE PRECISION",
+        "prob_neg": "DOUBLE PRECISION",
+        "prob_neu": "DOUBLE PRECISION",
+    }
+    with engine.begin() as conn:
+        for col, sql_type in desired.items():
+            conn.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN IF NOT EXISTS {col} {sql_type};'))
+    return reflect_table(engine, table_name)
+
+
+def resolve_table_window(
+    engine,
+    table: Table,
+    start_date: Optional[str],
+    end_date: Optional[str],
+) -> Tuple[str, str]:
+    if start_date and end_date:
+        return start_date, end_date
+
+    stmt = select(
+        text("MIN(published_at) AS min_published_at"),
+        text("MAX(published_at) AS max_published_at"),
+    ).select_from(table).where(table.c.published_at.is_not(None))
+
+    with engine.connect() as conn:
+        row = conn.execute(stmt).mappings().first()
+
+    min_dt = row["min_published_at"] if row else None
+    max_dt = row["max_published_at"] if row else None
+
+    if min_dt is None or max_dt is None:
+        raise RuntimeError(f"Could not determine date window for table '{table.name}' because published_at is empty.")
+
+    if start_date:
+        start = start_date
+    else:
+        start = pd.to_datetime(min_dt, utc=True).strftime("%Y-%m-%d")
+
+    if end_date:
+        end = end_date
+    else:
+        end = pd.to_datetime(max_dt, utc=True).strftime("%Y-%m-%d")
+
+    return start, end
+
+
 def select_device() -> int:
-    """Return HF pipeline device id: 0 for CUDA:0, -1 for CPU."""
     force_cpu = os.getenv("FINBERT_FORCE_CPU", "").strip().lower() in {"1", "true", "yes"}
     if force_cpu:
         return -1
@@ -121,9 +146,6 @@ def _clear_finbert_pipeline_cache() -> None:
 
 
 def get_finbert_pipeline(*, force_cpu: bool = False):
-    """
-    Cached HF pipeline instance.
-    """
     if not hasattr(get_finbert_pipeline, "finbert"):
         requested_device_id = -1 if force_cpu else select_device()
 
@@ -166,10 +188,8 @@ def get_finbert_pipeline(*, force_cpu: bool = False):
     return get_finbert_pipeline.finbert
 
 
-# --------------------------------------------------------------------------------------
-# Artifacts (simple, no stock field)
-# --------------------------------------------------------------------------------------
 class FetchFromDBArtifact(BaseModel):
+    table_name: str
     limit: int
     start_date: str
     end_date: str
@@ -177,11 +197,13 @@ class FetchFromDBArtifact(BaseModel):
 
 
 class IngestArtifact(BaseModel):
+    table_name: str
     published_at: List[str]
     title: List[str]
     description: List[str]
     url: List[str]
     source: List[str]
+    ticker: List[str]
 
 
 class SentimentArtifact(IngestArtifact):
@@ -192,9 +214,6 @@ class SentimentArtifact(IngestArtifact):
     prob_neu: List[float]
 
 
-# --------------------------------------------------------------------------------------
-# Fetch / Score / Write
-# --------------------------------------------------------------------------------------
 def _compose_text_for_finbert(title: str, description: str) -> str:
     title = (title or "").strip()
     description = (description or "").strip()
@@ -210,43 +229,42 @@ def _scores_dict(all_scores: List[Dict[str, float]]) -> Dict[str, float]:
     return d
 
 
-def fetch_articles_from_db(engine, articles: Table, cols: set, artifact: FetchFromDBArtifact) -> IngestArtifact:
-    """
-    Fetch a batch of articles (newest first) that match filters.
-    """
+def fetch_articles_from_db(engine, table: Table, cols: set, artifact: FetchFromDBArtifact) -> IngestArtifact:
     where_clauses = []
 
     if artifact.only_missing_sentiment and "sentiment" in cols:
-        where_clauses.append(articles.c.sentiment.is_(None))
+        where_clauses.append(table.c.sentiment.is_(None))
 
-    # Date window (timestamptz)
     start_dt = pd.to_datetime(artifact.start_date, utc=True, errors="raise")
     end_dt = pd.to_datetime(artifact.end_date, utc=True, errors="raise")
 
-    where_clauses.append(articles.c.published_at >= start_dt.to_pydatetime())
-    where_clauses.append(articles.c.published_at <= end_dt.to_pydatetime())
+    where_clauses.append(table.c.published_at >= start_dt.to_pydatetime())
+    # inclusive end date at 23:59:59
+    end_dt = end_dt + pd.Timedelta(days=1) - pd.Timedelta(microseconds=1)
+    where_clauses.append(table.c.published_at <= end_dt.to_pydatetime())
 
-    # Select only columns that exist
-    select_cols = [
-        articles.c.published_at,
-        articles.c.url,
-    ]
+    select_cols = [table.c.published_at, table.c.url]
+    if "ticker" in cols:
+        select_cols.append(table.c.ticker)
     if "title" in cols:
-        select_cols.append(articles.c.title)
+        select_cols.append(table.c.title)
     if "description" in cols:
-        select_cols.append(articles.c.description)
+        select_cols.append(table.c.description)
+    elif "snippet" in cols:
+        select_cols.append(table.c.snippet)
     if "source" in cols:
-        select_cols.append(articles.c.source)
+        select_cols.append(table.c.source)
 
     stmt = (
         select(*select_cols)
         .where(and_(*where_clauses))
-        .order_by(articles.c.published_at.desc())
+        .order_by(table.c.published_at.desc())
         .limit(int(artifact.limit))
     )
 
     logger.info(
-        "[FetchFromDB] limit=%s start=%s end=%s only_missing=%s",
+        "[FetchFromDB] table=%s limit=%s start=%s end=%s only_missing=%s",
+        artifact.table_name,
         artifact.limit,
         artifact.start_date,
         artifact.end_date,
@@ -257,29 +275,40 @@ def fetch_articles_from_db(engine, articles: Table, cols: set, artifact: FetchFr
         rows = conn.execute(stmt).fetchall()
 
     if not rows:
-        return IngestArtifact(published_at=[], title=[], description=[], url=[], source=[])
+        return IngestArtifact(
+            table_name=artifact.table_name,
+            published_at=[],
+            title=[],
+            description=[],
+            url=[],
+            source=[],
+            ticker=[],
+        )
 
     published_at_list: List[str] = []
     title_list: List[str] = []
     desc_list: List[str] = []
     url_list: List[str] = []
     source_list: List[str] = []
+    ticker_list: List[str] = []
 
-    # Row layout depends on which optional cols exist; unpack defensively
     for r in rows:
-        # r always starts with published_at, url
         published_at = r[0]
         url = r[1]
+        idx = 2
+
+        ticker = ""
         title = ""
         description = ""
         source = ""
 
-        # remaining positions in the same order we appended
-        idx = 2
+        if "ticker" in cols:
+            ticker = r[idx] if idx < len(r) else ""
+            idx += 1
         if "title" in cols:
             title = r[idx] if idx < len(r) else ""
             idx += 1
-        if "description" in cols:
+        if "description" in cols or "snippet" in cols:
             description = r[idx] if idx < len(r) else ""
             idx += 1
         if "source" in cols:
@@ -295,27 +324,32 @@ def fetch_articles_from_db(engine, articles: Table, cols: set, artifact: FetchFr
 
         published_at_list.append(dt.strftime("%Y-%m-%dT%H:%M:%SZ"))
         url_list.append(str(url).strip())
+        ticker_list.append((ticker or "").strip())
         title_list.append((title or "").strip())
         desc_list.append((description or "").strip())
         source_list.append((source or "").strip())
 
     return IngestArtifact(
+        table_name=artifact.table_name,
         published_at=published_at_list,
         title=title_list,
         description=desc_list,
         url=url_list,
         source=source_list,
+        ticker=ticker_list,
     )
 
 
 def finbert_score(artifact: IngestArtifact) -> SentimentArtifact:
     if not artifact.url:
         return SentimentArtifact(
+            table_name=artifact.table_name,
             published_at=[],
             title=[],
             description=[],
             url=[],
             source=[],
+            ticker=[],
             sentiment=[],
             sentiment_score=[],
             prob_pos=[],
@@ -325,15 +359,16 @@ def finbert_score(artifact: IngestArtifact) -> SentimentArtifact:
 
     inputs = [_compose_text_for_finbert(t, d) for t, d in zip(artifact.title, artifact.description)]
 
-    # If everything is empty, score neutral
     if not any(x.strip() for x in inputs):
         n = len(inputs)
         return SentimentArtifact(
+            table_name=artifact.table_name,
             published_at=artifact.published_at,
             title=artifact.title,
             description=artifact.description,
             url=artifact.url,
             source=artifact.source,
+            ticker=artifact.ticker,
             sentiment=["neutral"] * n,
             sentiment_score=[0.0] * n,
             prob_pos=[0.0] * n,
@@ -375,17 +410,19 @@ def finbert_score(artifact: IngestArtifact) -> SentimentArtifact:
         neu = score_map["neutral"]
 
         sentiments.append(label)
-        scores.append(pos - neg)  # your "sentiment_score"
+        scores.append(pos - neg)
         prob_pos.append(pos)
         prob_neg.append(neg)
         prob_neu.append(neu)
 
     return SentimentArtifact(
+        table_name=artifact.table_name,
         published_at=artifact.published_at,
         title=artifact.title,
         description=artifact.description,
         url=artifact.url,
         source=artifact.source,
+        ticker=artifact.ticker,
         sentiment=sentiments,
         sentiment_score=scores,
         prob_pos=prob_pos,
@@ -394,16 +431,11 @@ def finbert_score(artifact: IngestArtifact) -> SentimentArtifact:
     )
 
 
-def write_sentiment_to_db(engine, articles: Table, cols: set, artifact: SentimentArtifact) -> int:
-    """
-    Upsert by url. Only touches columns that exist.
-    Returns # rows written (attempted).
-    """
+def write_sentiment_to_db(engine, table: Table, cols: set, artifact: SentimentArtifact) -> int:
     n = len(artifact.url)
     if n == 0:
         return 0
 
-    # Build records
     records: List[Dict[str, Any]] = []
     for i in range(n):
         url = artifact.url[i]
@@ -416,19 +448,21 @@ def write_sentiment_to_db(engine, articles: Table, cols: set, artifact: Sentimen
 
         rec: Dict[str, Any] = {"url": url}
 
-        # Keep metadata consistent if those columns exist
+        if "ticker" in cols:
+            rec["ticker"] = artifact.ticker[i] or None
         if "published_at" in cols:
             rec["published_at"] = dt.to_pydatetime()
         if "title" in cols:
-            rec["title"] = (artifact.title[i] or None)
+            rec["title"] = artifact.title[i] or None
         if "description" in cols:
-            rec["description"] = (artifact.description[i] or None)
+            rec["description"] = artifact.description[i] or None
+        elif "snippet" in cols:
+            rec["snippet"] = artifact.description[i] or None
         if "source" in cols:
-            rec["source"] = (artifact.source[i] or None)
+            rec["source"] = artifact.source[i] or None
 
-        # Sentiment fields (only if columns exist)
         if "sentiment" in cols:
-            rec["sentiment"] = (artifact.sentiment[i] or None)
+            rec["sentiment"] = artifact.sentiment[i] or None
         if "sentiment_score" in cols:
             rec["sentiment_score"] = float(artifact.sentiment_score[i]) if artifact.sentiment_score[i] is not None else None
         if "prob_pos" in cols:
@@ -443,69 +477,77 @@ def write_sentiment_to_db(engine, articles: Table, cols: set, artifact: Sentimen
     if not records:
         return 0
 
-    # Build "set_" dict only for columns that exist (and that we provided)
-    def _maybe_set(col_name: str, stmt) -> Optional[Tuple[str, Any]]:
-        if col_name in cols:
-            return (col_name, getattr(stmt.excluded, col_name))
-        return None
-
     db_batch = int(os.getenv("FINBERT_DB_BATCH_SIZE", str(DEFAULT_DB_BATCH)))
     written = 0
 
-    for i in range(0, len(records), db_batch):
-        batch = records[i : i + db_batch]
-        with engine.begin() as conn:
-            stmt = insert(articles).values(batch)
+    conflict_keys = ["url"]
+    if table.name == "stock_news_articles" and "ticker" in cols:
+        conflict_keys = ["ticker", "url"]
 
-            set_items = [
-                _maybe_set("published_at", stmt),
-                _maybe_set("title", stmt),
-                _maybe_set("description", stmt),
-                _maybe_set("source", stmt),
-                _maybe_set("sentiment", stmt),
-                _maybe_set("sentiment_score", stmt),
-                _maybe_set("prob_pos", stmt),
-                _maybe_set("prob_neg", stmt),
-                _maybe_set("prob_neu", stmt),
-            ]
-            set_dict = {k: v for kv in set_items if kv is not None for (k, v) in [kv]}
+    for i in range(0, len(records), db_batch):
+        batch = records[i: i + db_batch]
+        with engine.begin() as conn:
+            stmt = insert(table).values(batch)
+
+            set_dict: Dict[str, Any] = {}
+            for col_name in ("published_at", "title", "description", "snippet", "source", "sentiment", "sentiment_score", "prob_pos", "prob_neg", "prob_neu"):
+                if col_name in cols:
+                    set_dict[col_name] = getattr(stmt.excluded, col_name)
 
             stmt = stmt.on_conflict_do_update(
-                index_elements=["url"],
+                index_elements=conflict_keys,
                 set_=set_dict,
             )
             conn.execute(stmt)
 
         written += len(batch)
-        logger.info(f"[WriteSentimentToDB] Processed {written}/{len(records)} in this batch-group")
+        logger.info(
+            "[WriteSentimentToDB] table=%s processed=%s/%s",
+            table.name,
+            written,
+            len(records),
+        )
 
     return len(records)
 
 
-# --------------------------------------------------------------------------------------
-# Main loop: process up to 5k missing-sentiment articles, in batches
-# --------------------------------------------------------------------------------------
-if __name__ == "__main__":
-    db_url = build_db_url()
-    engine = create_engine(db_url)
-    articles, col_list = get_articles_table(engine)
+def _parse_table_list(raw: str) -> List[str]:
+    out: List[str] = []
+    for item in raw.split(","):
+        name = item.strip()
+        if name:
+            out.append(name)
+    return out or ["articles"]
+
+
+def run_finbert_pipeline_for_table(
+    engine,
+    table_name: str,
+    start_date: Optional[str],
+    end_date: Optional[str],
+    total_target: int,
+    fetch_batch: int,
+    only_missing: bool,
+) -> Dict[str, Any]:
+    table, col_list = ensure_sentiment_columns(engine, table_name)
     cols = set(col_list)
 
-    # Inputs (no helper function; env still allowed but not required)
-    start_date = os.getenv("FINBERT_START_DATE", "").strip() or DEFAULT_START_DATE
-    end_date = os.getenv("FINBERT_END_DATE", "").strip() or DEFAULT_END_DATE
-
-    # Total target in this run
-    total_target = int(os.getenv("FINBERT_TOTAL", str(DEFAULT_TOTAL_TO_PROCESS)))
-
-    # Fetch size per loop
-    fetch_batch = int(os.getenv("FINBERT_FETCH_BATCH", str(DEFAULT_FETCH_BATCH)))
-
-    only_missing = os.getenv("FINBERT_ONLY_MISSING", "true").strip().lower() in {"1", "true", "yes"}
+    try:
+        start_date_resolved, end_date_resolved = resolve_table_window(engine, table, start_date, end_date)
+    except RuntimeError as e:
+        logger.warning("%s Skipping table '%s'.", e, table_name)
+        return {
+            "table": table_name,
+            "start_date": start_date,
+            "end_date": end_date,
+            "fetched": 0,
+            "written": 0,
+            "skipped": True,
+        }
 
     logger.info(
-        "FinBERT run starting: window=%s..%s total_target=%s fetch_batch=%s only_missing=%s",
-        start_date, end_date, total_target, fetch_batch, only_missing
+        "FinBERT run starting: table=%s window=%s..%s total_target=%s fetch_batch=%s only_missing=%s",
+        table_name, start_date_resolved, end_date_resolved, total_target, fetch_batch, only_missing
     )
 
     total_fetched = 0
@@ -518,35 +560,93 @@ if __name__ == "__main__":
         this_limit = min(fetch_batch, remaining)
 
         fetch_art = FetchFromDBArtifact(
+            table_name=table_name,
             limit=this_limit,
-            start_date=start_date,
-            end_date=end_date,
+            start_date=start_date_resolved,
+            end_date=end_date_resolved,
             only_missing_sentiment=only_missing,
         )
 
-        batch = fetch_articles_from_db(engine, articles, cols, fetch_art)
+        batch = fetch_articles_from_db(engine, table, cols, fetch_art)
         n = len(batch.url)
 
         if n == 0:
-            logger.info("No more matching articles found. Stopping.")
+            logger.info("No more matching rows found for table '%s'. Stopping.", table_name)
             break
 
-        logger.info(f"[Loop {loops}] fetched={n} (total_fetched would become {total_fetched + n}/{total_target})")
+        logger.info(
+            "[Loop %s][%s] fetched=%s (total_fetched would become %s/%s)",
+            loops, table_name, n, total_fetched + n, total_target
+        )
 
         scored = finbert_score(batch)
-        written = write_sentiment_to_db(engine, articles, cols, scored)
+        written = write_sentiment_to_db(engine, table, cols, scored)
 
         total_fetched += n
         total_written += written
 
-        logger.info(f"[Loop {loops}] wrote={written} total_written={total_written}")
+        logger.info("[Loop %s][%s] wrote=%s total_written=%s", loops, table_name, written, total_written)
 
-        # Safety: if we fetched less than requested, likely exhausted the query
         if n < this_limit:
-            logger.info("Fetched fewer than requested in last batch; likely exhausted. Stopping.")
+            logger.info("Fetched fewer than requested in last batch for table '%s'; likely exhausted. Stopping.", table_name)
             break
 
     logger.info(
-        "FinBERT run complete: total_fetched=%s total_written=%s window=%s..%s",
-        total_fetched, total_written, start_date, end_date
+        "FinBERT run complete: table=%s total_fetched=%s total_written=%s window=%s..%s",
+        table_name, total_fetched, total_written, start_date_resolved, end_date_resolved
     )
+
+    return {
+        "table": table_name,
+        "start_date": start_date_resolved,
+        "end_date": end_date_resolved,
+        "fetched": total_fetched,
+        "written": total_written,
+        "skipped": False,
+    }
+
+
+def run_finbert_pipeline_from_env() -> Dict[str, Any]:
+    db_url = build_db_url()
+    engine = create_engine(db_url)
+
+    start_date = os.getenv("FINBERT_START_DATE", "").strip() or None
+    end_date = os.getenv("FINBERT_END_DATE", "").strip() or None
+    total_target = int(os.getenv("FINBERT_TOTAL", str(DEFAULT_TOTAL_TO_PROCESS)))
+    fetch_batch = int(os.getenv("FINBERT_FETCH_BATCH", str(DEFAULT_FETCH_BATCH)))
+    only_missing = os.getenv("FINBERT_ONLY_MISSING", "true").strip().lower() in {"1", "true", "yes"}
+    table_names = _parse_table_list(os.getenv("FINBERT_TABLES", DEFAULT_TABLES))
+
+    results: List[Dict[str, Any]] = []
+    for table_name in table_names:
+        try:
+            results.append(
+                run_finbert_pipeline_for_table(
+                    engine=engine,
+                    table_name=table_name,
+                    start_date=start_date,
+                    end_date=end_date,
+                    total_target=total_target,
+                    fetch_batch=fetch_batch,
+                    only_missing=only_missing,
+                )
+            )
+        except Exception as exc:
+            logger.exception("FinBERT run failed for table '%s': %s", table_name, exc)
+            results.append(
+                {
+                    "table": table_name,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "fetched": 0,
+                    "written": 0,
+                    "skipped": True,
+                    "error": str(exc),
+                }
+            )
+
+    return {"tables": results}
+
+
+if __name__ == "__main__":
+    run_finbert_pipeline_from_env()

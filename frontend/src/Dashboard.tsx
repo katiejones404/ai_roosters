@@ -6,6 +6,7 @@ import axios from "axios";
 import { TICKER_NAMES } from "./utils/stockNames";
 
 import AddToPortfolioModal from "./components/AddToPortfolio";
+import LoadingScreen from "./components/LoadingScreen";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
@@ -330,9 +331,7 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
 
-          {loading && (
-            <p style={{ color: "#6b7280", textAlign: "center", padding: "40px" }}>Loading...</p>
-          )}
+          {loading && <LoadingScreen message="Loading stocks..." />}
           {error && <p style={{ color: "#ef4444" }}>{error}</p>}
 
           {!loading && !error && !hasLoadedOnce && (

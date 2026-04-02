@@ -16,6 +16,7 @@ import {
 import { StockSentimentCard } from "./SentimentIndicators";
 import { fetchLatestStockIndicator } from "./utils/sentiment";
 import type { StockIndicators } from "./utils/sentiment";
+import LoadingScreen from "./components/LoadingScreen";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
@@ -74,8 +75,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-// ---- helpers to harden backend responses ----
-
 const toNumOrNull = (v: any): number | null => {
   if (v == null) return null;
   const n = typeof v === "number" ? v : Number(v);
@@ -99,7 +98,6 @@ const normalizeAndSortPrices = (raw: any[], ticker?: string): PriceData[] => {
     })
     .filter((d) => d.date && !Number.isNaN(new Date(d.date).getTime()));
 
-  // CRITICAL: sort ASC by date so "oldest" and "latest" logic is correct
   cleaned.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   return cleaned;
 };
@@ -115,12 +113,10 @@ const StockDetail: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"7" | "30" | "120" | "360">("30");
   const [showModal, setShowModal] = useState(false);
 
-  // sentiment
   const [sentiment, setSentiment] = useState<StockIndicators | null>(null);
   const [sentimentLoading, setSentimentLoading] = useState(false);
   const [sentimentError, setSentimentError] = useState<string | null>(null);
 
-  // prices
   useEffect(() => {
     if (!ticker) return;
     setLoading(true);
@@ -136,7 +132,6 @@ const StockDetail: React.FC = () => {
       .finally(() => setLoading(false));
   }, [ticker]);
 
-  // sentiment (single)
   useEffect(() => {
     if (!ticker) return;
 
@@ -147,7 +142,7 @@ const StockDetail: React.FC = () => {
       .then((one) => setSentiment(one))
       .catch(() => {
         setSentiment(null);
-        setSentimentError("Failed to load sentiment indicators");
+        setSentimentError("Failed to load sentiment and AI news summary");
       })
       .finally(() => setSentimentLoading(false));
   }, [ticker]);
@@ -155,7 +150,6 @@ const StockDetail: React.FC = () => {
   const latest = allData.length ? allData[allData.length - 1] : null;
   const oldest = allData.length ? allData[0] : null;
 
-  // chart data relative to LAST available data point
   const chartData = useMemo(() => {
     if (!allData.length || !latest) return [];
     const days = parseInt(timeRange, 10);
@@ -179,7 +173,6 @@ const StockDetail: React.FC = () => {
     return candidates[candidates.length - 1].close;
   };
 
-  // Prefer backend-provided returns if present; fallback to computed returns.
   const ret1d = latest?.return_1d ?? calcReturn(getPriceNDaysAgo(1), latest?.close ?? null);
   const ret30d = latest?.return_30d ?? calcReturn(getPriceNDaysAgo(30), latest?.close ?? null);
   const ret120d = latest?.return_120d ?? calcReturn(getPriceNDaysAgo(120), latest?.close ?? null);
@@ -191,18 +184,13 @@ const StockDetail: React.FC = () => {
   const isPositive = (rangeChange ?? 0) >= 0;
   const accentColor = isPositive ? "#16a34a" : "#dc2626";
 
-  // Chart range dates (for the header badge context)
   const chartStartDate = chartData.length ? chartData[0].date : null;
   const chartEndDate = chartData.length ? chartData[chartData.length - 1].date : null;
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#6366f1", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
-          <p style={{ color: "#94a3b8", marginTop: 16 }}>Loading {ticker}...</p>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <LoadingScreen message={`Loading ${ticker}...`} />
       </div>
     );
   }
@@ -234,7 +222,6 @@ const StockDetail: React.FC = () => {
         .perf-row:last-child { border-bottom: none; }
       `}</style>
 
-      {/* Header */}
       <div style={{ background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "16px 32px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <button onClick={() => navigate(-1)} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", color: "#64748b", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 14, fontWeight: 500 }}>
@@ -258,7 +245,6 @@ const StockDetail: React.FC = () => {
               )}
             </div>
 
-            {/* Show full history range, plus chart range */}
             {oldest && latest && (
               <p style={{ margin: "2px 0 0", fontSize: 12, color: "#94a3b8" }}>
                 Data from {new Date(oldest.date).toLocaleDateString()} – {new Date(latest.date).toLocaleDateString()}
@@ -278,7 +264,6 @@ const StockDetail: React.FC = () => {
       </div>
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
-        {/* Stat cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginBottom: 28 }}>
           {[
             { label: "Current Price", value: formatCurrency(latest?.close), color: "#0f172a" },
@@ -294,17 +279,15 @@ const StockDetail: React.FC = () => {
           ))}
         </div>
 
-        {/* Sentiment Indicators */}
         <div style={{ marginBottom: 28, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 24 }}>
-          <h2 style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700 }}>Sentiment Indicators</h2>
+          <h2 style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700 }}>Sentiment & AI News Summary</h2>
 
-          {sentimentLoading && <div style={{ color: "#94a3b8" }}>Loading sentiment...</div>}
+          {sentimentLoading && <div style={{ color: "#94a3b8" }}>Loading sentiment and AI news summary...</div>}
           {!sentimentLoading && sentimentError && <div style={{ color: "#ef4444" }}>{sentimentError}</div>}
           {!sentimentLoading && !sentimentError && sentiment && <StockSentimentCard data={sentiment} />}
           {!sentimentLoading && !sentimentError && !sentiment && <div style={{ color: "#94a3b8" }}>No sentiment snapshot found for {ticker}.</div>}
         </div>
 
-        {/* Chart */}
         <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 24, marginBottom: 28 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>Price History</h2>

@@ -1,18 +1,15 @@
+
 from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, List, Callable, Type, Optional, Tuple
+from typing import Any, Dict, List, Callable, Type, Optional
 from datetime import date, datetime
 import math
 
 import psycopg2
 import numpy as np
 from xgboost import XGBRegressor
-
-# --------------------------------------------------------------------------------------
-# Logging
-# --------------------------------------------------------------------------------------
 
 logger = logging.getLogger("snapshot_pipeline")
 logger.setLevel(logging.INFO)
@@ -21,9 +18,11 @@ if not logger.handlers:
     _handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
     logger.addHandler(_handler)
 
-# --------------------------------------------------------------------------------------
-# Pydantic BaseModel
-# --------------------------------------------------------------------------------------
+TARGET_TICKERS = [
+    "KSS", "ALK", "NVS", "AXP", "FCX",
+    "CSX", "DAL", "NTAP", "AMZN", "AAPL",
+    "MRK", "NVDA", "COP", "BHP", "EA",
+]
 
 try:
     from pydantic import BaseModel
@@ -47,8 +46,6 @@ class Artifact(BaseModel):
             return self.dict()
         return self.__dict__.copy()
 
-# --------------------------------------------------------------------------------------
-# Core Stage / Pipeline
 
 class Stage:
     def __init__(
@@ -89,19 +86,17 @@ class Pipeline:
         logger.info(f"Pipeline '{self.name}' completed.")
         return data
 
-# ------------------------------------------------------
-# DB Artifacts
-# ----------------------------------------------------
 
 class SnapshotRequestArtifact(Artifact):
     ticker: Optional[str] = None
+    tickers: Optional[List[str]] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
 
 
 class StockRowsArtifact(Artifact):
     ticker: List[str]
-    date: List[str]  # "YYYY-MM-DD"
+    date: List[str]
     close_price: List[Optional[float]]
     return_1d: List[Optional[float]]
     return_30d: List[Optional[float]]
@@ -112,7 +107,6 @@ class StockRowsArtifact(Artifact):
 class SentimentAggregateArtifact(Artifact):
     ticker: List[str]
     snapshot_date: List[str]
-
     close_price: List[Optional[float]]
     return_1d: List[Optional[float]]
     return_30d: List[Optional[float]]
@@ -146,9 +140,6 @@ class SentimentAggregateArtifact(Artifact):
 class DBArtifact(Artifact):
     num_snapshots: int
 
-# -------------------------------------------------------
-# Helpers
-# -------------------------------------------------------
 
 def _get_dsn() -> str:
     return os.getenv(
@@ -159,23 +150,6 @@ def _get_dsn() -> str:
 
 def _parse_date(s: str) -> date:
     return datetime.fromisoformat(s).date()
-
-
-def _mean(values: List[Optional[float]]) -> Optional[float]:
-    nums = [float(v) for v in values if v is not None and math.isfinite(float(v))]
-    if not nums:
-        return None
-    return float(sum(nums) / len(nums))
-
-
-def _safe_max(values: List[Optional[float]]) -> Optional[float]:
-    nums = [float(v) for v in values if v is not None and math.isfinite(float(v))]
-    return max(nums) if nums else None
-
-
-def _safe_min(values: List[Optional[float]]) -> Optional[float]:
-    nums = [float(v) for v in values if v is not None and math.isfinite(float(v))]
-    return min(nums) if nums else None
 
 
 def _truthy_env(name: str, default: str = "0") -> bool:
@@ -210,9 +184,17 @@ def _safe_num(x: Optional[float]) -> float:
         return 0.0
     return v
 
-# --------------------------------------------------------------------------------------
-# Stage 1: Load stocks + returns
-# --------------------------------------------------------------------------------------
+
+def _pick_tickers(req: SnapshotRequestArtifact) -> List[str]:
+    if req.ticker:
+        return [req.ticker]
+    if req.tickers:
+        return [t for t in req.tickers if t]
+    env = (os.getenv("AGG_TICKERS") or "").strip()
+    if env:
+        return [t.strip().upper() for t in env.split(",") if t.strip()]
+    return TARGET_TICKERS.copy()
+
 
 def load_stock_rows(req: SnapshotRequestArtifact) -> StockRowsArtifact:
     logger.info("[LoadStocks] Fetching stock rows from database")
@@ -220,6 +202,10 @@ def load_stock_rows(req: SnapshotRequestArtifact) -> StockRowsArtifact:
     dsn = _get_dsn()
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
+
+    tickers = _pick_tickers(req)
+    start_date = req.start_date or os.getenv("AGG_START_DATE") or "2020-01-01"
+    end_date = req.end_date or os.getenv("AGG_END_DATE") or date.today().isoformat()
 
     sql = """
         SELECT
@@ -231,30 +217,18 @@ def load_stock_rows(req: SnapshotRequestArtifact) -> StockRowsArtifact:
             return_120d,
             return_360d
         FROM stocks
-        WHERE 1=1
+        WHERE ticker = ANY(%s)
+          AND date >= %s
+          AND date <= %s
+        ORDER BY ticker, date
     """
-    params: List[Any] = []
 
-    if req.ticker:
-        sql += " AND ticker = %s"
-        params.append(req.ticker)
-
-    if req.start_date:
-        sql += " AND date >= %s"
-        params.append(req.start_date)
-
-    if req.end_date:
-        sql += " AND date <= %s"
-        params.append(req.end_date)
-
-    sql += " ORDER BY ticker, date"
-
-    cur.execute(sql, params)
+    cur.execute(sql, (tickers, start_date, end_date))
     rows = cur.fetchall()
     cur.close()
     conn.close()
 
-    tickers: List[str] = []
+    out_ticker: List[str] = []
     dates: List[str] = []
     close_price: List[Optional[float]] = []
     r1d: List[Optional[float]] = []
@@ -263,7 +237,7 @@ def load_stock_rows(req: SnapshotRequestArtifact) -> StockRowsArtifact:
     r360d: List[Optional[float]] = []
 
     for (t, d, close, ret1, ret30, ret120, ret360) in rows:
-        tickers.append(str(t))
+        out_ticker.append(str(t))
         dates.append(d.isoformat() if isinstance(d, date) else str(d))
         close_price.append(float(close) if close is not None else None)
         r1d.append(float(ret1) if ret1 is not None else None)
@@ -271,10 +245,10 @@ def load_stock_rows(req: SnapshotRequestArtifact) -> StockRowsArtifact:
         r120d.append(float(ret120) if ret120 is not None else None)
         r360d.append(float(ret360) if ret360 is not None else None)
 
-    logger.info(f"[LoadStocks] Loaded {len(tickers)} stock rows")
+    logger.info(f"[LoadStocks] Loaded {len(out_ticker)} stock rows across {len(set(out_ticker)) if out_ticker else 0} tickers")
 
     return StockRowsArtifact(
-        ticker=tickers,
+        ticker=out_ticker,
         date=dates,
         close_price=close_price,
         return_1d=r1d,
@@ -291,53 +265,8 @@ LoadStocksStage = Stage(
     compute_fn=load_stock_rows,
 )
 
-# --------------------------------------------------------------------------------------
-# Step 2: Aggregate article sentiment per DATE (ALL articles apply to ALL stocks)
-# --------------------------------------------------------------------------------------
 
-def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact:
-    """
-    Build daily sentiment aggregates from articles by published_at::date,
-    then attach those daily aggregates to every (ticker, stocks.date).
-    """
-    logger.info("[AggregateSentiment] Aggregating ALL-articles sentiment per day (published_at::date)")
-
-    n = len(stocks.ticker)
-    if n == 0:
-        logger.info("[AggregateSentiment] No stock rows; returning empty artifact")
-        return SentimentAggregateArtifact(
-            ticker=[],
-            snapshot_date=[],
-            close_price=[],
-            return_1d=[],
-            return_30d=[],
-            return_120d=[],
-            return_360d=[],
-            sentiment_mean=[],
-            sentiment_max=[],
-            sentiment_min=[],
-            num_articles=[],
-            num_pos_articles=[],
-            num_neg_articles=[],
-            pos_share=[],
-            neg_share=[],
-            prob_pos_mean=[],
-            prob_neg_mean=[],
-            prob_neu_mean=[],
-            prob_pos_max=[],
-            prob_neg_max=[],
-        )
-
-    all_dates = [_parse_date(d) for d in stocks.date]
-    min_date_val = min(all_dates)
-    max_date_val = max(all_dates)
-
-    logger.info(f"[AggregateSentiment] Stocks window: {min_date_val} -> {max_date_val}")
-
-    dsn = _get_dsn()
-    conn = psycopg2.connect(dsn)
-    cur = conn.cursor()
-
+def _fetch_broad_daily(cur, min_date_val: date, max_date_val: date) -> Dict[date, Dict[str, Any]]:
     cur.execute(
         """
         SELECT
@@ -365,50 +294,160 @@ def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact
         (min_date_val, max_date_val),
     )
 
-    daily: Dict[date, Dict[str, Any]] = {}
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    logger.info(f"[AggregateSentiment] Loaded {len(rows)} daily sentiment rows from articles")
-
-    for (
-        pub_date,
-        n_labeled,
-        n_pos,
-        n_neg,
-        mean_score,
-        max_score,
-        min_score,
-        pp_mean,
-        pn_mean,
-        pneu_mean,
-        pp_max,
-        pn_max,
-    ) in rows:
+    out: Dict[date, Dict[str, Any]] = {}
+    for row in cur.fetchall():
+        pub_date, n_labeled, n_pos, n_neg, mean_score, max_score, min_score, pp_mean, pn_mean, pneu_mean, pp_max, pn_max = row
         d = pub_date if isinstance(pub_date, date) else _parse_date(str(pub_date))
         nl = int(n_labeled or 0)
         np_ = int(n_pos or 0)
         nn_ = int(n_neg or 0)
-
-        daily[d] = {
+        out[d] = {
             "num_articles": nl,
             "num_pos_articles": np_,
             "num_neg_articles": nn_,
-            "pos_share": (float(np_) / nl) if nl > 0 else None,
-            "neg_share": (float(nn_) / nl) if nl > 0 else None,
-
             "sentiment_mean": float(mean_score) if mean_score is not None else None,
             "sentiment_max": float(max_score) if max_score is not None else None,
             "sentiment_min": float(min_score) if min_score is not None else None,
-
             "prob_pos_mean": float(pp_mean) if pp_mean is not None else None,
             "prob_neg_mean": float(pn_mean) if pn_mean is not None else None,
             "prob_neu_mean": float(pneu_mean) if pneu_mean is not None else None,
-
             "prob_pos_max": float(pp_max) if pp_max is not None else None,
             "prob_neg_max": float(pn_max) if pn_max is not None else None,
         }
+    return out
+
+
+def _fetch_stock_news_daily(cur, min_date_val: date, max_date_val: date, tickers: List[str]) -> Dict[tuple, Dict[str, Any]]:
+    cur.execute(
+        """
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'stock_news_articles'
+              AND column_name = 'sentiment'
+        );
+        """
+    )
+    has_sentiment = bool(cur.fetchone()[0])
+    if not has_sentiment:
+        logger.warning("[AggregateSentiment] stock_news_articles has no sentiment columns yet; skipping stock-news contribution")
+        return {}
+
+    cur.execute(
+        """
+        SELECT
+            ticker,
+            published_at::date AS pub_date,
+            COUNT(*) FILTER (WHERE sentiment IS NOT NULL) AS n_labeled,
+            COUNT(*) FILTER (WHERE sentiment = 'positive') AS n_pos,
+            COUNT(*) FILTER (WHERE sentiment = 'negative') AS n_neg,
+
+            AVG(sentiment_score) FILTER (WHERE sentiment_score IS NOT NULL) AS mean_score,
+            MAX(sentiment_score) FILTER (WHERE sentiment_score IS NOT NULL) AS max_score,
+            MIN(sentiment_score) FILTER (WHERE sentiment_score IS NOT NULL) AS min_score,
+
+            AVG(prob_pos) FILTER (WHERE prob_pos IS NOT NULL) AS prob_pos_mean,
+            AVG(prob_neg) FILTER (WHERE prob_neg IS NOT NULL) AS prob_neg_mean,
+            AVG(prob_neu) FILTER (WHERE prob_neu IS NOT NULL) AS prob_neu_mean,
+
+            MAX(prob_pos) FILTER (WHERE prob_pos IS NOT NULL) AS prob_pos_max,
+            MAX(prob_neg) FILTER (WHERE prob_neg IS NOT NULL) AS prob_neg_max
+        FROM stock_news_articles
+        WHERE published_at IS NOT NULL
+          AND ticker = ANY(%s)
+          AND published_at::date BETWEEN %s AND %s
+        GROUP BY 1, 2
+        ORDER BY 1, 2;
+        """,
+        (tickers, min_date_val, max_date_val),
+    )
+
+    out: Dict[tuple, Dict[str, Any]] = {}
+    for row in cur.fetchall():
+        tkr, pub_date, n_labeled, n_pos, n_neg, mean_score, max_score, min_score, pp_mean, pn_mean, pneu_mean, pp_max, pn_max = row
+        d = pub_date if isinstance(pub_date, date) else _parse_date(str(pub_date))
+        nl = int(n_labeled or 0)
+        np_ = int(n_pos or 0)
+        nn_ = int(n_neg or 0)
+        out[(str(tkr), d)] = {
+            "num_articles": nl,
+            "num_pos_articles": np_,
+            "num_neg_articles": nn_,
+            "sentiment_mean": float(mean_score) if mean_score is not None else None,
+            "sentiment_max": float(max_score) if max_score is not None else None,
+            "sentiment_min": float(min_score) if min_score is not None else None,
+            "prob_pos_mean": float(pp_mean) if pp_mean is not None else None,
+            "prob_neg_mean": float(pn_mean) if pn_mean is not None else None,
+            "prob_neu_mean": float(pneu_mean) if pneu_mean is not None else None,
+            "prob_pos_max": float(pp_max) if pp_max is not None else None,
+            "prob_neg_max": float(pn_max) if pn_max is not None else None,
+        }
+    return out
+
+
+def _weighted_mean(a: Optional[float], an: int, b: Optional[float], bn: int) -> Optional[float]:
+    an_eff = an if a is not None else 0
+    bn_eff = bn if b is not None else 0
+    denom = an_eff + bn_eff
+    if denom == 0:
+        return None
+    total = (float(a) * an_eff if a is not None else 0.0) + (float(b) * bn_eff if b is not None else 0.0)
+    return total / denom
+
+
+def _combine_max(a: Optional[float], b: Optional[float]) -> Optional[float]:
+    vals = [v for v in (a, b) if v is not None]
+    return max(vals) if vals else None
+
+
+def _combine_min(a: Optional[float], b: Optional[float]) -> Optional[float]:
+    vals = [v for v in (a, b) if v is not None]
+    return min(vals) if vals else None
+
+
+def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact:
+    logger.info("[AggregateSentiment] Aggregating broad articles + ticker-specific stock_news_articles")
+
+    n = len(stocks.ticker)
+    if n == 0:
+        return SentimentAggregateArtifact(
+            ticker=[],
+            snapshot_date=[],
+            close_price=[],
+            return_1d=[],
+            return_30d=[],
+            return_120d=[],
+            return_360d=[],
+            sentiment_mean=[],
+            sentiment_max=[],
+            sentiment_min=[],
+            num_articles=[],
+            num_pos_articles=[],
+            num_neg_articles=[],
+            pos_share=[],
+            neg_share=[],
+            prob_pos_mean=[],
+            prob_neg_mean=[],
+            prob_neu_mean=[],
+            prob_pos_max=[],
+            prob_neg_max=[],
+        )
+
+    all_dates = [_parse_date(d) for d in stocks.date]
+    min_date_val = min(all_dates)
+    max_date_val = max(all_dates)
+    unique_tickers = sorted(set(stocks.ticker))
+
+    dsn = _get_dsn()
+    conn = psycopg2.connect(dsn)
+    cur = conn.cursor()
+
+    broad_daily = _fetch_broad_daily(cur, min_date_val, max_date_val)
+    stock_news_daily = _fetch_stock_news_daily(cur, min_date_val, max_date_val, unique_tickers)
+
+    cur.close()
+    conn.close()
 
     out_ticker: List[str] = []
     out_date: List[str] = []
@@ -434,46 +473,41 @@ def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact
     prob_pos_max: List[Optional[float]] = []
     prob_neg_max: List[Optional[float]] = []
 
-    missing_days = 0
-
     for i in range(n):
         t = stocks.ticker[i]
         d = _parse_date(stocks.date[i])
 
-        day = daily.get(d)
-        if day is None:
-            missing_days += 1
-            sent_mean.append(None)
-            sent_max.append(None)
-            sent_min.append(None)
+        broad = broad_daily.get(d, {})
+        specific = stock_news_daily.get((t, d), {})
 
-            num_articles.append(0)
-            num_pos.append(0)
-            num_neg.append(0)
-            pos_share.append(None)
-            neg_share.append(None)
+        broad_n = int(broad.get("num_articles", 0))
+        stock_n = int(specific.get("num_articles", 0))
+        total_n = broad_n + stock_n
 
-            prob_pos_mean.append(None)
-            prob_neg_mean.append(None)
-            prob_neu_mean.append(None)
-            prob_pos_max.append(None)
-            prob_neg_max.append(None)
-        else:
-            sent_mean.append(day["sentiment_mean"])
-            sent_max.append(day["sentiment_max"])
-            sent_min.append(day["sentiment_min"])
+        broad_pos = int(broad.get("num_pos_articles", 0))
+        stock_pos = int(specific.get("num_pos_articles", 0))
+        total_pos = broad_pos + stock_pos
 
-            num_articles.append(int(day["num_articles"]))
-            num_pos.append(int(day["num_pos_articles"]))
-            num_neg.append(int(day["num_neg_articles"]))
-            pos_share.append(day["pos_share"])
-            neg_share.append(day["neg_share"])
+        broad_neg = int(broad.get("num_neg_articles", 0))
+        stock_neg = int(specific.get("num_neg_articles", 0))
+        total_neg = broad_neg + stock_neg
 
-            prob_pos_mean.append(day["prob_pos_mean"])
-            prob_neg_mean.append(day["prob_neg_mean"])
-            prob_neu_mean.append(day["prob_neu_mean"])
-            prob_pos_max.append(day["prob_pos_max"])
-            prob_neg_max.append(day["prob_neg_max"])
+        sent_mean.append(_weighted_mean(broad.get("sentiment_mean"), broad_n, specific.get("sentiment_mean"), stock_n))
+        sent_max.append(_combine_max(broad.get("sentiment_max"), specific.get("sentiment_max")))
+        sent_min.append(_combine_min(broad.get("sentiment_min"), specific.get("sentiment_min")))
+
+        num_articles.append(total_n)
+        num_pos.append(total_pos)
+        num_neg.append(total_neg)
+
+        pos_share.append((float(total_pos) / total_n) if total_n > 0 else None)
+        neg_share.append((float(total_neg) / total_n) if total_n > 0 else None)
+
+        prob_pos_mean.append(_weighted_mean(broad.get("prob_pos_mean"), broad_n, specific.get("prob_pos_mean"), stock_n))
+        prob_neg_mean.append(_weighted_mean(broad.get("prob_neg_mean"), broad_n, specific.get("prob_neg_mean"), stock_n))
+        prob_neu_mean.append(_weighted_mean(broad.get("prob_neu_mean"), broad_n, specific.get("prob_neu_mean"), stock_n))
+        prob_pos_max.append(_combine_max(broad.get("prob_pos_max"), specific.get("prob_pos_max")))
+        prob_neg_max.append(_combine_max(broad.get("prob_neg_max"), specific.get("prob_neg_max")))
 
         out_ticker.append(t)
         out_date.append(d.isoformat())
@@ -483,10 +517,7 @@ def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact
         out_r120d.append(stocks.return_120d[i])
         out_r360d.append(stocks.return_360d[i])
 
-    logger.info(
-        f"[AggregateSentiment] Built aggregates for {len(out_ticker)} snapshot rows "
-        f"(days_missing_articles={missing_days})"
-    )
+    logger.info("[AggregateSentiment] Built %s combined snapshot rows", len(out_ticker))
 
     return SentimentAggregateArtifact(
         ticker=out_ticker,
@@ -519,16 +550,12 @@ AggregateStage = Stage(
     compute_fn=aggregate_sentiment,
 )
 
-# --------------------------------------------------------------------------------------
-# Stage 3: XGBoost on returns using sentiment features
-# --------------------------------------------------------------------------------------
 
 def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArtifact:
     logger.info("[XGBoost] Building dataset from sentiment snapshots")
 
     n = len(agg.ticker)
     if n == 0:
-        logger.info("[XGBoost] No rows; skipping model training")
         agg.pred_return_1d = None
         agg.pred_return_30d = None
         agg.pred_return_120d = None
@@ -589,13 +616,6 @@ def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArt
     force_cpu = _truthy_env("XGB_FORCE_CPU", "0")
     cuda_build = _xgb_has_cuda_build()
     prefer_gpu = (not force_cpu) and cuda_build
-
-    if force_cpu:
-        logger.info("[XGBoost] XGB_FORCE_CPU=1 -> forcing CPU")
-    elif cuda_build:
-        logger.info("[XGBoost] CUDA-enabled XGBoost build detected; will try GPU first")
-    else:
-        logger.info("[XGBoost] XGBoost CUDA not available; using CPU")
 
     def make_model(device: str) -> XGBRegressor:
         return XGBRegressor(
@@ -674,21 +694,33 @@ XGBoostStage = Stage(
     compute_fn=run_xgboost_models,
 )
 
-# --------------------------------------------------------------------------------------
-# Stage 4: Write to sentiment_snapshots
-# --------------------------------------------------------------------------------------
+
+def _ensure_snapshot_columns(cur) -> None:
+    cur.execute("""
+        ALTER TABLE sentiment_snapshots
+        ADD COLUMN IF NOT EXISTS pred_return_1d DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS pred_return_30d DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS pred_return_120d DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS pred_return_360d DOUBLE PRECISION;
+    """)
+
 
 def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
     logger.info("[WriteSnapshots] Writing sentiment snapshots to database")
 
     n = len(agg.ticker)
     if n == 0:
-        logger.info("[WriteSnapshots] No snapshots to write")
         return DBArtifact(num_snapshots=0)
+
+    pred_1d = agg.pred_return_1d if agg.pred_return_1d is not None else [None] * n
+    pred_30d = agg.pred_return_30d if agg.pred_return_30d is not None else [None] * n
+    pred_120d = agg.pred_return_120d if agg.pred_return_120d is not None else [None] * n
+    pred_360d = agg.pred_return_360d if agg.pred_return_360d is not None else [None] * n
 
     dsn = _get_dsn()
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
+    _ensure_snapshot_columns(cur)
 
     num_written = 0
 
@@ -713,30 +745,20 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
         agg.prob_neu_mean,
         agg.prob_pos_max,
         agg.prob_neg_max,
+        pred_1d,
+        pred_30d,
+        pred_120d,
+        pred_360d,
     )
 
-    for (
-        ticker,
-        snapshot_date,
-        close_price,
-        return_1d,
-        return_30d,
-        return_120d,
-        return_360d,
-        sentiment_mean,
-        sentiment_max,
-        sentiment_min,
-        num_articles,
-        num_pos_articles,
-        num_neg_articles,
-        pos_share,
-        neg_share,
-        prob_pos_mean,
-        prob_neg_mean,
-        prob_neu_mean,
-        prob_pos_max,
-        prob_neg_max,
-    ) in rows:
+    for row in rows:
+        (
+            ticker, snapshot_date, close_price, return_1d, return_30d, return_120d, return_360d,
+            sentiment_mean, sentiment_max, sentiment_min, num_articles, num_pos_articles, num_neg_articles,
+            pos_share, neg_share, prob_pos_mean, prob_neg_mean, prob_neu_mean, prob_pos_max, prob_neg_max,
+            pred_return_1d, pred_return_30d, pred_return_120d, pred_return_360d
+        ) = row
+
         cur.execute(
             """
             INSERT INTO sentiment_snapshots (
@@ -759,7 +781,11 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
                 prob_neg_mean,
                 prob_neu_mean,
                 prob_pos_max,
-                prob_neg_max
+                prob_neg_max,
+                pred_return_1d,
+                pred_return_30d,
+                pred_return_120d,
+                pred_return_360d
             )
             VALUES (
                 %(ticker)s,
@@ -781,7 +807,11 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
                 %(prob_neg_mean)s,
                 %(prob_neu_mean)s,
                 %(prob_pos_max)s,
-                %(prob_neg_max)s
+                %(prob_neg_max)s,
+                %(pred_return_1d)s,
+                %(pred_return_30d)s,
+                %(pred_return_120d)s,
+                %(pred_return_360d)s
             )
             ON CONFLICT (ticker, snapshot_date) DO UPDATE SET
                 close_price      = EXCLUDED.close_price,
@@ -801,7 +831,11 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
                 prob_neg_mean    = EXCLUDED.prob_neg_mean,
                 prob_neu_mean    = EXCLUDED.prob_neu_mean,
                 prob_pos_max     = EXCLUDED.prob_pos_max,
-                prob_neg_max     = EXCLUDED.prob_neg_max;
+                prob_neg_max     = EXCLUDED.prob_neg_max,
+                pred_return_1d   = EXCLUDED.pred_return_1d,
+                pred_return_30d  = EXCLUDED.pred_return_30d,
+                pred_return_120d = EXCLUDED.pred_return_120d,
+                pred_return_360d = EXCLUDED.pred_return_360d;
             """,
             {
                 "ticker": ticker,
@@ -824,6 +858,10 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
                 "prob_neu_mean": prob_neu_mean,
                 "prob_pos_max": prob_pos_max,
                 "prob_neg_max": prob_neg_max,
+                "pred_return_1d": pred_return_1d,
+                "pred_return_30d": pred_return_30d,
+                "pred_return_120d": pred_return_120d,
+                "pred_return_360d": pred_return_360d,
             },
         )
         num_written += 1
@@ -846,9 +884,6 @@ WriteSnapshotsStage = Stage(
     compute_fn=write_snapshots_to_db,
 )
 
-# --------------------------------------------------------------------------------------
-# Pipeline
-# --------------------------------------------------------------------------------------
 
 sentiment_snapshot_pipeline = Pipeline(
     "SentimentSnapshotAggregator",
@@ -860,13 +895,12 @@ sentiment_snapshot_pipeline = Pipeline(
     ],
 )
 
-# --------------------------------------------------------------------------------------
-# Public helper for FastAPI startup
-# --------------------------------------------------------------------------------------
 
 def run_sentiment_snapshot_pipeline_from_env() -> Dict[str, Any]:
+    tickers_env = (os.getenv("AGG_TICKERS") or "").strip()
     req = {
         "ticker": os.getenv("AGG_TICKER") or None,
+        "tickers": [t.strip().upper() for t in tickers_env.split(",") if t.strip()] or None,
         "start_date": os.getenv("AGG_START_DATE") or None,
         "end_date": os.getenv("AGG_END_DATE") or None,
     }
@@ -877,236 +911,5 @@ def run_sentiment_snapshot_pipeline_from_env() -> Dict[str, Any]:
     return result
 
 
-# --------------------------------------------------------------------------------------
-# GPT explanation helper (adds explanations to existing snapshot rows)
-# --------------------------------------------------------------------------------------
-
-def generate_gpt_explanations(row: Dict[str, Any]) -> Dict[str, Optional[str]]:
-    default_out: Dict[str, Optional[str]] = {"d30": None, "d120": None, "d360": None}
-
-    if os.getenv("ENABLE_GPT_EXPLANATIONS", "0") != "1":
-        return default_out
-
-    api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
-    if not api_key:
-        logger.warning("OPENAI_API_KEY missing, skipping GPT stage.")
-        return default_out
-
-    import json
-    import time
-    import re
-    import requests
-
-    model = os.getenv("GPT_EXPL_MODEL", "gpt-4o-mini")
-
-    '''
-    02/28/2026
-    Potential new prompt for next pipeline run 
-    - Returns formatted percents- easier for GPT to reason with
-    - Added sentiment_mean (the finbert score)
-    - Article counts replaced with pos/neg percents
-
-    def _fmt_return(val):
-        if val is None:
-            return "no data"
-        return f"{float(val) * 100:+.1f}%"
-
-    num_articles = row.get("num_articles") or 0
-    num_pos = row.get("num_pos_articles") or 0
-    num_neg = row.get("num_neg_articles") or 0
-    pos_pct = f"{(num_pos / num_articles * 100):.0f}%" if num_articles > 0 else "N/A"
-    neg_pct = f"{(num_neg / num_articles * 100):.0f}%" if num_articles > 0 else "N/A"
-    raw_score = row.get("sentiment_mean")
-    score_str = f"{float(raw_score):+.3f}" if raw_score is not None else "N/A"
-
-    prompt = (
-        "You are a finance dashboard assistant writing brief, factual summaries.\n"
-        "Summarize what the news sentiment suggests about each return horizon for this stock.\n"
-        "Rules: 1-2 sentences each. No buy/sell/hold advice. Use cautious language. "
-        "If num_articles is 0, note that no scored news was available for this period.\n\n"
-        f"Ticker: {row.get('ticker')}\n"
-        f"Snapshot date: {row.get('snapshot_date')}\n\n"
-        "Actual returns:\n"
-        f"- 30-day:  {_fmt_return(row.get('return_30d'))}\n"
-        f"- 120-day: {_fmt_return(row.get('return_120d'))}\n"
-        f"- 360-day: {_fmt_return(row.get('return_360d'))}\n\n"
-        f"News sentiment ({num_articles} scored articles):\n"
-        f"- FinBERT score (mean, -1 to +1): {score_str}\n"
-        f"- Positive: {pos_pct}  |  Negative: {neg_pct}\n"
-    )
-
-    )'''
-    prompt = (
-        "You are a finance dashboard assistant.\n"
-        "Write short explanations that summarize how article sentiment relates to 30-day / 120-day / 360-day horizons.\n"
-        "Do NOT give investment advice (no buy/sell/hold). Avoid hype and certainty words.\n"
-        "Each value must be 1–2 sentences, cautious if uncertain.\n\n"
-        f"Ticker: {row.get('ticker')}\n"
-        f"Snapshot date: {row.get('snapshot_date')}\n\n"
-        "Returns:\n"
-        f"- 30-day: {row.get('return_30d')}\n"
-        f"- 120-day: {row.get('return_120d')}\n"
-        f"- 360-day: {row.get('return_360d')}\n\n"
-        "Articles:\n"
-        f"- total: {row.get('num_articles')}\n"
-        f"- positive: {row.get('num_pos_articles')}\n"
-        f"- negative: {row.get('num_neg_articles')}\n"
-    )
-
-    schema = {
-        "type": "object",
-        "additionalProperties": False,
-        "properties": {
-            "d30": {"type": ["string", "null"]},
-            "d120": {"type": ["string", "null"]},
-            "d360": {"type": ["string", "null"]},
-        },
-        "required": ["d30", "d120", "d360"],
-    }
-
-    payload: Dict[str, Any] = {
-        "model": model,
-        "input": prompt,
-        "text": {
-            "format": {
-                "type": "json_schema",
-                "name": "sentiment_explanations",
-                "strict": True,
-                "schema": schema,
-            }
-        },
-    }
-
-    url = "https://api.openai.com/v1/responses"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-
-    for attempt in range(1, 4):
-        try:
-            r = requests.post(url, headers=headers, json=payload, timeout=45)
-            if r.status_code >= 300:
-                logger.warning(f"OpenAI error {r.status_code}: {(r.text or '')[:600]}")
-                return default_out
-            try:
-                resp_json = r.json()
-            except Exception:
-                logger.warning(f"OpenAI returned non-JSON body: {(r.text or '')[:600]}")
-                return default_out
-
-            text_out = ""
-            out = resp_json.get("output")
-            if isinstance(out, list):
-                for item in out:
-                    if not isinstance(item, dict) or item.get("type") != "message":
-                        continue
-                    content = item.get("content")
-                    if not isinstance(content, list):
-                        continue
-                    for c in content:
-                        if isinstance(c, dict) and isinstance(c.get("text"), str):
-                            text_out = c["text"].strip()
-                            break
-
-            if not text_out:
-                text_out = (resp_json.get("output_text") or "").strip()
-
-            s = text_out.strip()
-            if not s.startswith("{"):
-                m = re.search(r"\{.*\}", s, flags=re.DOTALL)
-                s = m.group(0).strip() if m else ""
-            try:
-                parsed = json.loads(s) if s else None
-            except Exception:
-                parsed = None
-
-            if not parsed:
-                logger.warning(f"GPT returned unparsable output: {text_out[:250]!r}")
-                return default_out
-
-            return {"d30": parsed.get("d30"), "d120": parsed.get("d120"), "d360": parsed.get("d360")}
-
-        except Exception as e:
-            logger.warning(f"GPT request failed (attempt {attempt}/3): {e}")
-            if attempt < 3:
-                time.sleep(1.5 * attempt)
-                continue
-            return default_out
-
-    return default_out
-
-
-def run_gpt_explanations(ticker_filter: Optional[str] = None) -> None:
-    """Add GPT explanations to existing sentiment_snapshots rows (requires ENABLE_GPT_EXPLANATIONS=1)."""
-    if os.getenv("ENABLE_GPT_EXPLANATIONS", "0") != "1":
-        logger.info("ENABLE_GPT_EXPLANATIONS != 1 - skipping GPT explanations.")
-        return
-
-    dsn = _get_dsn()
-    conn = psycopg2.connect(dsn)
-    cur = conn.cursor()
-
-    extra_and = ""
-    params: List[Any] = []
-    if ticker_filter:
-        extra_and = "AND ticker ILIKE %s"
-        params.append(f"%{ticker_filter}%")
-
-    cur.execute(
-        f"""
-        SELECT DISTINCT ON (ticker)
-            ticker, snapshot_date, return_30d, return_120d, return_360d,
-            num_articles, num_pos_articles, num_neg_articles
-        FROM sentiment_snapshots
-        WHERE (gpt_expl_30d IS NULL OR gpt_expl_120d IS NULL OR gpt_expl_360d IS NULL)
-        {extra_and}
-        ORDER BY ticker, snapshot_date DESC;
-        """,
-        params,
-    )
-    rows = cur.fetchall()
-    logger.info(f"[GPT] {len(rows)} snapshots need GPT explanations")
-
-    model_name = os.getenv("GPT_EXPL_MODEL", "gpt-4o-mini")
-    written = skipped = 0
-
-    for (ticker, snapshot_date, r30, r120, r360, num_articles, num_pos, num_neg) in rows:
-        expl = generate_gpt_explanations({
-            "ticker": ticker, "snapshot_date": str(snapshot_date),
-            "return_30d": r30, "return_120d": r120, "return_360d": r360,
-            "num_articles": num_articles, "num_pos_articles": num_pos, "num_neg_articles": num_neg,
-        })
-
-        if not (expl.get("d30") and expl.get("d120") and expl.get("d360")):
-            skipped += 1
-            continue
-
-        cur.execute(
-            """
-            UPDATE sentiment_snapshots
-            SET gpt_expl_30d = COALESCE(%s, gpt_expl_30d),
-                gpt_expl_120d = COALESCE(%s, gpt_expl_120d),
-                gpt_expl_360d = COALESCE(%s, gpt_expl_360d),
-                gpt_model = %s,
-                gpt_generated_at = %s
-            WHERE ticker = %s AND snapshot_date = %s;
-            """,
-            (expl["d30"], expl["d120"], expl["d360"], model_name, datetime.utcnow(), ticker, snapshot_date),
-        )
-        written += 1
-
-    conn.commit()
-    cur.close()
-    conn.close()
-    logger.info(f"[GPT] Done. Updated {written} snapshots. Skipped {skipped}.")
-
-
-# --------------------------------------------------------------------------------------
-# CLI entry point
-# --------------------------------------------------------------------------------------
-
 if __name__ == "__main__":
     run_sentiment_snapshot_pipeline_from_env()
-    run_gpt_explanations(ticker_filter=os.getenv("AGG_TICKER") or None)

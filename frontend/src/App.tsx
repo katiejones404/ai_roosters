@@ -12,9 +12,12 @@ import Login from "./login";
 import Settings from "./settings";
 import Dashboard from "./Dashboard";
 import Portfolio from "./portfolio";
+import NetWorth from "./NetWorth";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./ProtectedRoute";
 import StockDetail from "./StockDetail";
+import News from "./News";
+import Alerts from "./Alerts";
 
 import "./App.css"; // Keep up high for global CSS loads
 import "./index.css"; 
@@ -163,8 +166,11 @@ function AppContent() {
         <Route element={<ProtectedRoute />}>
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/networth" element={<NetWorth />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/stock/:ticker" element={<StockDetail />} />
+          <Route path="/news" element={<News />} />
+          <Route path="/alerts" element={<Alerts />} />
         </Route>
 
         {/* Fallback */}

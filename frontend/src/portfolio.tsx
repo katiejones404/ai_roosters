@@ -6,6 +6,8 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip,
     LineChart, Line, CartesianGrid, ResponsiveContainer, Cell, Legend,
 } from "recharts";
+import AddToPortfolioModal from "./components/AddToPortfolio";
+import LoadingScreen from "./components/LoadingScreen";
 import './portfolio.css';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
@@ -61,6 +63,8 @@ const Portfolio = () => {
     const [actionTicker, setActionTicker] = useState<string | null>(null);
     const [sellQty, setSellQty] = useState<string>('');
     const [actionError, setActionError] = useState<string | null>(null);
+    const [addSharesTicker, setAddSharesTicker] = useState<string | null>(null);
+    const [addSharesPrice, setAddSharesPrice] = useState<number>(0);
 
     useEffect(() => {
         fetchPortfolioSummary();
@@ -239,6 +243,38 @@ const Portfolio = () => {
         return { start: fmt(slice[0].date), end: fmt(slice[slice.length - 1].date) };
     };
 
+    const handleExportCSV = () => {
+        const { portfolio_items = [] } = portfolioData || {};
+        if (portfolio_items.length === 0) return;
+        const headers = [
+            'Ticker', 'Quantity', 'Avg Price', 'Current Price',
+            'Cost Basis', 'Current Value', 'Gain/Loss $', 'Gain/Loss %',
+            '1D Return', '30D Return', '120D Return', '360D Return',
+        ];
+        const rows = portfolio_items.map((item: PortfolioItemWithMetrics) => [
+            item.ticker,
+            item.quantity,
+            item.avg_price?.toFixed(2) ?? '',
+            item.current_price?.toFixed(2) ?? '',
+            item.cost_basis?.toFixed(2) ?? '',
+            item.current_value?.toFixed(2) ?? '',
+            item.total_gain_loss?.toFixed(2) ?? '',
+            item.gain_loss_pct != null ? (item.gain_loss_pct * 100).toFixed(2) + '%' : '',
+            item.return_1d != null ? (item.return_1d * 100).toFixed(2) + '%' : '',
+            item.return_30d != null ? (item.return_30d * 100).toFixed(2) + '%' : '',
+            item.return_120d != null ? (item.return_120d * 100).toFixed(2) + '%' : '',
+            item.return_360d != null ? (item.return_360d * 100).toFixed(2) + '%' : '',
+        ]);
+        const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'portfolio.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     // Build merged chart dataset for the comparison LineChart
     const buildChartData = () => {
         const tickers = Object.keys(compareData);
@@ -278,10 +314,7 @@ const Portfolio = () => {
                     <div className="home-shape home-shape-3"></div>
                 </div>
                 <div className="home-card">
-                    <div className="portfolio-loading">
-                        <div className="loading-spinner"></div>
-                        <p>Loading portfolio...</p>
-                    </div>
+                    <LoadingScreen message="Loading portfolio..." />
                 </div>
             </div>
         );
@@ -384,14 +417,25 @@ const Portfolio = () => {
                             <div className="portfolio-holdings-section">
                                 <div className="section-header">
                                     <h2 className="section-title">Holdings</h2>
-                                    {portfolio_items.length >= 2 && (
-                                        <button
-                                            className={`compare-btn ${compareMode ? 'active' : ''}`}
-                                            onClick={toggleCompareMode}
-                                        >
-                                            {compareMode ? 'Done Comparing' : 'Compare'}
-                                        </button>
-                                    )}
+                                    <div className="section-header-actions">
+                                        {portfolio_items.length > 0 && (
+                                            <button
+                                                className="csv-export-btn"
+                                                onClick={handleExportCSV}
+                                                title="Download portfolio as CSV"
+                                            >
+                                                ↓ Export CSV
+                                            </button>
+                                        )}
+                                        {portfolio_items.length >= 2 && (
+                                            <button
+                                                className={`compare-btn ${compareMode ? 'active' : ''}`}
+                                                onClick={toggleCompareMode}
+                                            >
+                                                {compareMode ? 'Done Comparing' : 'Compare'}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {compareMode && (
@@ -440,13 +484,25 @@ const Portfolio = () => {
                                                             </Link>
                                                             <span className="quantity-badge">{item.quantity} shares</span>
                                                         </div>
-                                                        <button
-                                                            onClick={() => openActionPanel(item.ticker)}
-                                                            className="remove-btn"
-                                                            title="Manage Position"
-                                                        >
-                                                            ✕
-                                                        </button>
+                                                        <div className="holding-card-actions">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setAddSharesTicker(item.ticker);
+                                                                    setAddSharesPrice(item.current_price ?? item.avg_price);
+                                                                }}
+                                                                className="add-shares-btn"
+                                                                title="Add more shares"
+                                                            >
+                                                                + Add
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openActionPanel(item.ticker)}
+                                                                className="remove-btn"
+                                                                title="Manage Position"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
                                                     </div>
 
                                                     <div className="holding-price-section">
@@ -660,7 +716,7 @@ const Portfolio = () => {
                         </div>
                     </div>
 
-                    {/* Comparison table — full width, below 2-col */}
+                    {/* Comparison table full width, below 2-col */}
                     {compareMode && comparedItems.length >= 2 && (
                         <div className="comparison-section">
                             <h3 className="comparison-title">Side-by-Side Comparison</h3>
@@ -755,8 +811,18 @@ const Portfolio = () => {
                     )}
                 </div>
             </div>
-        </div>
-    );
+        {addSharesTicker && (
+            <AddToPortfolioModal
+                ticker={addSharesTicker}
+                currentPrice={addSharesPrice}
+                onClose={() => setAddSharesTicker(null)}
+                onSuccess={() => {
+                    setAddSharesTicker(null);
+                    fetchPortfolioSummary();
+                }}
+            />
+        )}
+    </div>
+);
 };
-
 export default Portfolio;

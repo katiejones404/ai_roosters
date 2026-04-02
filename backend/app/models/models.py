@@ -2,7 +2,7 @@
 Database models
 """
 import uuid
-from sqlalchemy import Column, String, DateTime, Text, Numeric, ForeignKey, TIMESTAMP
+from sqlalchemy import Column, String, DateTime, Text, Numeric, ForeignKey, TIMESTAMP, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -52,3 +52,35 @@ class Portfolio(Base):
 
     def __repr__(self):
         return f"<Portfolio(user_id={self.user_id}, ticker={self.ticker}, quantity={self.quantity})>"
+
+
+class StockNewsArticle(Base):
+    __tablename__ = "stock_news_articles"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    ticker = Column(Text, nullable=False)
+    url = Column(Text, nullable=False)
+    title = Column(Text, nullable=True)
+    source = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
+    snippet = Column(Text, nullable=True)
+    image_url = Column(Text, nullable=True)
+    language = Column(Text, nullable=True)
+    published_at = Column(DateTime(timezone=True), nullable=True)
+    inserted_at = Column(DateTime(timezone=True), server_default=func.now())
+    relevance_score = Column(Numeric, nullable=True)
+
+
+class PriceAlert(Base):
+    __tablename__ = "price_alerts"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    ticker = Column(String, nullable=False)
+    target_price = Column(Numeric, nullable=False)
+    direction = Column(String, nullable=False)  # "above" or "below"
+    is_active = Column(Boolean, default=True, nullable=False)
+    triggered_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")

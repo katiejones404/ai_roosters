@@ -137,6 +137,17 @@ const Navbar = () => {
           <Link className={isActive("/portfolio")} to="/portfolio">
             Portfolio
           </Link>
+          <Link className={isActive("/networth")} to="/networth">
+            Net Worth
+          </Link>
+
+          <Link className={isActive("/news")} to="/news">
+            News
+          </Link>
+          
+          <Link className={isActive("/alerts")} to="/alerts">
+            Alerts
+          </Link>
         </div>
 
         <div className="nav-search-wrapper" ref={searchRef}>
