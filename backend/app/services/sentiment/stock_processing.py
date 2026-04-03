@@ -92,10 +92,13 @@ def add_returns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def update_returns_in_db(engine, df: pd.DataFrame) -> None:
+def update_returns_in_db(engine, df: pd.DataFrame, batch_size: int = 500) -> None:
     """
     Update stocks table with computed returns.
     Matches rows on (ticker, date).
+
+    Commits in batches of batch_size to avoid Neon connection timeouts
+    that occur when sending all 23k rows in a single executemany call.
     """
     if df.empty:
         logger.warning("No data to update in DB.")
@@ -109,7 +112,8 @@ def update_returns_in_db(engine, df: pd.DataFrame) -> None:
         ["ticker", "date", "return_1d", "return_30d", "return_120d", "return_360d"]
     ].to_dict("records")
 
-    logger.info(f"Updating {len(rows)} rows with returns...")
+    total = len(rows)
+    logger.info(f"Updating {total} rows with returns (batch_size={batch_size})...")
     update_sql = text(
         """
         UPDATE stocks
@@ -122,8 +126,12 @@ def update_returns_in_db(engine, df: pd.DataFrame) -> None:
         """
     )
 
-    with engine.begin() as conn:
-        conn.execute(update_sql, rows)
+    # Send rows in small batches so Neon doesn't drop the connection
+    for start in range(0, total, batch_size):
+        batch = rows[start : start + batch_size]
+        with engine.begin() as conn:
+            conn.execute(update_sql, batch)
+        logger.info(f"Committed rows {start + len(batch)}/{total}")
 
     logger.info("Database update complete.")
 
