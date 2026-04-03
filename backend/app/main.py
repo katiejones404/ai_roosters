@@ -32,7 +32,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-FRONTEND_ORIGINS = os.getenv("FRONTEND_ORIGINS", "https://ai-roosters-frontend.onrender.com")
+FRONTEND_ORIGINS = os.getenv("FRONTEND_ORIGINS", "https://ai-roosters-webpage.vercel.app")
 base_origins = [o.strip() for o in FRONTEND_ORIGINS.split(",") if o.strip()]
 
 origins = base_origins + [
