@@ -505,3 +505,121 @@
 .btn-add-portfolio-lg:hover {
   background: #1d4ed8;
 }
+
+.dashboard-layout {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+  align-items: flex-start;
+}
+
+.filter-panel {
+  width: 220px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  height: fit-content;
+}
+
+.stocks-section {
+  flex: 1;
+}
+
+.filter-panel-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  transition: background 0.15s ease;
+  box-sizing: border-box;
+}
+
+.filter-option:hover {
+  background: #f3f4f6;
+}
+
+.filter-option input {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.filter-label {
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.filter-clear {
+  margin-top: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 10px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.filter-clear:hover {
+  background: #e5e7eb;
+}
+.dashboard-page-layout {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 24px 32px;
+  box-sizing: border-box;
+}
+
+.filter-panel {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(229, 231, 235, 0.9);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.dashboard-page-layout {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 24px 32px;
+  box-sizing: border-box;
+}
+
+.dashboard-sidebar {
+  position: absolute;
+  left: 50%;
+  top: 46px;
+  transform: translateX(-610px);
+  width: 210px;
+}
+
+.home-card {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
