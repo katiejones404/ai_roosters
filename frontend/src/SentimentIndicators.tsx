@@ -6,15 +6,15 @@ type StockCardProps = {
 };
 
 const labelColor = (label: SentimentLabel): string => {
-  if (label === "bullish") return "#16a34a";
-  if (label === "bearish") return "#dc2626";
-  return "#64748b";
+  if (label === "bullish") return "#22c55e";
+  if (label === "bearish") return "#ef4444";
+  return "#cbd5e1";
 };
 
 const labelBg = (label: SentimentLabel): string => {
-  if (label === "bullish") return "#dcfce7";
-  if (label === "bearish") return "#fee2e2";
-  return "#f1f5f9";
+  if (label === "bullish") return "rgba(22, 163, 74, 0.18)";
+  if (label === "bearish") return "rgba(220, 38, 38, 0.18)";
+  return "rgba(100, 116, 139, 0.24)";
 };
 
 const prettyRange = (k: "d30" | "d120" | "d360") => {
@@ -68,10 +68,10 @@ export const StockSentimentCard: React.FC<StockCardProps> = ({ data }) => {
             <div
               key={k}
               style={{
-                border: "1px solid #e2e8f0",
+                border: "1px solid rgba(148, 163, 184, 0.22)",
                 borderRadius: 14,
                 padding: 16,
-                background: "#fff",
+                background: "rgba(15, 23, 42, 0.74)",
               }}
             >
               <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 700, letterSpacing: "0.08em" }}>
@@ -87,7 +87,7 @@ export const StockSentimentCard: React.FC<StockCardProps> = ({ data }) => {
                     borderRadius: 999,
                     color: labelColor(label),
                     background: labelBg(label),
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid rgba(148, 163, 184, 0.22)",
                     textTransform: "uppercase",
                     letterSpacing: "0.04em",
                   }}
@@ -102,10 +102,10 @@ export const StockSentimentCard: React.FC<StockCardProps> = ({ data }) => {
 
       <div
         style={{
-          border: "1px solid #e2e8f0",
+          border: "1px solid rgba(148, 163, 184, 0.22)",
           borderRadius: 14,
           padding: 18,
-          background: "#fff",
+          background: "rgba(15, 23, 42, 0.74)",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -113,7 +113,7 @@ export const StockSentimentCard: React.FC<StockCardProps> = ({ data }) => {
             <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 700, letterSpacing: "0.08em" }}>
               AI NEWS EXPLANATION
             </div>
-            <div style={{ marginTop: 6, fontSize: 18, fontWeight: 700, color: "#0f172a" }}>
+            <div style={{ marginTop: 6, fontSize: 18, fontWeight: 700, color: "#e2e8f0" }}>
               {preferredNews?.label ?? "News Summary"}
             </div>
           </div>
@@ -126,9 +126,9 @@ export const StockSentimentCard: React.FC<StockCardProps> = ({ data }) => {
                   fontWeight: 700,
                   padding: "5px 10px",
                   borderRadius: 999,
-                  color: preferredNews.isFallback ? "#7c3aed" : "#0369a1",
-                  background: preferredNews.isFallback ? "#f3e8ff" : "#e0f2fe",
-                  border: "1px solid #e2e8f0",
+                  color: preferredNews.isFallback ? "#c4b5fd" : "#7dd3fc",
+                  background: preferredNews.isFallback ? "rgba(76, 29, 149, 0.34)" : "rgba(12, 74, 110, 0.34)",
+                  border: "1px solid rgba(148, 163, 184, 0.22)",
                 }}
               >
                 {preferredNews.isFallback ? "30D fallback" : "7D primary"}
@@ -140,9 +140,9 @@ export const StockSentimentCard: React.FC<StockCardProps> = ({ data }) => {
                   fontWeight: 700,
                   padding: "5px 10px",
                   borderRadius: 999,
-                  color: "#334155",
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
+                  color: "#cbd5e1",
+                  background: "rgba(51, 65, 85, 0.5)",
+                  border: "1px solid rgba(148, 163, 184, 0.22)",
                 }}
               >
                 {preferredNews.window.article_count} article{preferredNews.window.article_count === 1 ? "" : "s"}
@@ -153,7 +153,7 @@ export const StockSentimentCard: React.FC<StockCardProps> = ({ data }) => {
 
         <div style={{ marginTop: 12 }}>
           {preferredNews?.window.summary_text ? (
-            <p style={{ margin: 0, color: "#334155", fontSize: 14, lineHeight: 1.6 }}>
+            <p style={{ margin: 0, color: "#cbd5e1", fontSize: 14, lineHeight: 1.6 }}>
               {preferredNews.window.summary_text}
             </p>
           ) : (

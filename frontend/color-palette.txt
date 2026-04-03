@@ -1,0 +1,21 @@
+AI_ROOSTERS COLOR PALETTE
+     GREEN       #10b981   Primary positive/success
+     GREEN DK    #059669   Hover/dark variant
+     GREEN DKR   #047857   Active/darkest variant
+     PURPLE      #6366f1   Primary brand accent
+     PURPLE LT   #8b5cf6   Lighter purple/gradients
+     PURPLE GR1  #667eea   Gradient start
+     PURPLE GR2  #764ba2   Gradient end
+     RED         #ef4444   Negative sentiment/errors/ X marks
+     RED DK      #dc2626   Hover/ dark variant
+     RED DKR     #b91c1c   Active/darkest variant
+     WHITE       #ffffff   Backgrounds/text on dark
+     OFF-WHITE   #f9fafb   Card/surface backgrounds
+     GREY LT     #e5e7eb   Borders/dividers
+     GREY MID    #9ca3af   Placeholder/disabled text
+     GREY        #6b7280   Secondary text
+     GREY DK     #374151   Body text on light bg
+     GREY DKR    #1f2937   Headings on light bg
+     BLACK       #0b0b0b   App header / deep backgrounds
+     BLACK ALT   #000000   Pure black
+ 

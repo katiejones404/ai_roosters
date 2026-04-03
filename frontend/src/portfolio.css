@@ -68,7 +68,7 @@
 
 .stat-labelP {
   font-size: 0.875rem;
-  color: #374151;
+  color: rgba(255, 255, 255, 0.55);
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -78,7 +78,7 @@
 .stat-valueP {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #571c78;
+  color: #e2e8f0;
   line-height: 1.2;
 }
 
@@ -276,7 +276,7 @@
 
 .price-label {
   font-size: 0.75rem;
-  color: rgba(71, 81, 98, 0.5);
+  color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -284,7 +284,7 @@
 .price-value {
   font-size: 1rem;
   font-weight: 600;
-  color: #3e3e3e;
+  color: #e2e8f0;
 }
 
 /* Divider */
@@ -327,14 +327,14 @@
 
 .metric-label {
   font-size: 0.875rem;
-  color: rgba(50, 50, 50, 0.6);
+  color: rgba(255, 255, 255, 0.5);
   font-weight: 500;
 }
 
 .metric-value {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #303030;
+  color: #e2e8f0;
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -374,7 +374,7 @@
 
 .return-label {
   font-size: 0.7rem;
-  color: rgba(45, 45, 45, 0.5);
+  color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -383,7 +383,7 @@
 .return-value {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #323232;
+  color: #e2e8f0;
 }
 
 .return-value.positive {
@@ -535,7 +535,7 @@
   padding: 0.625rem 1.25rem;
   background: rgba(102, 126, 234, 0.15);
   border: 1px solid rgba(102, 126, 234, 0.3);
-  color: #5024ff;
+  color: #818cf8;
   border-radius: 10px;
   font-weight: 600;
   font-size: 0.875rem;
@@ -551,7 +551,7 @@
 .compare-btn.active {
   background: rgba(102, 126, 234, 0.3);
   border-color: #818cf8;
-  color: #5024ff;
+  color: #a5b4fc;
 }
 
 .compare-hint {
@@ -589,7 +589,7 @@
 .comparison-title {
   font-size: 2rem;
   font-weight: 1000;
-  color: #2a0052;
+  color: #e0e7ff;
   margin-bottom: 1rem;
 }
 
@@ -622,7 +622,7 @@
 /* The 'metric' column title*/
 .comparison-table th:first-child {
   text-align: left;
-  color:rgba(13, 0, 78, 0.838);
+  color: #a5b4fc;
   font-size: 1.2rem;
   text-transform: uppercase;
   font-weight: 600;
@@ -633,7 +633,7 @@
   padding: 0.875rem 1.25rem;
   text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color:rgba(13, 0, 78, 0.838);
+  color: #cbd5e1;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -641,7 +641,7 @@
 /* Left side of table, metric names */
 .comparison-table td:first-child {
   text-align: left;
-  color:rgba(13, 0, 78, 0.838);
+  color: #94a3b8;
   font-size: 1rem;
   text-transform: uppercase;
   font-weight: 600;
@@ -708,7 +708,7 @@
 .widget-title {
   font-size: 1rem;
   font-weight: 700;
-  color: #22025d;
+  color: #e2e8f0;
   margin-bottom: 0.75rem;
 }
 
@@ -753,7 +753,7 @@
 .compare-range-btns button.active {
   background: rgba(99, 102, 241, 0.3);
   border-color: #818cf8;
-  color: #5024ff;
+  color: #a5b4fc;
 }
 
 .chart-date-range {
@@ -807,7 +807,7 @@
   display: block;
   font-size: 0.75rem;
   font-weight: 700;
-  color: rgba(24, 24, 26, 0.788)
+  color: rgba(255, 255, 255, 0.6)
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 0.65rem;
@@ -825,7 +825,7 @@
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 10px;
-  color: #363638c5;
+  color: #e2e8f0;
   font-size: 0.875rem;
   margin-bottom: 0.65rem;
   box-sizing: border-box;
@@ -839,7 +839,7 @@
 }
 
 .action-qty-input::placeholder {
-  color: rgba(0, 0, 0, 0.651);
+  color: rgba(255, 255, 255, 0.25);
 }
 
 /* Row that holds the three action buttons */

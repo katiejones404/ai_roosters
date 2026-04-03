@@ -44,7 +44,8 @@ const ProtectedRoute: React.FC = () => {
   }, [location.pathname]);
 
   if (authState === "checking") {
-    return <div className="auth-checking">Checking session...</div>;
+    //return <div className="auth-checking">Checking session...</div>;
+    return
   }
 
   if (authState === "unauthorized") {

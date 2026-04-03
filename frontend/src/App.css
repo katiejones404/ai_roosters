@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5847d4 100%);
+  background: transparent;
   padding: 2rem;
   position: relative;
   overflow: hidden;
@@ -68,7 +68,7 @@
 
 /* Home Card */
 .home-card {
-  background: rgba(255, 255, 255, 0.98);
+  background: rgba(15, 23, 42, 0.97);
   backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 4rem 3rem;
@@ -106,7 +106,7 @@
 
 .home-content p {
   font-size: 1.1rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.6);
   margin-bottom: 2.5rem;
   line-height: 1.6;
   animation: fadeIn 0.8s ease-out 0.4s both;
@@ -182,7 +182,7 @@
 .features-section {
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   animation: fadeIn 0.8s ease-out 0.8s both;
 }
 
@@ -211,7 +211,7 @@
 .feature-title {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #374151;
+  color: #e2e8f0;
   margin-bottom: 0.25rem;
 }
 
@@ -230,7 +230,7 @@
 .home-brand-name {
   font-size: 2rem;
   font-weight: 700;
-  color: #374151;
+  color: #e2e8f0;
 }
 
 .home-brand-highlight {
@@ -274,18 +274,8 @@
   }
 
   .home-card {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 4rem 3rem;
-  max-width: 960px;        /* ← was 600px */
-  width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  animation: slideUp 0.6s ease-out;
-}
+    max-width: 960px;
+  }
 
 
   .home-content h1 {
@@ -326,7 +316,7 @@
 .sentiment-title {
   font-size: 1.4rem;
   font-weight: 600;
-  color: #4b5563;
+  color: #cbd5e1;
   margin-bottom: 1rem;
 }
 
@@ -339,7 +329,7 @@
 .sentiment-card {
   border-radius: 16px;
   padding: 16px 18px 20px;
-  background: #f9fafb;
+  background: rgba(255, 255, 255, 0.04);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
   font-family: system-ui, sans-serif;
 }
@@ -361,7 +351,7 @@
 
 .sentiment-price {
   font-weight: 600;
-  color: #111827;
+  color: #f1f5f9;
 }
 
 /* Pie layout */
@@ -382,7 +372,7 @@
 
 .sentiment-pie-label {
   font-size: 0.8rem;
-  color: #4b5563;
+  color: #94a3b8;
 }
 
 /* SVG size */

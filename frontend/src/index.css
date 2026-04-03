@@ -19,6 +19,13 @@ body {
     Oxygen, Ubuntu, Cantarell, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg,
+    rgba(67, 7, 112, 0.849)  0%,
+    #0f1117                25%,
+    #0f1117                75%,
+    rgba(67, 7, 112, 0.849) 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
 }
 
 #root {

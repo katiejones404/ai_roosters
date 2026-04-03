@@ -7,6 +7,7 @@ import {
     ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import "./networth.css";
+import LoadingScreen from "./components/LoadingScreen";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
@@ -357,10 +358,7 @@ const NetWorth = () => {
                     <div className="home-shape home-shape-3"></div>
                 </div>
                 <div className="home-card">
-                    <div className="portfolio-loading">
-                        <div className="loading-spinner"></div>
-                        <p>Loading net worth...</p>
-                    </div>
+                    <LoadingScreen message="Loading net worth..." />
                 </div>
             </div>
         );
@@ -551,7 +549,7 @@ const NetWorth = () => {
                                 <button className="add-shares-btn" onClick={openAddAsset}>+ Add Asset</button>
                             </div>
 
-                            {/* Portfolio row — read-only */}
+                            {/* Portfolio row */}
                             <div className="nw-entry-row nw-portfolio-row">
                                 <span className="nw-category-badge nw-badge-portfolio">Portfolio</span>
                                 <span className="nw-entry-name">Stock Portfolio</span>
