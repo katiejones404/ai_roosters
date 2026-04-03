@@ -1,4 +1,6 @@
 # Environment variables
+
+backend/data/kaggle.json
 .env
 .env.*
 !.env.example
