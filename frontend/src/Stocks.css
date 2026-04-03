@@ -13,9 +13,9 @@
   min-width: 220px;
   padding: 12px 16px;
   border-radius: 12px;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  color: #111827;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
   font-size: 14px;
   outline: none;
   transition: border-color 0.15s ease;
@@ -27,7 +27,7 @@
 
 .dashboard-controls input:focus {
   border-color: #6366f1;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.09);
 }
 
 .btn-primary {
@@ -49,9 +49,9 @@
 .btn-ghost {
   padding: 12px 24px;
   border-radius: 12px;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  color: #374151;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -59,7 +59,7 @@
 }
 
 .btn-ghost:hover {
-  background: #e5e7eb;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* 
@@ -94,8 +94,8 @@
    STOCK MINI CARD
  */
 .stock-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 16px;
   padding: 20px;
   cursor: pointer;
@@ -128,7 +128,7 @@
 .stock-card-ticker {
   font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: #f1f5f9;
   letter-spacing: 0.03em;
 }
 
@@ -162,13 +162,13 @@
 
 .score-bar-value {
   font-size: 11px;
-  color: #374151;
+  color: #cbd5e1;
   font-weight: 600;
 }
 
 .score-bar-track {
   height: 4px;
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 14px;
@@ -234,13 +234,13 @@
  */
 .sd-page {
   min-height: 100vh;
-  background: #f9fafb;
+  background: transparent;
 }
 
 .sd-header {
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-bottom: 1px solid #e5e7eb;
+  background: rgba(15, 23, 42, 0.9);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sd-header-inner {
@@ -263,13 +263,13 @@
 }
 
 .sd-back-btn:hover {
-  color: #111827;
+  color: #f1f5f9;
 }
 
 .sd-ticker-title {
   font-size: 24px;
   font-weight: 700;
-  color: #111827;
+  color: #f1f5f9;
 }
 
 .sd-body {
@@ -286,9 +286,10 @@
 }
 
 .sd-card {
-  background: #fff;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   padding: 24px;
 }
 
@@ -301,7 +302,7 @@
 .sd-card-value {
   font-size: 24px;
   font-weight: 700;
-  color: #111827;
+  color: #f1f5f9;
 }
 
 .sd-card-value.positive { color: #16a34a; }
@@ -309,8 +310,8 @@
 .sd-card-value.neutral  { color: #6b7280; }
 
 .sd-position-banner {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.25);
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 32px;
@@ -319,7 +320,7 @@
 .sd-position-banner h3 {
   font-size: 17px;
   font-weight: 600;
-  color: #1e3a8a;
+  color: #a5b4fc;
   margin: 0 0 16px;
 }
 
@@ -331,20 +332,21 @@
 
 .sd-position-label {
   font-size: 13px;
-  color: #3b82f6;
+  color: #818cf8;
   margin-bottom: 4px;
 }
 
 .sd-position-value {
   font-size: 20px;
   font-weight: 700;
-  color: #1e3a8a;
+  color: #e0e7ff;
 }
 
 .sd-chart-card {
-  background: #fff;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   padding: 24px;
   margin-bottom: 32px;
 }
@@ -361,7 +363,7 @@
 .sd-chart-title {
   font-size: 19px;
   font-weight: 600;
-  color: #111827;
+  color: #f1f5f9;
   margin: 0;
 }
 
@@ -386,12 +388,12 @@
 }
 
 .sd-range-btn.inactive {
-  background: #e5e7eb;
-  color: #374151;
+  background: rgba(255, 255, 255, 0.07);
+  color: #94a3b8;
 }
 
 .sd-range-btn.inactive:hover {
-  background: #d1d5db;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .sd-metrics-grid {
@@ -401,16 +403,17 @@
 }
 
 .sd-metrics-card {
-  background: #fff;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   padding: 24px;
 }
 
 .sd-metrics-title {
   font-size: 17px;
   font-weight: 600;
-  color: #111827;
+  color: #f1f5f9;
   margin: 0 0 16px;
 }
 
@@ -419,7 +422,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sd-metric-row:last-child {
@@ -434,7 +437,7 @@
 .sd-metric-value {
   font-weight: 600;
   font-size: 14px;
-  color: #111827;
+  color: #f1f5f9;
 }
 
 .sd-metric-value.positive { color: #16a34a; }
@@ -451,7 +454,7 @@
 
 .sd-sentiment-badge.positive { background: #dcfce7; color: #166534; }
 .sd-sentiment-badge.negative { background: #fee2e2; color: #991b1b; }
-.sd-sentiment-badge.neutral  { background: #f3f4f6; color: #374151; }
+.sd-sentiment-badge.neutral  { background: rgba(255,255,255,0.07); color: #94a3b8; }
 
 .sd-articles-note {
   font-size: 12px;

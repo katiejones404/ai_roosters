@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import "./News.css";
+import StockChartBg from "./components/StockChartBg";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
@@ -72,6 +74,8 @@ export default function News() {
 
   return (
     <div className="news-page">
+      <StockChartBg />
+      <div className="news-content">
       <div className="news-header">
         <div>
           <h1 className="news-title">Market News</h1>
@@ -107,11 +111,15 @@ export default function News() {
             className="news-card"
           >
             <div className="news-card-top">
-              <span className="news-ticker-badge">{article.ticker}</span>
+              <Link
+                to={`/stock/${article.ticker}`}
+                className="news-ticker-badge"
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >{article.ticker}</Link>
               <span className="news-date">{formatDate(article.published_at)}</span>
             </div>
             <p className="news-headline">{article.title || "Untitled"}</p>
-            {article.description && (
+            {article.description && article.description.trim().split(/\s+/).length >= 5 && (
               <p className="news-description">{article.description}</p>
             )}
             <div className="news-card-footer">
@@ -135,6 +143,7 @@ export default function News() {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

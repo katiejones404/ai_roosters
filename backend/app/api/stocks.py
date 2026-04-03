@@ -177,7 +177,8 @@ def get_stock_prices(
     - Uses trading-row offsets: 1 / 21 / 84 / 252 (approx 1d / 1m / 4m / 1y).
     - Keeps ORDER BY date ASC for charts.
     """
-    params = {"ticker": ticker}
+    normalized_ticker = ticker.strip().upper()
+    params = {"ticker": normalized_ticker}
     date_clause = _build_date_clause(start_date, end_date, params)
 
     sql = text(f"""
@@ -189,7 +190,7 @@ def get_stock_prices(
                 adjusted_close,
                 COALESCE(adjusted_close, close) AS px
             FROM stocks
-            WHERE ticker = :ticker
+            WHERE UPPER(ticker) = :ticker
             {date_clause}
         ),
         with_lags AS (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import "./Alerts.css";
+import LoadingScreen from "./components/LoadingScreen";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
@@ -93,7 +94,8 @@ export default function Alerts() {
   const triggered = alerts.filter((a) => !a.is_active);
 
   return (
-    <div className="alerts-page">
+    <div className="app-container">
+      <div className="home-card alerts-card">
       <div className="alerts-header">
         <h1 className="alerts-title">Price Alerts</h1>
         <p className="alerts-subtitle">Get notified by email when a stock hits your target price</p>
@@ -153,7 +155,7 @@ export default function Alerts() {
       <div className="alerts-section">
         <h2 className="alerts-section-title">Active Alerts</h2>
         {loading ? (
-          <p className="alerts-empty">Loading...</p>
+          <LoadingScreen message="Loading alerts..." />
         ) : active.length === 0 ? (
           <p className="alerts-empty">No active alerts. Create one above.</p>
         ) : (
@@ -234,6 +236,7 @@ export default function Alerts() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
