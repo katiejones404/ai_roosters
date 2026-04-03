@@ -5,7 +5,7 @@ import {
   Link,
   useLocation,
 } from "react-router-dom";
-import { useEffect, useState } from "react";
+
 
 import CreateAccount from "./create_account";
 import Login from "./login";
@@ -23,36 +23,11 @@ import "./App.css"; // Keep up high for global CSS loads
 import "./index.css"; 
 // import "./styles.css";        // Add any missing CSS imports here
 
-import { fetchAllStockIndicators } from "./utils/sentiment";
-import type { StockIndicators } from "./utils/sentiment";
-import { StockSentimentCard } from "./SentimentIndicators";
+
 
 // ---------------------- HOME PAGE ----------------------
 function Home() {
-  const [indicators, setIndicators] = useState<StockIndicators[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadIndicators = async () => {
-      try {
-        const data = await fetchAllStockIndicators();
-
-        const filtered = data.filter((item) =>
-          ["BP", "RELIANCE"].includes(item.ticker),
-        );
-
-        setIndicators(filtered);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load sentiment indicators");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadIndicators();
-  }, []);
 
   return (
     <div className="app-container">
@@ -103,21 +78,6 @@ function Home() {
                 <div className="feature-description">Intelligent insights</div>
               </div>
             </div>
-          </div>
-
-          <div className="sentiment-section">
-            <div className="sentiment-title">Current Market Sentiment</div>
-
-            {loading && <p>Loading sentiment...</p>}
-            {error && <p className="sentiment-error">{error}</p>}
-
-            {!loading && !error && (
-              <div className="sentiment-grid">
-                {indicators.map((stock) => (
-                  <StockSentimentCard key={stock.ticker} data={stock} />
-                ))}
-              </div>
-            )}
           </div>
 
         </div>
