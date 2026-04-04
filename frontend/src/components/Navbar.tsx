@@ -1,3 +1,8 @@
+/*
+ * Navbar.tsx
+ * Top navigation bar component with links to all main pages, a notification
+ * bell for triggered price alerts, and access to the user profile and settings.
+ */
 import { useEffect, useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";

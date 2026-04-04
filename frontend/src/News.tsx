@@ -1,3 +1,8 @@
+/*
+ * News.tsx
+ * News feed page that displays recent financial news articles,
+ * with filtering by ticker symbol and keyword search.
+ */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";

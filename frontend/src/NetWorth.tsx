@@ -1,3 +1,8 @@
+/*
+ * NetWorth.tsx
+ * Net worth tracker page where users manage manual assets and liabilities,
+ * view their total financial position, and export data as CSV or PDF.
+ */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";

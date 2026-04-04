@@ -1,3 +1,8 @@
+/*
+ * AddToPortfolio.tsx
+ * Modal component for adding a new stock position to the user's portfolio,
+ * with fields for ticker, quantity, and average purchase price.
+ */
 import React, { useState } from "react";
 import { getToken } from "../utils/auth";
 import axios from "axios";

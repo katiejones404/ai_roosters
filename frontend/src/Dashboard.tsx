@@ -1,3 +1,8 @@
+/*
+ * Dashboard.tsx
+ * Main dashboard page displaying stock sentiment indicators, a portfolio snapshot,
+ * and recent news articles for all tracked tickers.
+ */
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./app-header.css";

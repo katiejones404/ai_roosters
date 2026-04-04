@@ -1,4 +1,8 @@
-// src/Layout.tsx
+/*
+ * Layout.tsx
+ * Shared page layout component that wraps protected pages with a navigation
+ * sidebar and renders child routes via an outlet.
+ */
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import "./app-header.css"; // header styles (shared by dashboard & settings)

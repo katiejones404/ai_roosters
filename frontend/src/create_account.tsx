@@ -1,3 +1,8 @@
+/*
+ * CreateAccount.tsx
+ * Registration page where new users create an account with an email address,
+ * username, and password that meets the application strength requirements.
+ */
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "./utils/auth";

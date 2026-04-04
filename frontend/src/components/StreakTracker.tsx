@@ -1,3 +1,8 @@
+/*
+ * StreakTracker.tsx
+ * Sidebar widget that displays the user's daily login streak, best streak,
+ * and a seven-day dot grid showing recent visit history.
+ */
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { FaFire } from "react-icons/fa";
