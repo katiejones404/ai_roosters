@@ -11,6 +11,7 @@ import InvestorQuiz from "./components/InvestorQuiz";
 import FunFinanceFacts from "./components/FunFinanceFacts";
 import StreakTracker from "./components/StreakTracker";
 import { getToken } from "./utils/auth";
+import WhatIfCalculator from "./components/WhatIfCalculator";
 import "./HomePage.css";
 
 const API_BASE = (
@@ -72,7 +73,9 @@ export default function HomePage() {
             <div className="hp-section hp-top-card hp-portfolio-card">
               <div className="hp-section-header">
                 <h2 className="hp-section-title">Portfolio Summary</h2>
-                <Link to="/portfolio" className="hp-view-link">View Full -&gt;</Link>
+                <Link to="/portfolio" className="hp-view-link">
+                  View Full -&gt;
+                </Link>
               </div>
 
               {items.length > 0 ? (
@@ -118,7 +121,9 @@ export default function HomePage() {
                           <td
                             className={
                               item.return_1d != null
-                                ? item.return_1d >= 0 ? "hp-positive" : "hp-negative"
+                                ? item.return_1d >= 0
+                                  ? "hp-positive"
+                                  : "hp-negative"
                                 : ""
                             }
                           >
@@ -127,14 +132,17 @@ export default function HomePage() {
                           <td
                             className={
                               item.total_gain_loss != null
-                                ? item.total_gain_loss >= 0 ? "hp-positive" : "hp-negative"
+                                ? item.total_gain_loss >= 0
+                                  ? "hp-positive"
+                                  : "hp-negative"
                                 : ""
                             }
                           >
                             {fmtDollar(item.total_gain_loss)}
                             {item.gain_loss_pct != null && (
                               <span className="hp-pct">
-                                {" "}({item.gain_loss_pct >= 0 ? "+" : ""}
+                                {" "}
+                                ({item.gain_loss_pct >= 0 ? "+" : ""}
                                 {(item.gain_loss_pct * 100).toFixed(1)}%)
                               </span>
                             )}
@@ -146,7 +154,8 @@ export default function HomePage() {
                 </div>
               ) : (
                 <p className="hp-empty">
-                  No holdings yet. <Link to="/dashboard">Browse Stocks -&gt;</Link>
+                  No holdings yet.{" "}
+                  <Link to="/dashboard">Browse Stocks -&gt;</Link>
                 </p>
               )}
             </div>
@@ -154,7 +163,9 @@ export default function HomePage() {
             <div className="hp-section hp-top-card hp-alert-card">
               <div className="hp-section-header">
                 <h2 className="hp-section-title">Active Alerts</h2>
-                <Link to="/alerts" className="hp-view-link">View All -&gt;</Link>
+                <Link to="/alerts" className="hp-view-link">
+                  View All -&gt;
+                </Link>
               </div>
 
               {alerts.length > 0 ? (
@@ -163,9 +174,13 @@ export default function HomePage() {
                     <div key={a.id} className="hp-alert-row">
                       <span className="hp-alert-ticker">{a.ticker}</span>
                       <span className="hp-alert-condition">
-                        {a.direction === "above" ? "Rises above" : "Falls below"}
+                        {a.direction === "above"
+                          ? "Rises above"
+                          : "Falls below"}
                       </span>
-                      <span className="hp-alert-price">${a.target_price.toFixed(2)}</span>
+                      <span className="hp-alert-price">
+                        ${a.target_price.toFixed(2)}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -182,6 +197,7 @@ export default function HomePage() {
 
             <div className="hp-fact-cell">
               <FunFinanceFacts />
+              <WhatIfCalculator />
             </div>
           </div>
         </div>

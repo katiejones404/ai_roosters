@@ -14,7 +14,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/app/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stock_user} -d ${POSTGRES_DB:-stock_db}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-stock_user} -d ${POSTGRES_DB:-stock_db}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,7 +36,7 @@ services:
       PG_USER: ${POSTGRES_USER:-stock_user}
       PG_PASS: ${POSTGRES_PASSWORD:-stock_pass}
       # Keep 0 - article ingest runs via pipeline container, not the API.
-      # To ingest articles (in backend folder): 
+      # To ingest articles (in backend folder):
       #docker compose --profile pipeline run --rm pipeline python -m app.services.ingesting_pipelines.news_ingest
       RUN_ARTICLE_INGEST: "0"
 

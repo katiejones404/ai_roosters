@@ -80,6 +80,8 @@ app.include_router(portfolio.router, prefix="/api")
 app.include_router(news.router, prefix="/api")
 app.include_router(alerts_router.router, prefix="/api/alerts")
 app.include_router(networth.router, prefix="/api")
+from app.stock_proxy import router as proxy_router   
+app.include_router(proxy_router)                     
 
 
 @app.on_event("startup")

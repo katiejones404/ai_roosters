@@ -1,0 +1,452 @@
+/* ImportPortfolioModal.css */
+
+.imp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(4, 8, 20, 0.82);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: impFadeIn 0.2s ease;
+}
+
+@keyframes impFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.imp-modal {
+  background: #0d1526;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 760px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(99, 102, 241, 0.12);
+  animation: impSlideUp 0.25s ease;
+}
+
+@keyframes impSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* Header */
+
+.imp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.75rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.imp-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.imp-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.imp-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.imp-subtitle {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.imp-close {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imp-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Column headers */
+
+.imp-col-headers {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr 120px 48px;
+  gap: 0.5rem;
+  padding: 0.6rem 1.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Rows */
+
+.imp-rows {
+  padding: 0.75rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.imp-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr 120px 48px;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid transparent;
+  transition: border-color 0.2s;
+  position: relative;
+}
+
+.imp-row:hover {
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.imp-row-error {
+  border-color: rgba(239, 68, 68, 0.35) !important;
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.imp-row-saved {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  background: rgba(16, 185, 129, 0.04);
+}
+
+/* Fields & inputs */
+
+.imp-field {
+  display: flex;
+  align-items: center;
+}
+
+.imp-field-total  { justify-content: flex-end; }
+.imp-field-action { justify-content: center;   }
+
+.imp-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.imp-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.imp-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.imp-input-ticker {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.imp-input-prefix-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.imp-prefix {
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.imp-input-prefixed {
+  padding-left: 1.4rem;
+}
+
+/* Total / status */
+
+.imp-total-val {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.imp-total-empty {
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+/* Row actions */
+
+.imp-remove-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #475569;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imp-remove-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.imp-remove-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.imp-saved-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #10b981;
+  white-space: nowrap;
+}
+
+.imp-row-err-msg {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  color: #f87171;
+  padding: 0.2rem 0 0.1rem 0.25rem;
+}
+
+/* Add row button */
+
+.imp-add-row-btn {
+  margin: 0.25rem 1.75rem 0.75rem;
+  background: none;
+  border: 1px dashed rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: calc(100% - 3.5rem);
+  font-family: inherit;
+}
+
+.imp-add-row-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.07);
+  border-color: #6366f1;
+}
+
+.imp-add-row-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Feedback messages */
+
+.imp-global-error {
+  margin: 0 1.75rem;
+  padding: 0.6rem 0.9rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  color: #f87171;
+  font-size: 0.82rem;
+}
+
+.imp-progress {
+  margin: 0 1.75rem 0.5rem;
+  font-size: 0.8rem;
+  color: #10b981;
+}
+
+/* Footer */
+
+.imp-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.25rem 1.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.imp-cancel-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  border-radius: 10px;
+  padding: 0.65rem 1.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.imp-cancel-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+.imp-confirm-btn {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  padding: 0.65rem 1.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  font-family: inherit;
+}
+
+.imp-confirm-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+}
+
+.imp-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Spinner */
+
+.imp-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: impSpin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes impSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Ticker search dropdown */
+
+.imp-ticker-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.imp-ticker-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 280px;
+  background: #131e35;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.imp-ticker-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.imp-ticker-option:hover {
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.imp-ticker-opt-symbol {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #a5b4fc;
+  letter-spacing: 0.04em;
+  min-width: 52px;
+}
+
+.imp-ticker-opt-name {
+  font-size: 0.8rem;
+  color: #64748b;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.imp-ticker-opt-price {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* Responsive  */
+
+@media (max-width: 600px) {
+  .imp-col-headers {
+    display: none;
+  }
+
+  .imp-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .imp-field-total {
+    display: none;
+  }
+
+  .imp-field-action {
+    grid-column: 2;
+    justify-content: flex-end;
+  }
+}
