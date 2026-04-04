@@ -195,6 +195,9 @@ const Navbar = () => {
       {/* Center: Nav links + Search */}
       <div className="navbar-center">
         <div className="navbar-links">
+          <Link className={isActive("/home")} to="/home">
+            Home
+          </Link>
           <Link className={isActive("/dashboard")} to="/dashboard">
             Dashboard
           </Link>

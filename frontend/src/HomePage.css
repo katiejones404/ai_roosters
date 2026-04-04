@@ -1,0 +1,268 @@
+.hp-page {
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* Outer flex: main content + sidebar */
+.hp-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: 1700px;
+  margin: 0 auto;
+}
+
+.hp-content {
+  flex: 0 1 1320px;
+  min-width: 0;
+}
+
+/* Sidebar: streak tracker */
+.hp-sidebar {
+  width: 185px;
+  flex: 0 0 185px;
+  position: sticky;
+  top: 80px;
+}
+
+/* Main quadrant grid:
+   top-left portfolio, top-right alerts,
+   bottom-left quiz, bottom-right finance fact */
+.hp-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+/* Shared section card */
+.hp-section {
+  background: rgba(15, 23, 42, 0.97);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.hp-top-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.hp-alert-card {
+  border-color: rgba(239, 68, 68, 0.9);
+}
+
+.hp-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.hp-section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.hp-view-link {
+  color: #818cf8;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.hp-view-link:hover {
+  color: #a5b4fc;
+}
+
+/* Portfolio table */
+.hp-table-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.hp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.90rem;
+}
+
+.hp-table th {
+  padding: 0.55rem 0.875rem;
+  text-align: left;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.hp-table td {
+  padding: 0.7rem 0.875rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  font-variant-numeric: tabular-nums;
+}
+
+.hp-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Ticker cell with trend icon */
+.hp-ticker-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.hp-trend-up {
+  font-size: 0.9rem;
+  color: #10b981;
+  line-height: 1;
+}
+
+.hp-trend-down {
+  font-size: 0.9rem;
+  color: #ef4444;
+  line-height: 1;
+}
+
+.hp-ticker-link {
+  font-weight: 700;
+  color: #818cf8;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  transition: color 0.15s ease;
+}
+
+.hp-ticker-link:hover {
+  color: #a5b4fc;
+}
+
+.hp-positive {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.hp-negative {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.hp-pct {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-left: 0.15rem;
+}
+
+/* Empty state */
+.hp-empty {
+  color: rgba(255, 255, 255, 0.877);
+  font-size: 1rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hp-empty a {
+  color: #818cf8;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.hp-empty a:hover {
+  color: #a5b4fc;
+}
+
+/* Alerts list */
+.hp-alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hp-alert-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.875rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+
+.hp-alert-ticker {
+  font-weight: 700;
+  color: #818cf8;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  min-width: 3.25rem;
+}
+
+.hp-alert-condition {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.hp-alert-price {
+  color: #10b981;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hp-quiz-cell {
+  max-width: 620px;
+}
+
+.hp-quiz-cell .quiz-section {
+  margin-top: 0;
+  border-top: none;
+  padding-top: 0;
+}
+
+.hp-fact-cell {
+  min-width: 0;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .hp-sidebar {
+    display: none;
+  }
+
+  .hp-main-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hp-fact-cell {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .hp-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hp-fact-cell {
+    grid-column: auto;
+  }
+
+  .hp-page {
+    padding: 1rem;
+  }
+
+  .hp-quiz-cell {
+    max-width: 100%;
+  }
+}

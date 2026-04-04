@@ -66,7 +66,7 @@ const Login: React.FC = () => {
 
     try {
       await login(formData.email, formData.password);
-      navigate("/dashboard", { replace: true });
+      navigate("/home", { replace: true });
     } catch (error: any) {
       const detail = error?.response?.data?.detail;
 

@@ -40,6 +40,14 @@ class UserResponse(BaseModel):
         orm_mode = True
 
 
+class StreakResponse(BaseModel):
+    currentStreak: int
+    bestStreak: int
+    lastVisit: str
+    visitDays: list[str]
+    totalVisits: int
+
+
 class ProfilePictureUpdate(BaseModel):
     profile_picture: str
 

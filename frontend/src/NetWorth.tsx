@@ -16,6 +16,8 @@ import {
 } from "recharts";
 import "./networth.css";
 import LoadingScreen from "./components/LoadingScreen";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const API_BASE = (
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
@@ -109,257 +111,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   vehicle: "#ec4899",
   other: "#94a3b8",
 };
-
-// ---------------------------------------------------------------------------
-// Quiz constants
-// ---------------------------------------------------------------------------
-
-const QUIZ_QUESTIONS = [
-  {
-    id: 1,
-    question: "The market drops 20% overnight. What do you do?",
-    options: [
-      { text: "Buy more — it's on sale!", score: 4 },
-      { text: "Hold and wait it out", score: 3 },
-      { text: "Sell a little to sleep at night", score: 2 },
-      { text: "Sell everything immediately", score: 1 },
-    ],
-  },
-  {
-    id: 2,
-    question: "What's your investment time horizon?",
-    options: [
-      { text: "10+ years, I'm in it for the long haul", score: 4 },
-      { text: "5–10 years", score: 3 },
-      { text: "2–5 years", score: 2 },
-      { text: "Less than 2 years", score: 1 },
-    ],
-  },
-  {
-    id: 3,
-    question: "A friend tells you about a hot new stock. You:",
-    options: [
-      { text: "Put in a significant chunk right away", score: 4 },
-      { text: "Research it first, then invest a little", score: 3 },
-      { text: "Ask a few more people before deciding", score: 2 },
-      { text: "Stick to your current plan", score: 1 },
-    ],
-  },
-  {
-    id: 4,
-    question: "What best describes your financial goal?",
-    options: [
-      { text: "Maximum growth, I can handle volatility", score: 4 },
-      { text: "Growth with some stability", score: 3 },
-      { text: "Stability with some growth", score: 2 },
-      { text: "Preserve my capital above all", score: 1 },
-    ],
-  },
-  {
-    id: 5,
-    question: "How often do you check your portfolio?",
-    options: [
-      { text: "Multiple times a day — I love it", score: 4 },
-      { text: "Once a day or a few times a week", score: 3 },
-      { text: "Once a month or so", score: 2 },
-      { text: "Rarely — set it and forget it", score: 1 },
-    ],
-  },
-];
-
-const QUIZ_PROFILES = [
-  {
-    min: 17,
-    max: 20,
-    label: "Risk Taker 🚀",
-    description:
-      "You thrive on volatility and see every dip as an opportunity. You're built for high-growth, high-risk strategies — think emerging markets, small-caps, and speculative plays.",
-    allocation: { stocks: 90, bonds: 5, cash: 5 },
-    color: "#10b981",
-    borderColor: "rgba(16, 185, 129, 0.3)",
-    bg: "rgba(16, 185, 129, 0.07)",
-  },
-  {
-    min: 13,
-    max: 16,
-    label: "Growth Seeker 📈",
-    description:
-      "You want strong returns and can stomach moderate swings. A diversified equity portfolio with some international exposure suits you well.",
-    allocation: { stocks: 75, bonds: 15, cash: 10 },
-    color: "#818cf8",
-    borderColor: "rgba(129, 140, 248, 0.3)",
-    bg: "rgba(129, 140, 248, 0.07)",
-  },
-  {
-    min: 9,
-    max: 12,
-    label: "Balanced Investor ⚖️",
-    description:
-      "You want the best of both worlds — growth without too much heartache. A 60/40 portfolio or a target-date fund is right in your wheelhouse.",
-    allocation: { stocks: 60, bonds: 30, cash: 10 },
-    color: "#f59e0b",
-    borderColor: "rgba(245, 158, 11, 0.3)",
-    bg: "rgba(245, 158, 11, 0.07)",
-  },
-  {
-    min: 5,
-    max: 8,
-    label: "Safe Player 🛡️",
-    description:
-      "Capital preservation is your priority. You sleep better knowing your money is protected, even if it grows more slowly.",
-    allocation: { stocks: 30, bonds: 50, cash: 20 },
-    color: "#64748b",
-    borderColor: "rgba(100, 116, 139, 0.3)",
-    bg: "rgba(100, 116, 139, 0.07)",
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Quiz sub-components
-// ---------------------------------------------------------------------------
-
-function AllocBar({
-  label,
-  pct,
-  color,
-}: {
-  label: string;
-  pct: number;
-  color: string;
-}) {
-  return (
-    <div className="quiz-alloc-row">
-      <div className="quiz-alloc-label">{label}</div>
-      <div className="quiz-alloc-track">
-        <div
-          className="quiz-alloc-fill"
-          style={{ width: `${pct}%`, background: color }}
-        />
-      </div>
-      <div className="quiz-alloc-pct">{pct}%</div>
-    </div>
-  );
-}
-
-function InvestorQuiz() {
-  const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [submitted, setSubmitted] = useState(false);
-  const [profile, setProfile] = useState<(typeof QUIZ_PROFILES)[0] | null>(
-    null,
-  );
-
-  const answer = (questionId: number, score: number) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: score }));
-  };
-
-  const submit = () => {
-    const total = Object.values(answers).reduce((a, b) => a + b, 0);
-    const found = QUIZ_PROFILES.find((p) => total >= p.min && total <= p.max);
-    setProfile(found || QUIZ_PROFILES[2]);
-    setSubmitted(true);
-  };
-
-  const reset = () => {
-    setAnswers({});
-    setSubmitted(false);
-    setProfile(null);
-  };
-
-  const answered = Object.keys(answers).length;
-  const progress = (answered / QUIZ_QUESTIONS.length) * 100;
-
-  return (
-    <div className="quiz-section">
-      <div className="quiz-section-header">
-        <h2 className="nw-section-title">Investor Personality Quiz</h2>
-        <p className="quiz-section-sub">
-          Find out what kind of investor you are
-        </p>
-      </div>
-
-      {submitted && profile ? (
-        <div className="quiz-inner">
-          <div
-            className="quiz-result-card"
-            style={{ borderColor: profile.borderColor, background: profile.bg }}
-          >
-            <div className="quiz-result-label" style={{ color: profile.color }}>
-              Your Profile
-            </div>
-            <div className="quiz-result-name" style={{ color: profile.color }}>
-              {profile.label}
-            </div>
-            <p className="quiz-result-desc">{profile.description}</p>
-            <div className="quiz-alloc-title">Suggested Allocation</div>
-            <div className="quiz-alloc-bars">
-              <AllocBar
-                label="Stocks"
-                pct={profile.allocation.stocks}
-                color="#6366f1"
-              />
-              <AllocBar
-                label="Bonds"
-                pct={profile.allocation.bonds}
-                color="#10b981"
-              />
-              <AllocBar
-                label="Cash"
-                pct={profile.allocation.cash}
-                color="#64748b"
-              />
-            </div>
-          </div>
-          <button className="quiz-retake-btn" onClick={reset}>
-            Retake Quiz
-          </button>
-        </div>
-      ) : (
-        <div className="quiz-inner">
-          <div className="quiz-progress-bar-track">
-            <div
-              className="quiz-progress-bar-fill"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="quiz-progress-label">
-            {answered} of {QUIZ_QUESTIONS.length} answered
-          </div>
-
-          <div className="quiz-questions">
-            {QUIZ_QUESTIONS.map((q) => (
-              <div key={q.id} className="quiz-question-block">
-                <p className="quiz-question-text">
-                  <span className="quiz-q-num">{q.id}.</span> {q.question}
-                </p>
-                <div className="quiz-options">
-                  {q.options.map((opt) => (
-                    <button
-                      key={opt.score}
-                      className={`quiz-option-btn ${answers[q.id] === opt.score ? "selected" : ""}`}
-                      onClick={() => answer(q.id, opt.score)}
-                    >
-                      {opt.text}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button
-            className="quiz-submit-btn"
-            disabled={answered < QUIZ_QUESTIONS.length}
-            onClick={submit}
-          >
-            {answered < QUIZ_QUESTIONS.length
-              ? `Answer all questions (${QUIZ_QUESTIONS.length - answered} left)`
-              : "See My Profile →"}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -633,6 +384,65 @@ const NetWorth = () => {
     }
   };
 
+    const handleExportCSVNW = () => {
+        if (!summary) return;
+        const s = summary;
+        const rows: string[][] = [['Section', 'Name', 'Category', 'Balance']];
+        rows.push(['Assets', 'Stock Portfolio', 'Portfolio', s.portfolio_value.toFixed(2)]);
+        s.assets.forEach(a => rows.push(['Assets', a.name, CATEGORY_LABELS[a.category] || a.category, a.balance.toFixed(2)]));
+        s.liabilities.forEach(l => rows.push(['Liabilities', l.name, CATEGORY_LABELS[l.category] || l.category, l.balance.toFixed(2)]));
+        rows.push(['', 'Total Assets', '', s.total_assets.toFixed(2)]);
+        rows.push(['', 'Total Liabilities', '', s.total_liabilities.toFixed(2)]);
+        rows.push(['', 'Net Worth', '', s.net_worth.toFixed(2)]);
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'networth.csv'; a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleExportPDFNW = () => {
+        if (!summary) return;
+        const s = summary;
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text('Net Worth Report', 14, 22);
+        doc.setFontSize(10);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.text('Summary', 14, 40);
+        doc.setFontSize(10);
+        doc.text(`Net Worth: ${formatCurrency(s.net_worth)}`, 14, 48);
+        doc.text(`Portfolio Value: ${formatCurrency(s.portfolio_value)}`, 14, 56);
+        doc.text(`Total Assets: ${formatCurrency(s.total_assets)}`, 14, 64);
+        doc.text(`Total Liabilities: ${formatCurrency(s.total_liabilities)}`, 14, 72);
+        const assetRows = [
+            ['Stock Portfolio', 'Portfolio', `$${s.portfolio_value.toFixed(2)}`],
+            ...s.assets.map(a => [a.name, CATEGORY_LABELS[a.category] || a.category, `$${a.balance.toFixed(2)}`]),
+        ];
+        autoTable(doc, {
+            head: [['Asset', 'Category', 'Balance']],
+            body: assetRows,
+            startY: 80,
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [16, 185, 129] },
+        });
+        if (s.liabilities.length > 0) {
+            const finalY = (doc as any).lastAutoTable.finalY + 10;
+            autoTable(doc, {
+                head: [['Liability', 'Category', 'Balance']],
+                body: s.liabilities.map(l => [l.name, CATEGORY_LABELS[l.category] || l.category, `$${l.balance.toFixed(2)}`]),
+                startY: finalY,
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [239, 68, 68] },
+            });
+        }
+        doc.save('networth.pdf');
+    };
+
   if (loading) {
     return (
       <div className="app-container">
@@ -691,13 +501,20 @@ const NetWorth = () => {
         <div className="home-shape home-shape-3"></div>
       </div>
 
-      <div className="home-card nw-card">
-        <div className="home-content">
-          {/* Header */}
-          <div className="nw-header">
-            <h1>Net Worth</h1>
-            <p>Your complete financial picture</p>
-          </div>
+            <div className="home-card nw-card">
+                <div className="home-content">
+
+                    {/* Header */}
+                    <div className="nw-header">
+                        <div>
+                            <h1>Net Worth</h1>
+                            <p>Your complete financial picture</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <button className="csv-export-btn" onClick={handleExportCSVNW}>Export CSV</button>
+                            <button className="csv-export-btn" onClick={handleExportPDFNW}>Export PDF</button>
+                        </div>
+                    </div>
 
           {/* Summary stat cards */}
           <div className="nw-summary-grid">
@@ -952,8 +769,6 @@ const NetWorth = () => {
             </div>
           </div>
 
-          {/* Investor Personality Quiz */}
-          <InvestorQuiz />
         </div>
       </div>
 

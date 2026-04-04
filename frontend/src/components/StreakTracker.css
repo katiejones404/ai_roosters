@@ -1,0 +1,88 @@
+.st-card {
+  background: rgba(15, 23, 42, 0.97);
+  border: 1px solid rgba(255, 98, 0, 0.772);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.st-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0.875rem;
+}
+
+.st-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.st-flame {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.st-count {
+  font-size: 3.25rem;
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.2rem;
+}
+
+.st-unit {
+  font-size: 0.9rem;
+  color: #475569;
+  margin-bottom: 0.625rem;
+}
+
+.st-message {
+  font-size: 0.95rem;
+  color: #f2f8ff;
+  margin: 0 0 1rem;
+}
+
+.st-dots {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.875rem;
+}
+
+.st-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.304);
+  border: 1px solid rgba(255, 255, 255, 0.826);
+}
+
+.st-dot-on {
+  background: #f97316;
+  border-color: #f97316;
+}
+
+.st-dot-today {
+  border-color: #818cf8;
+}
+
+.st-dot-on.st-dot-today {
+  background: #f97316;
+  border-color: #818cf8;
+  box-shadow: 0 0 5px rgba(249, 115, 22, 0.5);
+}
+
+.st-meta {
+  font-size: 0.9rem;
+  color: #e7f1ff;
+}

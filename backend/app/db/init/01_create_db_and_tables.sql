@@ -179,6 +179,11 @@ CREATE INDEX IF NOT EXISTS idx_article_ticker_sentiment_article
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_current INTEGER;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_best INTEGER;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_last_visit DATE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_visit_days TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_total_visits INTEGER;
 
 -- Net Worth: manual assets
 CREATE TABLE IF NOT EXISTS networth_assets (

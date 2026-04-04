@@ -57,11 +57,16 @@ if not logger.handlers:
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-# The 15 tickers tracked on the website -- keep this in sync with the other ingest scripts
+# Tickers tracked on the website -- keep this in sync with the other ingest scripts
 TARGET_TICKERS = [
     "KSS", "ALK", "NVS", "AXP", "FCX",
-    "CSX", "DAL", "NTAP", "AMZN", "AAPL",
-    "MRK", "NVDA", "COP", "BHP", "EA",
+    "CSX", "DAL", "NTAP", "MRK", "COP",
+    "BHP", "EA",
+    "TSLA", "NVDA", "AAPL", "MSFT", "AMZN",
+    "AMD", "META", "GOOGL", "GOOG", "PLTR",
+    "MU", "NFLX",
+    "NKE", "AAL", "BAC", "F", "INTC", "XOM", "T",
+    "SOFI", "PLUG", "MARA", "SNAP", "COIN", "AMC", "RIVN", "CCL", "ENPH",
 ]
 
 # The Guardian does not support ticker symbol filtering, so we search by company
@@ -76,13 +81,38 @@ TICKER_QUERIES: Dict[str, str] = {
     "CSX":  "CSX Corporation railroad",
     "DAL":  "Delta Air Lines",
     "NTAP": "NetApp",
-    "AMZN": "Amazon",
-    "AAPL": "Apple",
     "MRK":  "Merck",
-    "NVDA": "Nvidia",
     "COP":  "ConocoPhillips",
     "BHP":  "BHP",
     "EA":   "Electronic Arts",
+    "TSLA": "Tesla",
+    "NVDA": "Nvidia",
+    "AAPL": "Apple",
+    "MSFT": "Microsoft",
+    "AMZN": "Amazon",
+    "AMD":  "Advanced Micro Devices",
+    "META": "Meta Platforms Facebook",
+    "GOOGL": "Alphabet Google",
+    "GOOG": "Alphabet Google",
+    "PLTR": "Palantir",
+    "MU":   "Micron Technology",
+    "NFLX": "Netflix",
+    "NKE":  "Nike",
+    "AAL":  "American Airlines",
+    "BAC":  "Bank of America",
+    "F":    "Ford Motor Company",
+    "INTC": "Intel",
+    "XOM":  "ExxonMobil",
+    "T":    "AT&T",
+    "SOFI": "SoFi Technologies",
+    "PLUG": "Plug Power",
+    "MARA": "Marathon Digital",
+    "SNAP": "Snap Snapchat",
+    "COIN": "Coinbase",
+    "AMC":  "AMC Entertainment",
+    "RIVN": "Rivian",
+    "CCL":  "Carnival Corporation",
+    "ENPH": "Enphase Energy",
 }
 
 GUARDIAN_BASE_URL = "https://content.guardianapis.com/search"

@@ -261,14 +261,14 @@ const Dashboard: React.FC = () => {
     : cards;
 
   return (
-    <div className="app-container">
+    <div className="app-container app-container-wide">
       <div className="home-background-shapes">
         <div className="home-shape home-shape-1"></div>
         <div className="home-shape home-shape-2"></div>
         <div className="home-shape home-shape-3"></div>
       </div>
 
-      <div className="home-card">
+      <div className="home-card dashboard-card">
         <div className="home-content">
           <h1>Dashboard</h1>
           <p>Overview of your tracked stocks and sentiment predictions.</p>
