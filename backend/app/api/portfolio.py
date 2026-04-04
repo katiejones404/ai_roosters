@@ -1,5 +1,10 @@
 """
-Portfolio API endpoints
+Portfolio API endpoints for managing user stock positions and calculating performance.
+
+Notes
+-----
+All endpoints require authentication. Portfolio operations delegate business logic
+to the services.portfolio module, which handles price averaging and P&L calculations.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -25,21 +30,68 @@ router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
 @router.get("", response_model=List[PortfolioItem])
 async def get_user_portfolio(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Return all portfolio positions for the authenticated user.
+
+    Returns
+    -------
+    list of PortfolioItem
+        All stock positions held by the current user, ordered by date added.
+    """
     return portfolio.get_user_portfolio(db, current_user.id)
 
 
 @router.post("", response_model=PortfolioItem, status_code=status.HTTP_201_CREATED)
 async def add_to_portfolio(item: PortfolioCreateItem, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Add a new position or increase an existing position using price averaging.
+
+    Notes
+    -----
+    If the ticker already exists in the portfolio, the quantity is increased and
+    the average price is recalculated using a weighted average of old and new shares.
+
+    Returns
+    -------
+    PortfolioItem
+        The created or updated portfolio position.
+    """
     return portfolio.add_or_update_position(db, current_user.id, item)
 
 
 @router.get("/stats/summary", response_model=PortfolioSummaryResponse)
 async def get_portfolio_summary(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Return portfolio positions with current market prices and P&L calculations.
+
+    Returns
+    -------
+    PortfolioSummaryResponse
+        All positions with current price, cost basis, unrealized gain/loss,
+        and 1D/30D/120D/360D return percentages, plus a portfolio-level summary.
+    """
     return portfolio.get_portfolio_summary(db, current_user.id)
 
 
 @router.get("/{ticker}", response_model=PortfolioItem)
 async def get_portfolio_item(ticker: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Return a single portfolio position by ticker symbol.
+
+    Path Parameters
+    ---------------
+    ticker : str
+        The stock ticker symbol to look up.
+
+    Returns
+    -------
+    PortfolioItem
+        The matching portfolio position.
+
+    Notes
+    -----
+    Returns 404 if the ticker is not in the user's portfolio.
+    """
     item = portfolio.get_portfolio_item_by_ticker(db, current_user.id, ticker)
     if not item:
         raise HTTPException(
@@ -51,6 +103,24 @@ async def get_portfolio_item(ticker: str, current_user: User = Depends(get_curre
 
 @router.put("/{ticker}", response_model=PortfolioItem)
 async def update_portfolio_item(ticker: str, item: PortfolioUpdateItem, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Update the quantity or average price for an existing portfolio position.
+
+    Path Parameters
+    ---------------
+    ticker : str
+        The stock ticker symbol of the position to update.
+
+    Returns
+    -------
+    PortfolioItem
+        The updated portfolio position.
+
+    Notes
+    -----
+    Returns 404 if the ticker is not in the user's portfolio.
+    Only fields provided in the request body are updated.
+    """
     updated_item = portfolio.update_portfolio_item(
         db, current_user.id, ticker, item
     )
@@ -64,11 +134,23 @@ async def update_portfolio_item(ticker: str, item: PortfolioUpdateItem, current_
 
 @router.delete("/{ticker}")
 async def remove_from_portfolio(ticker: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Permanently remove a stock position from the user's portfolio.
+
+    Path Parameters
+    ---------------
+    ticker : str
+        The stock ticker symbol of the position to remove.
+
+    Notes
+    -----
+    Returns 404 if the ticker is not in the user's portfolio.
+    """
     success = portfolio.remove_from_portfolio(db, current_user.id, ticker)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Ticker {ticker} not found in portfolio"
         )
-    
+
     return {"status": "ok", "message": f"Removed {ticker} from portfolio"}

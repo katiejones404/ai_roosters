@@ -1,3 +1,11 @@
+"""
+News article API endpoints for retrieving stock news and sentiment summaries.
+
+Notes
+-----
+Article sentiment counts come from the historical articles table scored by FinBERT.
+Recent daily news is served from the stock_news_articles table populated by Marketaux.
+"""
 from __future__ import annotations
 
 import os
@@ -31,6 +39,14 @@ class ArticleSentimentSummary(BaseModel):
 
 
 def _normalize_sentiment_label(raw: Optional[str]) -> str:
+    """
+    Normalize a raw FinBERT sentiment label to a canonical lowercase form.
+
+    Notes
+    -----
+    Accepts abbreviated forms such as 'pos', 'neg', 'neu' in addition to
+    full forms. Any unrecognized value returns 'unknown'.
+    """
     if not raw:
         return "unknown"
     s = raw.strip().lower()

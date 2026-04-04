@@ -21,6 +21,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements-api.txt requirements-pipeline.txt ./
 RUN pip install --no-cache-dir --prefix=/install -r requirements-pipeline.txt
 
+# Pre-download ProsusAI/finbert so the image is self-contained (no HuggingFace
+# network call at job runtime). Model files land in /cache/huggingface which
+# matches the HF_HOME env var set in docker-compose and ACA job configs.
+ENV HF_HOME=/cache/huggingface
+ENV PATH="/install/bin:$PATH"
+ENV PYTHONPATH="/install/lib/python3.11/site-packages"
+RUN python -c "\
+from transformers import AutoModelForSequenceClassification, AutoTokenizer; \
+AutoModelForSequenceClassification.from_pretrained('ProsusAI/finbert'); \
+AutoTokenizer.from_pretrained('ProsusAI/finbert'); \
+print('FinBERT model cached successfully')"
+
 
 FROM python:3.11-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -30,6 +42,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /install /usr/local
+# Copy the pre-downloaded model from the builder stage
+COPY --from=builder /cache/huggingface /cache/huggingface
+
+ENV HF_HOME=/cache/huggingface
 
 WORKDIR /app
 COPY . .

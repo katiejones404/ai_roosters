@@ -42,6 +42,14 @@ def list_alerts(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> List[AlertOut]:
+    """
+    Return all price alerts for the authenticated user, ordered newest first.
+
+    Returns
+    -------
+    list of AlertOut
+        Active and triggered alerts belonging to the current user.
+    """
     alerts = (
         db.query(PriceAlert)
         .filter(PriceAlert.user_id == current_user.id)
@@ -69,6 +77,21 @@ def create_alert(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> AlertOut:
+    """
+    Create a new price alert for the authenticated user.
+
+    Notes
+    -----
+    Direction must be 'above' or 'below'. Target price must be positive.
+    The ticker is normalized to uppercase before storage. The alert becomes
+    active immediately and will trigger when the stock price crosses the
+    target in the specified direction.
+
+    Returns
+    -------
+    AlertOut
+        The newly created alert record.
+    """
     if body.direction not in ("above", "below"):
         raise HTTPException(status_code=400, detail="direction must be 'above' or 'below'")
     if body.target_price <= 0:
@@ -106,6 +129,18 @@ def delete_alert(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> None:
+    """
+    Permanently delete a price alert owned by the authenticated user.
+
+    Path Parameters
+    ---------------
+    alert_id : str
+        UUID of the alert to delete.
+
+    Notes
+    -----
+    Returns 404 if the alert does not exist or belongs to a different user.
+    """
     alert = (
         db.query(PriceAlert)
         .filter(PriceAlert.id == alert_id, PriceAlert.user_id == current_user.id)

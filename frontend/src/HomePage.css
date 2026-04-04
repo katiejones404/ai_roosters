@@ -135,6 +135,12 @@
 }
 
 .hp-ticker-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.12rem 0.5rem;
+  border-radius: 0.45rem;
+  border: 1px solid transparent;
   font-weight: 700;
   color: #818cf8;
   text-decoration: none;
@@ -144,6 +150,28 @@
 
 .hp-ticker-link:hover {
   color: #a5b4fc;
+}
+
+.hp-ticker-link-up {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.14);
+  border-color: rgba(22, 163, 74, 0.35);
+}
+
+.hp-ticker-link-up:hover {
+  color: #22c55e;
+  background: rgba(22, 163, 74, 0.2);
+}
+
+.hp-ticker-link-down {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.hp-ticker-link-down:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.2);
 }
 
 .hp-positive {

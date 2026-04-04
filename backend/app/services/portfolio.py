@@ -1,3 +1,11 @@
+"""
+Portfolio service layer providing database operations for user stock positions.
+
+Notes
+-----
+This module handles CRUD operations, price averaging logic, and P&L calculations.
+All SQL queries use parameterized statements to prevent injection.
+"""
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
@@ -23,6 +31,13 @@ from app.schema.schemas import (
 
 
 def safe_float(value, default=0.0):
+    """
+    Safely convert a value to float, returning a default for None, NaN, or infinity.
+
+    Notes
+    -----
+    Returns None when value is None and default is 0.0, preserving optional fields.
+    """
     if value is None:
         return None if default == 0.0 else default
     try:
@@ -170,6 +185,14 @@ def add_or_update_position(
 def update_portfolio_item(
     db: Session, user_id: UUID, ticker: str, item: PortfolioUpdateItem
 ) -> Optional[PortfolioItem]:
+    """
+    Update quantity and/or average price for an existing portfolio position.
+
+    Notes
+    -----
+    Only fields provided in the update schema are modified. Returns None if
+    no fields are provided or if the ticker does not exist for the user.
+    """
     update_fields = []
     params = {"user_id": str(user_id), "ticker": ticker}
     
@@ -198,6 +221,14 @@ def update_portfolio_item(
 
 
 def remove_from_portfolio(db: Session, user_id: UUID, ticker: str) -> bool:
+    """
+    Delete a portfolio position for the given user and ticker.
+
+    Returns
+    -------
+    bool
+        True if a row was deleted, False if the ticker was not found.
+    """
     sql = text("""
         DELETE FROM portfolio
         WHERE user_id = :user_id AND ticker = :ticker

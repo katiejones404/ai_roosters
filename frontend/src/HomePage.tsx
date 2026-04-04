@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { FaCaretUp, FaCaretDown } from "react-icons/fa";
 import InvestorQuiz from "./components/InvestorQuiz";
 import FunFinanceFacts from "./components/FunFinanceFacts";
 import StreakTracker from "./components/StreakTracker";
@@ -92,12 +93,18 @@ export default function HomePage() {
                             <div className="hp-ticker-cell">
                               {item.return_1d !== null && (
                                 <span className={item.return_1d >= 0 ? "hp-trend-up" : "hp-trend-down"}>
-                                  {item.return_1d >= 0 ? "?" : "?"}
+                                  {item.return_1d >= 0 ? <FaCaretUp /> : <FaCaretDown />}
                                 </span>
                               )}
                               <Link
                                 to={`/stock/${encodeURIComponent(item.ticker)}`}
-                                className="hp-ticker-link"
+                                className={`hp-ticker-link ${
+                                  item.return_1d != null
+                                    ? item.return_1d >= 0
+                                      ? "hp-ticker-link-up"
+                                      : "hp-ticker-link-down"
+                                    : ""
+                                }`}
                               >
                                 {item.ticker}
                               </Link>

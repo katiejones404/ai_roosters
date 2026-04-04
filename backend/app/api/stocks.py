@@ -1,3 +1,11 @@
+"""
+Stock price and sentiment snapshot API endpoints.
+
+Notes
+-----
+Price data is stored in the stocks table. Sentiment snapshots are aggregated
+records combining price returns with FinBERT sentiment metrics per ticker per day.
+"""
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -68,6 +76,14 @@ class SentimentSnapshotOut(SentimentSnapshotBase):
 # ---------------------------------------------------------------------------
 
 def _build_date_clause(start_date: Optional[date], end_date: Optional[date], params: dict) -> str:
+    """
+    Build a SQL WHERE clause fragment for optional date range filtering.
+
+    Notes
+    -----
+    Mutates the params dict in place to add start_date and end_date values.
+    Returns an empty string when no dates are provided.
+    """
     date_filters = []
     if start_date:
         date_filters.append("date >= :start_date")
