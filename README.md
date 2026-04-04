@@ -125,6 +125,121 @@ Steps are run via Docker Compose pipeline profile:
 az containerapp create --name stocksense-api --resource-group stocksense-rg --environment stocksense-env --image "ghcr.io/katiejones404/stocksense-api:latest" --registry-server "ghcr.io" --registry-username katiejones404 --registry-password $GH_PAT --target-port 8000 --ingress external --min-replicas 1 --cpu 1.0 --memory 2.0Gi
 ```
 
+### Production Scheduling (Azure Container Apps Jobs)
+
+For production, run recurring work as Container Apps Jobs (not in-process API loops).
+
+1. Disable API in-process schedulers:
+
+```powershell
+az containerapp update `
+  --name stocksense-api `
+  --resource-group stocksense-rg `
+  --set-env-vars ENABLE_BACKGROUND_SCHEDULERS=0 RUN_ARTICLE_INGEST=0 RUN_PRICE_INGEST=0 RUN_ML_PIPELINES=0
+```
+
+2. Create scheduled jobs (cron is UTC):
+
+```powershell
+# Alerts every 5 minutes
+az containerapp job create `
+  --name stocksense-alerts-job `
+  --resource-group stocksense-rg `
+  --environment stocksense-env `
+  --trigger-type Schedule `
+  --cron-expression "*/5 * * * *" `
+  --image ghcr.io/katiejones404/stocksense-api:latest `
+  --registry-server ghcr.io `
+  --registry-username katiejones404 `
+  --registry-password $GH_PAT `
+  --cpu 0.5 --memory 1.0Gi `
+  --replica-timeout 900 --replica-retry-limit 1 `
+  --command python `
+  --args -m app.jobs.run_alert_checks_once `
+  --secrets database-url="$DATABASE_URL" smtp-user="$SMTP_USER" smtp-pass="$SMTP_PASS" alert-from="$ALERT_FROM_EMAIL" `
+  --env-vars DATABASE_URL=secretref:database-url SMTP_USER=secretref:smtp-user SMTP_PASS=secretref:smtp-pass ALERT_FROM_EMAIL=secretref:alert-from SMTP_HOST=smtp.gmail.com SMTP_PORT=587
+
+# Price ingest every 15 minutes during market hours (job itself runs all day; ingestion module handles data window)
+az containerapp job create `
+  --name stocksense-prices-job `
+  --resource-group stocksense-rg `
+  --environment stocksense-env `
+  --trigger-type Schedule `
+  --cron-expression "*/15 * * * 1-5" `
+  --image ghcr.io/katiejones404/stocksense-api:latest `
+  --registry-server ghcr.io `
+  --registry-username katiejones404 `
+  --registry-password $GH_PAT `
+  --cpu 0.5 --memory 1.0Gi `
+  --replica-timeout 1800 --replica-retry-limit 1 `
+  --command python `
+  --args -m app.services.ingesting_pipelines.prices_ingest `
+  --secrets database-url="$DATABASE_URL" `
+  --env-vars DATABASE_URL=secretref:database-url PRICE_UPDATE_EXISTING=1
+
+# News ingest every 2 hours
+az containerapp job create `
+  --name stocksense-news-job `
+  --resource-group stocksense-rg `
+  --environment stocksense-env `
+  --trigger-type Schedule `
+  --cron-expression "5 */2 * * *" `
+  --image ghcr.io/katiejones404/stocksense-api:latest `
+  --registry-server ghcr.io `
+  --registry-username katiejones404 `
+  --registry-password $GH_PAT `
+  --cpu 0.5 --memory 1.0Gi `
+  --replica-timeout 1800 --replica-retry-limit 1 `
+  --command python `
+  --args -m app.services.ingesting_pipelines.daily_news_ingest `
+  --secrets database-url="$DATABASE_URL" marketaux-token="$MARKETAUX_API_TOKEN" `
+  --env-vars DATABASE_URL=secretref:database-url MARKETAUX_API_TOKEN=secretref:marketaux-token
+
+# Sentiment refresh every 6 hours (pipeline image with ML deps)
+az containerapp job create `
+  --name stocksense-sentiment-job `
+  --resource-group stocksense-rg `
+  --environment stocksense-env `
+  --trigger-type Schedule `
+  --cron-expression "25 */6 * * *" `
+  --image ghcr.io/katiejones404/stocksense-pipeline:latest `
+  --registry-server ghcr.io `
+  --registry-username katiejones404 `
+  --registry-password $GH_PAT `
+  --cpu 1.0 --memory 2.0Gi `
+  --replica-timeout 3600 --replica-retry-limit 1 `
+  --command sh `
+  --args -c "python -m app.services.sentiment.article_processing && python -m app.services.sentiment.stock_processing && python -m app.services.sentiment.aggregator" `
+  --secrets database-url="$DATABASE_URL" openai-key="$OPENAI_API_KEY" `
+  --env-vars DATABASE_URL=secretref:database-url OPENAI_API_KEY=secretref:openai-key
+```
+
+3. Validate and run on demand:
+
+```powershell
+az containerapp job execution list --name stocksense-news-job --resource-group stocksense-rg -o table
+az containerapp job start --name stocksense-news-job --resource-group stocksense-rg
+```
+
+### Build Pipeline Image In GitHub Actions (No Local Heavy Build)
+
+Workflow file:
+- `.github/workflows/build-pipeline-image.yml`
+
+What it does:
+- Builds `backend/Pipeline.Dockerfile` on GitHub-hosted runners.
+- Pushes to `ghcr.io/<repo-owner-lowercase>/stocksense-pipeline`.
+- Publishes tags:
+  - `latest` (default branch only)
+  - `sha-<commit>`
+
+How to run:
+1. Push to `main` (when pipeline-related files changed), or
+2. In GitHub: **Actions -> Build And Push Pipeline Image -> Run workflow**
+
+After it succeeds, use this image in Azure jobs:
+- `ghcr.io/<repo-owner-lowercase>/stocksense-pipeline:latest`
+
 ### Frontend (Vercel)
 
 Deployed automatically from GitHub. Set environment variable:
@@ -148,8 +263,16 @@ Cloud-hosted serverless PostgreSQL. Connection via `DATABASE_URL` environment va
 | GUARDIAN_API_KEY | For pipeline | Guardian ingest |
 | SECRET_KEY | Yes | JWT signing key |
 | FRONTEND_ORIGINS | Yes | CORS allowed origins |
+| RUN_ARTICLE_INGEST | Optional | Set to 1 to run historical article ingest on API startup (default 0) |
 | RUN_PRICE_INGEST | Optional | Set to 1 to run price ingest on startup |
 | RUN_ML_PIPELINES | Optional | Set to 1 to run FinBERT/XGBoost on startup |
+| ENABLE_BACKGROUND_SCHEDULERS | Optional | Set to 0 to disable in-process API loops (recommended when using ACA Jobs) |
+| ENABLE_ALERT_SCHEDULER | Optional | Enable/disable in-process alert loop |
+| ENABLE_PRICE_INGEST_SCHEDULER | Optional | Enable/disable in-process price loop |
+| ENABLE_NEWS_INGEST_SCHEDULER | Optional | Enable/disable in-process news loop |
+| ENABLE_SENTIMENT_SCHEDULER | Optional | Enable/disable in-process sentiment loop |
+| NEWS_INGEST_FILTERED_MODE | Optional | `1` uses filtered HF subsets (Colab-style) instead of full-dataset scan |
+| NEWS_INGEST_HF_SUBSETS | Optional | Comma-separated HF subset names for historical news ingest |
 | SMTP_HOST | For alerts | Email alert SMTP server |
 | SMTP_USER | For alerts | Email alert sender address |
 | SMTP_PASS | For alerts | Email alert password |

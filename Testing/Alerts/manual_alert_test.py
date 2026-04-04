@@ -36,7 +36,7 @@ def _configure_import_paths() -> None:
 _configure_import_paths()
 
 from app.core.security import hash_password  # noqa: E402
-from app.main import run_alert_checks  # noqa: E402
+from app.services.alert_scheduler import run_alert_checks  # noqa: E402
 
 
 def _database_url() -> str:

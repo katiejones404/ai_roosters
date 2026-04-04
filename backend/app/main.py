@@ -1,10 +1,19 @@
+"""
+FastAPI application entry point for StockSense.
+
+Notes
+-----
+Configures CORS, registers all API routers, runs database initialization on startup,
+and launches background scheduler loops for alert checks, price ingestion, news
+ingestion, and sentiment pipeline re-scoring.
+"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text as sa_text
 
 from app.api import auth, sentiment, portfolio, news, stocks, alerts as alerts_router, networth
 from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
-from app.services.alerts_logic import is_alert_triggered, should_send_alert_email
+from app.services.alert_scheduler import run_alert_checks
 from app.db_init import init_db
 import asyncio
 import logging
@@ -20,6 +29,13 @@ except ImportError:
     ML_AVAILABLE = False
 
 logger = logging.getLogger("startup")
+
+TRUTHY_VALUES = {"1", "true", "yes", "on"}
+
+
+def _env_bool(name: str, default: str = "0") -> bool:
+    return os.getenv(name, default).strip().lower() in TRUTHY_VALUES
+
 
 WEBSITE_TICKERS = [
     "KSS", "ALK", "NVS", "AXP", "FCX",
@@ -70,11 +86,21 @@ app.include_router(proxy_router)
 
 @app.on_event("startup")
 def ingest_stock_prices_on_startup():
+    """
+    Run database initialization and optional data ingestion pipelines on startup.
+
+    Notes
+    -----
+    Controlled by environment variables: RUN_ARTICLE_INGEST, RUN_PRICE_INGEST,
+    and RUN_ML_PIPELINES. Defaults are disabled for production-safe startups.
+    Set to '1' to run.
+    Also applies any pending schema migrations for columns added after initial deploy.
+    """
     logger.info("Backend startup initiated...")
 
-    run_article_ingest = os.getenv("RUN_ARTICLE_INGEST", "0") == "1"
-    run_price_ingest = os.getenv("RUN_PRICE_INGEST", "1") == "1"
-    run_ml_pipelines = os.getenv("RUN_ML_PIPELINES", "1") == "1"
+    run_article_ingest = _env_bool("RUN_ARTICLE_INGEST", "0")
+    run_price_ingest = _env_bool("RUN_PRICE_INGEST", "0")
+    run_ml_pipelines = _env_bool("RUN_ML_PIPELINES", "0")
 
     try:
         logger.info("Initializing database tables...")
@@ -120,15 +146,8 @@ def ingest_stock_prices_on_startup():
     try:
         if run_article_ingest:
             logger.info("RUN_ARTICLE_INGEST=1 — running article ingestion pipeline...")
-            from app.services.ingesting_pipelines.news_ingest import ArticleIngestor
-            ArticleIngestor(db_url).ingest_all_years_one_pass(
-                years=list(range(2020, date.today().year + 1)),
-                per_year=1000,
-                end_date=date.today().isoformat(),
-                max_scanned=50_000_000,
-                flush_batch_size=2000,
-                streaming=True,
-            )
+            from app.services.ingesting_pipelines.news_ingest import run_hf_news_ingest_from_env
+            run_hf_news_ingest_from_env(db_url=db_url)
             logger.info("Article ingestion complete.")
         else:
             logger.info("RUN_ARTICLE_INGEST != 1 — skipping article ingestion.")
@@ -189,88 +208,6 @@ def ingest_stock_prices_on_startup():
         logger.warning("Backend will start anyway, but data pipelines did not complete.")
 
 
-def run_alert_checks() -> None:
-    """Check all active price alerts against latest stock prices and email on trigger."""
-    from sqlalchemy import create_engine, text as _text
-    from sqlalchemy.orm import sessionmaker
-    from app.models.models import PriceAlert
-    from app.services.email_service import send_price_alert_email
-
-
-    db_url = os.getenv("DATABASE_URL", "postgresql://stock_user:stock_pass@postgres:5432/stock_db")
-    _engine = create_engine(db_url)
-    Session = sessionmaker(bind=_engine)
-    db = Session()
-    try:
-
-        alerts = db.query(PriceAlert).filter(PriceAlert.is_active == True).all()  # noqa: E712
-        if not alerts:
-            return
-        tickers = list({a.ticker for a in alerts})
-        rows = db.execute(
-            _text(
-                "SELECT DISTINCT ON (ticker) ticker, close FROM stocks "
-                "WHERE ticker = ANY(:tickers) AND close IS NOT NULL "
-                "ORDER BY ticker, date DESC"
-            ),
-            {"tickers": tickers},
-        ).fetchall()
-        latest_prices = {row[0]: float(row[1]) for row in rows}
-
-        for alert in alerts:
-
-            current = latest_prices.get(alert.ticker)
-            if current is None:
-                continue
-            if not alert.user:
-                continue
-            target = float(alert.target_price)
-            triggered = is_alert_triggered(alert.direction, current, target)
-            if triggered:
-
-                user_email_enabled = bool(
-                    True
-                    if alert.user.notify_email_enabled is None
-                    else alert.user.notify_email_enabled
-                )
-                user_market_alerts_enabled = bool(
-                    True
-                    if alert.user.notify_market_alerts_enabled is None
-                    else alert.user.notify_market_alerts_enabled
-                )
-
-                if should_send_alert_email(
-                    alert.email_notify,
-                    user_email_enabled,
-                    user_market_alerts_enabled,
-                ):
-                    try:
-                        send_price_alert_email(
-                            to_email=alert.user.email,
-                            ticker=alert.ticker,
-                            direction=alert.direction,
-                            target_price=target,
-                            current_price=current,
-                        )
-                        logger.info(f"Alert email sent: {alert.ticker} {alert.direction} {target}")
-                    except Exception as email_err:
-                        logger.warning(f"Alert email failed for {alert.ticker}: {email_err}")
-                else:
-                    logger.info(
-                        "Alert triggered (email disabled by alert/user preferences): "
-                        f"{alert.ticker} {alert.direction} {target}"
-                    )
-                alert.is_active = False
-                alert.triggered_at = datetime.now(timezone.utc)
-        db.commit()
-    except Exception as e:
-        logger.error(f"Alert check failed: {e}", exc_info=True)
-    finally:
-
-        db.close()
-        _engine.dispose()
-
-
 async def _alert_check_loop() -> None:
     """Run alert checks at a configurable interval."""
     try:
@@ -292,21 +229,171 @@ async def _alert_check_loop() -> None:
         await asyncio.sleep(interval_seconds)
 
 
+async def _price_ingest_loop() -> None:
+    """
+    Ingest latest stock prices on weekdays during US market hours.
+
+    Notes
+    -----
+    Only runs Monday through Friday between approximately 13:00 and 21:00 UTC,
+    which covers 8 AM to 4 PM US Eastern in both EST and EDT.
+    Interval is controlled by PRICE_INGEST_INTERVAL_SECONDS (default 900).
+    """
+    try:
+        interval_seconds = int(os.getenv("PRICE_INGEST_INTERVAL_SECONDS", "900"))
+    except ValueError:
+        interval_seconds = 900
+    interval_seconds = max(interval_seconds, 60)
+
+    await asyncio.sleep(120)  # Allow startup to complete before first run
+    while True:
+        now_utc = datetime.now(timezone.utc)
+        is_weekday = now_utc.weekday() < 5
+        is_market_hours = 13 <= now_utc.hour < 21
+        if is_weekday and is_market_hours:
+            try:
+                db_url = os.getenv("DATABASE_URL", "postgresql://stock_user:stock_pass@postgres:5432/stock_db")
+                ingestor = PriceIngestor(db_url)
+                ingestor.ingest_multiple_stocks(
+                    tickers=WEBSITE_TICKERS,
+                    start_date=str(date.today() - timedelta(days=5)),
+                    end_date=str(date.today()),
+                    period=None,
+                    update_existing=True,
+                )
+                logger.info("Price ingest loop: ingestion complete.")
+            except Exception as e:
+                logger.error(f"Price ingest loop error: {e}", exc_info=True)
+        await asyncio.sleep(interval_seconds)
+
+
+async def _news_ingest_loop() -> None:
+    """
+    Ingest recent stock news articles on a recurring schedule.
+
+    Notes
+    -----
+    Runs continuously regardless of time of day.
+    Interval is controlled by NEWS_INGEST_INTERVAL_SECONDS (default 7200, i.e. 2 hours).
+    """
+    try:
+        interval_seconds = int(os.getenv("NEWS_INGEST_INTERVAL_SECONDS", "7200"))
+    except ValueError:
+        interval_seconds = 7200
+    interval_seconds = max(interval_seconds, 300)
+
+    await asyncio.sleep(180)  # Allow startup to complete before first run
+    while True:
+        if not os.getenv("MARKETAUX_API_TOKEN", "").strip():
+            logger.warning(
+                "News ingest loop skipped: MARKETAUX_API_TOKEN is not configured."
+            )
+            await asyncio.sleep(interval_seconds)
+            continue
+        try:
+            from app.services.ingesting_pipelines.daily_news_ingest import StockNewsIngestor
+            StockNewsIngestor().ingest_recent_news()
+            logger.info("News ingest loop: ingestion complete.")
+        except Exception as e:
+            logger.error(f"News ingest loop error: {e}", exc_info=True)
+        await asyncio.sleep(interval_seconds)
+
+
+async def _sentiment_pipeline_loop() -> None:
+    """
+    Re-run FinBERT scoring and sentiment aggregation on a recurring schedule.
+
+    Notes
+    -----
+    Only executes when ML libraries are available (ML_AVAILABLE is True).
+    Interval is controlled by SENTIMENT_INTERVAL_SECONDS (default 21600, i.e. 6 hours).
+    """
+    try:
+        interval_seconds = int(os.getenv("SENTIMENT_INTERVAL_SECONDS", "21600"))
+    except ValueError:
+        interval_seconds = 21600
+    interval_seconds = max(interval_seconds, 1800)
+
+    if not ML_AVAILABLE:
+        logger.info("Sentiment loop enabled but ML libraries are unavailable in this image.")
+
+    await asyncio.sleep(300)  # Allow startup and news ingest to complete first
+    while True:
+        if ML_AVAILABLE:
+            try:
+                logger.info("Sentiment pipeline loop: starting re-scoring...")
+                run_finbert_pipeline_from_env()
+                run_returns_pipeline()
+                run_sentiment_snapshot_pipeline_from_env()
+                logger.info("Sentiment pipeline loop: complete.")
+            except Exception as e:
+                logger.error(f"Sentiment pipeline loop error: {e}", exc_info=True)
+        await asyncio.sleep(interval_seconds)
 
 
 @app.on_event("startup")
-
 async def start_alert_scheduler() -> None:
-    asyncio.create_task(_alert_check_loop())
-    logger.info("Price alert scheduler started.")
+    """
+    Launch all background scheduler tasks on application startup.
+
+    Notes
+    -----
+    Starts selected asyncio tasks for alert checks, price ingestion,
+    news ingestion, and sentiment re-scoring. Use the environment variables
+    ENABLE_BACKGROUND_SCHEDULERS, ENABLE_ALERT_SCHEDULER,
+    ENABLE_PRICE_INGEST_SCHEDULER, ENABLE_NEWS_INGEST_SCHEDULER,
+    and ENABLE_SENTIMENT_SCHEDULER to control behavior.
+    """
+    if not _env_bool("ENABLE_BACKGROUND_SCHEDULERS", "1"):
+        logger.info("Background schedulers disabled via ENABLE_BACKGROUND_SCHEDULERS=0.")
+        return
+
+    started_tasks = []
+
+    if _env_bool("ENABLE_ALERT_SCHEDULER", "1"):
+        asyncio.create_task(_alert_check_loop())
+        started_tasks.append("alerts")
+
+    if _env_bool("ENABLE_PRICE_INGEST_SCHEDULER", "1"):
+        asyncio.create_task(_price_ingest_loop())
+        started_tasks.append("prices")
+
+    if _env_bool("ENABLE_NEWS_INGEST_SCHEDULER", "1"):
+        asyncio.create_task(_news_ingest_loop())
+        started_tasks.append("news")
+
+    if _env_bool("ENABLE_SENTIMENT_SCHEDULER", "1" if ML_AVAILABLE else "0"):
+        asyncio.create_task(_sentiment_pipeline_loop())
+        started_tasks.append("sentiment")
+
+    if started_tasks:
+        logger.info("Background scheduler tasks started: %s", ", ".join(started_tasks))
+    else:
+        logger.warning("Background schedulers are enabled, but no scheduler tasks were selected.")
 
 
 @app.get("/")
 def root():
+    """
+    Return a simple liveness response for the root path.
+
+    Returns
+    -------
+    dict
+        A message confirming the backend is running.
+    """
     return {"message": "Backend is working!", "status": "healthy"}
 
 
 
 @app.get("/health")
 def health_check():
+    """
+    Return a health check response confirming the service is running.
+
+    Returns
+    -------
+    dict
+        Status and database connection indicator used by Azure health probes.
+    """
     return {"status": "healthy", "database": "connected"}

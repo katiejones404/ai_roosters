@@ -21,6 +21,15 @@ if not logger.handlers:
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
+DEFAULT_HF_FILTERED_SUBSETS = [
+    "yahoo_finance_felixdrinkall",
+    "reddit_finance_sp500",
+    "nyt_articles_2000_present",
+    "american_news_jonasbecker",
+    "cnbc_headlines",
+    "benzinga_6000stocks",
+]
+
 
 def build_db_url() -> str:
     db_url = os.getenv("DATABASE_URL")
@@ -175,6 +184,15 @@ def _resolve_end_date() -> str:
     return (os.getenv("NEWS_INGEST_END_DATE") or date.today().isoformat()).strip()
 
 
+def _resolve_hf_subset_names() -> List[str]:
+    raw = (os.getenv("NEWS_INGEST_HF_SUBSETS") or "").strip()
+    if raw:
+        names = [p.strip() for p in raw.split(",") if p.strip()]
+        if names:
+            return list(dict.fromkeys(names))
+    return DEFAULT_HF_FILTERED_SUBSETS.copy()
+
+
 class ArticleIngestor:
     def __init__(self, db_url: Optional[str] = None):
         if db_url is None:
@@ -198,8 +216,17 @@ class ArticleIngestor:
         if missing:
             raise RuntimeError(f"'articles' table missing required columns: {missing}")
 
-    def load_dataset_any(self, streaming: bool):
+    def load_dataset_any(self, streaming: bool, name: Optional[str] = None):
         token = get_hf_token_optional()
+        if name:
+            data_files = f"hf://datasets/Brianferrell787/financial-news-multisource/data/{name}/*.parquet"
+            return load_dataset(
+                "parquet",
+                data_files=data_files,
+                split="train",
+                streaming=streaming,
+                token=token,
+            )
         return load_dataset(
             "Brianferrell787/financial-news-multisource",
             split="train",
@@ -234,6 +261,7 @@ class ArticleIngestor:
         fallback_to_non_streaming_after: int = 1_000_000,
         fallback_if_target_year_share_below: float = 0.0005,
         min_rows_for_share_check: int = 2_000_000,
+        name: Optional[str] = None,
     ) -> None:
         if not end_date:
             end_date = date.today().isoformat()
@@ -253,11 +281,12 @@ class ArticleIngestor:
             return all(accepted_per_year[y] >= per_year for y in years_set)
 
         logger.info(
-            f"INGEST-ALL one-pass years={sorted(years_set)} per_year={per_year} end_date={end_date} "
+            f"INGEST-ALL one-pass subset={name or 'ALL'} years={sorted(years_set)} "
+            f"per_year={per_year} end_date={end_date} "
             f"flush_batch_size={flush_batch_size} streaming={streaming}"
         )
 
-        ds = self.load_dataset_any(streaming=streaming)
+        ds = self.load_dataset_any(streaming=streaming, name=name)
 
         scanned = 0
         in_window = 0
@@ -344,6 +373,7 @@ class ArticleIngestor:
                     fallback_to_non_streaming_after=fallback_to_non_streaming_after,
                     fallback_if_target_year_share_below=fallback_if_target_year_share_below,
                     min_rows_for_share_check=min_rows_for_share_check,
+                    name=name,
                 )
 
             if streaming and scanned >= min_rows_for_share_check:
@@ -366,6 +396,7 @@ class ArticleIngestor:
                         fallback_to_non_streaming_after=fallback_to_non_streaming_after,
                         fallback_if_target_year_share_below=fallback_if_target_year_share_below,
                         min_rows_for_share_check=min_rows_for_share_check,
+                        name=name,
                     )
 
             if y not in years_set:
@@ -428,18 +459,72 @@ class ArticleIngestor:
             for y, c in short:
                 logger.warning(f"  {y}: {c}/{per_year}")
 
+    def ingest_filtered_subsets(
+        self,
+        subset_names: List[str],
+        years: List[int],
+        per_year: int = 1000,
+        end_date: Optional[str] = None,
+        max_scanned: int = 50_000_000,
+        max_desc_chars: int = 280,
+        flush_batch_size: int = 2000,
+        progress_every: int = 200_000,
+        streaming: bool = False,
+    ) -> None:
+        subset_names = [s.strip() for s in subset_names if s and s.strip()]
+        subset_names = list(dict.fromkeys(subset_names))
+        if not subset_names:
+            raise ValueError("No subset names provided for filtered HF ingest.")
 
-if __name__ == "__main__":
-    ing = ArticleIngestor()
+        logger.info("Running filtered HF ingest for subsets=%s", subset_names)
 
+        for subset_name in subset_names:
+            logger.info("Starting subset ingest: %s", subset_name)
+            self.ingest_all_years_one_pass(
+                years=years,
+                per_year=per_year,
+                end_date=end_date,
+                max_scanned=max_scanned,
+                max_desc_chars=max_desc_chars,
+                flush_batch_size=flush_batch_size,
+                progress_every=progress_every,
+                streaming=streaming,
+                fallback_to_non_streaming_after=1_000_000,
+                name=subset_name,
+            )
+            logger.info("Finished subset ingest: %s", subset_name)
+
+
+def run_hf_news_ingest_from_env(db_url: Optional[str] = None) -> None:
+    ing = ArticleIngestor(db_url)
     years = _resolve_years()
     end_date = _resolve_end_date()
-
     per_year = int(os.getenv("NEWS_INGEST_PER_YEAR", "1000"))
     max_scanned = int(os.getenv("NEWS_INGEST_MAX_SCANNED", "50000000"))
     flush_batch_size = int(os.getenv("NEWS_INGEST_FLUSH_BATCH_SIZE", "2000"))
     progress_every = int(os.getenv("NEWS_INGEST_PROGRESS_EVERY", "200000"))
-    streaming = os.getenv("NEWS_INGEST_STREAMING", "1").strip().lower() in {"1", "true", "yes", "y", "on"}
+    streaming = os.getenv("NEWS_INGEST_STREAMING", "0").strip().lower() in {"1", "true", "yes", "y", "on"}
+    filtered_mode = os.getenv("NEWS_INGEST_FILTERED_MODE", "1").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "y",
+        "on",
+    }
+
+    if filtered_mode:
+        subset_names = _resolve_hf_subset_names()
+        ing.ingest_filtered_subsets(
+            subset_names=subset_names,
+            years=years,
+            per_year=per_year,
+            end_date=end_date,
+            max_scanned=max_scanned,
+            flush_batch_size=flush_batch_size,
+            progress_every=progress_every,
+            streaming=streaming,
+        )
+        return
 
     ing.ingest_all_years_one_pass(
         years=years,
@@ -451,3 +536,7 @@ if __name__ == "__main__":
         streaming=streaming,
         fallback_to_non_streaming_after=1_000_000,
     )
+
+
+if __name__ == "__main__":
+    run_hf_news_ingest_from_env()
