@@ -7,6 +7,7 @@ import {
     LineChart, Line, CartesianGrid, ResponsiveContainer, Cell, Legend,
 } from "recharts";
 import AddToPortfolioModal from "./components/AddToPortfolio";
+import ImportPortfolioModal from "./components/ImportPortfolioModal";
 import LoadingScreen from "./components/LoadingScreen";
 import './portfolio.css';
 
@@ -65,6 +66,7 @@ const Portfolio = () => {
     const [actionError, setActionError] = useState<string | null>(null);
     const [addSharesTicker, setAddSharesTicker] = useState<string | null>(null);
     const [addSharesPrice, setAddSharesPrice] = useState<number>(0);
+    const [showImport, setShowImport] = useState(false);
 
     useEffect(() => {
         fetchPortfolioSummary();
@@ -447,12 +449,20 @@ const Portfolio = () => {
                                 {portfolio_items.length === 0 ? (
                                     <div className="empty-portfolio">
                                         <p className="empty-message">Your portfolio is empty</p>
-                                        <button
-                                            onClick={() => navigate('/dashboard')}
-                                            className="add-stocks-btn"
-                                        >
-                                            Add Stocks from Dashboard
-                                        </button>
+                                        <div className="onboard-options">
+                                            <button
+                                                className="add-stocks-btn"
+                                                onClick={() => setShowImport(true)}
+                                            >
+                                                Import existing holdings
+                                            </button>
+                                            <button
+                                                className="add-stocks-btn add-stocks-btn-secondary"
+                                                onClick={() => navigate('/dashboard')}
+                                            >
+                                                Browse the Dashboard
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="holdings-grid">
@@ -818,6 +828,15 @@ const Portfolio = () => {
                 onClose={() => setAddSharesTicker(null)}
                 onSuccess={() => {
                     setAddSharesTicker(null);
+                    fetchPortfolioSummary();
+                }}
+            />
+        )}
+        {showImport && (
+            <ImportPortfolioModal
+                onClose={() => setShowImport(false)}
+                onSuccess={() => {
+                    setShowImport(false);
                     fetchPortfolioSummary();
                 }}
             />
