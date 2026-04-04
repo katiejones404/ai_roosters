@@ -1,3 +1,8 @@
+/*
+ * Login.tsx
+ * Login page where existing users authenticate with their email and password.
+ * Includes a link to the forgot password flow for account recovery.
+ */
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "./utils/auth.ts";
@@ -228,6 +233,11 @@ const Login: React.FC = () => {
                 {errors.password && (
                   <span className="error-message">{errors.password}</span>
                 )}
+                <div className="forgot-password-row">
+                  <Link to="/forgot-password" className="forgot-password-link">
+                    Forgot password?
+                  </Link>
+                </div>
               </div>
 
               <button

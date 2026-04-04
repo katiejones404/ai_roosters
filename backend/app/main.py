@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, text as sa_text
 
 from app.api import auth, sentiment, portfolio, news, stocks, alerts as alerts_router, networth
 from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
+from app.services.alerts_logic import is_alert_triggered, should_send_alert_email
 from app.db_init import init_db
 import asyncio
 import logging
@@ -80,6 +81,34 @@ def ingest_stock_prices_on_startup():
     except Exception as e:
         logger.warning(f"Database initialization skipped or failed: {e}")
         logger.info("Tables may already exist, continuing...")
+
+    # Ensure notification-related columns exist for alerts and users
+    try:
+        _mig_url = os.getenv("DATABASE_URL", "postgresql://stock_user:stock_pass@postgres:5432/stock_db")
+        _mig_engine = create_engine(_mig_url)
+        with _mig_engine.begin() as _conn:
+            _conn.execute(sa_text(
+                "ALTER TABLE price_alerts ADD COLUMN IF NOT EXISTS email_notify BOOLEAN NOT NULL DEFAULT TRUE"
+            ))
+            _conn.execute(sa_text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_email_enabled BOOLEAN NOT NULL DEFAULT TRUE"
+            ))
+            _conn.execute(sa_text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_market_alerts_enabled BOOLEAN NOT NULL DEFAULT TRUE"
+            ))
+            _conn.execute(sa_text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_portfolio_updates_enabled BOOLEAN NOT NULL DEFAULT TRUE"
+            ))
+            _conn.execute(sa_text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_weekly_report_enabled BOOLEAN NOT NULL DEFAULT FALSE"
+            ))
+            _conn.execute(sa_text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_push_enabled BOOLEAN NOT NULL DEFAULT FALSE"
+            ))
+        _mig_engine.dispose()
+        logger.info("Migration: notification columns ensured.")
+    except Exception as e:
+        logger.warning(f"Notification migrations skipped: {e}")
 
     db_url = os.getenv(
         "DATABASE_URL",
@@ -191,26 +220,44 @@ def run_alert_checks() -> None:
             current = latest_prices.get(alert.ticker)
             if current is None:
                 continue
+            if not alert.user:
+                continue
             target = float(alert.target_price)
-            triggered = (
-                (alert.direction == "above" and current >= target)
-                or (alert.direction == "below" and current <= target)
-            )
+            triggered = is_alert_triggered(alert.direction, current, target)
             if triggered:
 
-                try:
-                    send_price_alert_email(
-                        to_email=alert.user.email,
-                        ticker=alert.ticker,
-                        direction=alert.direction,
-                        target_price=target,
-                        current_price=current,
+                user_email_enabled = bool(
+                    True
+                    if alert.user.notify_email_enabled is None
+                    else alert.user.notify_email_enabled
+                )
+                user_market_alerts_enabled = bool(
+                    True
+                    if alert.user.notify_market_alerts_enabled is None
+                    else alert.user.notify_market_alerts_enabled
+                )
+
+                if should_send_alert_email(
+                    alert.email_notify,
+                    user_email_enabled,
+                    user_market_alerts_enabled,
+                ):
+                    try:
+                        send_price_alert_email(
+                            to_email=alert.user.email,
+                            ticker=alert.ticker,
+                            direction=alert.direction,
+                            target_price=target,
+                            current_price=current,
+                        )
+                        logger.info(f"Alert email sent: {alert.ticker} {alert.direction} {target}")
+                    except Exception as email_err:
+                        logger.warning(f"Alert email failed for {alert.ticker}: {email_err}")
+                else:
+                    logger.info(
+                        "Alert triggered (email disabled by alert/user preferences): "
+                        f"{alert.ticker} {alert.direction} {target}"
                     )
-
-                    logger.info(f"Alert email sent: {alert.ticker} {alert.direction} {target}")
-                except Exception as email_err:
-
-                    logger.warning(f"Alert email failed for {alert.ticker}: {email_err}")
                 alert.is_active = False
                 alert.triggered_at = datetime.now(timezone.utc)
         db.commit()
@@ -223,14 +270,24 @@ def run_alert_checks() -> None:
 
 
 async def _alert_check_loop() -> None:
-    """Run alert checks daily (every 24 hours)."""
-    await asyncio.sleep(3600)  # initial 1-hour delay after startup
+    """Run alert checks at a configurable interval."""
+    try:
+        initial_delay_seconds = int(os.getenv("ALERT_CHECK_INITIAL_DELAY_SECONDS", "30"))
+    except ValueError:
+        initial_delay_seconds = 30
+    try:
+        interval_seconds = int(os.getenv("ALERT_CHECK_INTERVAL_SECONDS", "300"))
+    except ValueError:
+        interval_seconds = 300
+    interval_seconds = max(interval_seconds, 30)
+
+    await asyncio.sleep(max(initial_delay_seconds, 0))
     while True:
         try:
             run_alert_checks()
         except Exception as e:
-            logger.error(f"Daily alert check error: {e}", exc_info=True)
-        await asyncio.sleep(24 * 3600)
+            logger.error(f"Alert check loop error: {e}", exc_info=True)
+        await asyncio.sleep(interval_seconds)
 
 
 
@@ -239,7 +296,7 @@ async def _alert_check_loop() -> None:
 
 async def start_alert_scheduler() -> None:
     asyncio.create_task(_alert_check_loop())
-    logger.info("Price alert scheduler started (daily check).")
+    logger.info("Price alert scheduler started.")
 
 
 @app.get("/")

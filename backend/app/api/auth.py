@@ -1,6 +1,7 @@
 """
 Authentication API endpoints
 """
+import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -16,7 +17,21 @@ sys.path.insert(0, '/app')
 
 from app.db.main import get_db
 from app.models.models import User
-from app.schema.schemas import UserRegister, UserLogin, UserResponse, Token, ProfilePictureUpdate, DeleteAccountRequest, UserProfileUpdate, PasswordChange, StreakResponse
+from app.schema.schemas import (
+    UserRegister,
+    UserLogin,
+    UserResponse,
+    Token,
+    ProfilePictureUpdate,
+    DeleteAccountRequest,
+    UserProfileUpdate,
+    PasswordChange,
+    StreakResponse,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    NotificationPreferencesResponse,
+    NotificationPreferencesUpdate,
+)
 from app.core.security import (
     hash_password,
     verify_password,
@@ -25,6 +40,7 @@ from app.core.security import (
     oauth2_scheme,
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
+from app.services.email_service import send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -89,6 +105,26 @@ def _serialize_streak(current_user: User) -> StreakResponse:
         lastVisit=last_visit_date.isoformat(),
         visitDays=visit_days,
         totalVisits=total,
+    )
+
+
+def _serialize_notification_preferences(current_user: User) -> NotificationPreferencesResponse:
+    return NotificationPreferencesResponse(
+        emailNotifications=bool(
+            True if current_user.notify_email_enabled is None else current_user.notify_email_enabled
+        ),
+        marketAlerts=bool(
+            True if current_user.notify_market_alerts_enabled is None else current_user.notify_market_alerts_enabled
+        ),
+        portfolioUpdates=bool(
+            True if current_user.notify_portfolio_updates_enabled is None else current_user.notify_portfolio_updates_enabled
+        ),
+        weeklyReport=bool(
+            False if current_user.notify_weekly_report_enabled is None else current_user.notify_weekly_report_enabled
+        ),
+        pushNotifications=bool(
+            False if current_user.notify_push_enabled is None else current_user.notify_push_enabled
+        ),
     )
 
 
@@ -220,6 +256,47 @@ async def get_current_user_streak(
     return streak
 
 
+@router.get("/me/notifications", response_model=NotificationPreferencesResponse)
+async def get_notification_preferences(current_user: User = Depends(get_current_user)):
+    """Get persisted notification preferences for the authenticated user."""
+    return _serialize_notification_preferences(current_user)
+
+
+@router.patch("/me/notifications", response_model=NotificationPreferencesResponse)
+async def update_notification_preferences(
+    data: NotificationPreferencesUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update persisted notification preferences for the authenticated user."""
+    if (
+        data.emailNotifications is None
+        and data.marketAlerts is None
+        and data.portfolioUpdates is None
+        and data.weeklyReport is None
+        and data.pushNotifications is None
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one notification preference is required.",
+        )
+
+    if data.emailNotifications is not None:
+        current_user.notify_email_enabled = data.emailNotifications
+    if data.marketAlerts is not None:
+        current_user.notify_market_alerts_enabled = data.marketAlerts
+    if data.portfolioUpdates is not None:
+        current_user.notify_portfolio_updates_enabled = data.portfolioUpdates
+    if data.weeklyReport is not None:
+        current_user.notify_weekly_report_enabled = data.weeklyReport
+    if data.pushNotifications is not None:
+        current_user.notify_push_enabled = data.pushNotifications
+
+    db.commit()
+    db.refresh(current_user)
+    return _serialize_notification_preferences(current_user)
+
+
 @router.post("/logout")
 async def logout(token: Annotated[str, Depends(oauth2_scheme)]):
     """
@@ -316,4 +393,87 @@ async def change_password(
             detail="Password must contain at least one number or special character."
         )
     current_user.password_hash = hash_password(data.new_password)
+    db.commit()
+
+
+@router.post("/forgot-password", status_code=status.HTTP_204_NO_CONTENT)
+def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """
+    Send a password reset email if the provided email matches a registered account.
+
+    Notes
+    -----
+    Always returns 204 regardless of whether the email exists to prevent
+    user enumeration attacks.
+
+    Path Parameters
+    ---------------
+    data : ForgotPasswordRequest
+        Body containing the user's email address.
+    """
+    user = db.query(User).filter(User.email == data.email.lower()).first()
+    if not user:
+        return  # Silent no-op to prevent enumeration
+
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    reset_token = create_access_token(
+        data={"sub": user.email, "type": "password_reset"},
+        expires_delta=timedelta(minutes=15),
+    )
+    reset_link = f"{frontend_url}/reset-password?token={reset_token}"
+
+    try:
+        send_password_reset_email(user.email, reset_link)
+    except Exception:
+        # Log but do not expose errors to the caller
+        pass
+
+
+@router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """
+    Reset a user's password using a valid password reset token.
+
+    Parameters
+    ----------
+    data : ResetPasswordRequest
+        Body containing the reset token and the new password.
+
+    Returns
+    -------
+    None
+        Returns 204 on success. Returns 400 if the token is invalid or expired.
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Invalid or expired reset token.",
+    )
+    try:
+        payload = verify_token(data.token)
+    except HTTPException:
+        raise credentials_exception
+
+    if payload.get("type") != "password_reset":
+        raise credentials_exception
+
+    email = payload.get("sub")
+    if not email:
+        raise credentials_exception
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise credentials_exception
+
+    if len(data.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters.",
+        )
+    if not re.search(r'[0-9!@#$%^&*(),.?\":{}|<>]', data.new_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must contain at least one number or special character.",
+        )
+
+    user.password_hash = hash_password(data.new_password)
     db.commit()

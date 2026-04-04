@@ -1,3 +1,8 @@
+/*
+ * App.tsx
+ * Root application component that defines client-side routing and
+ * conditionally renders the navigation bar based on the current page.
+ */
 import {
   BrowserRouter,
   Routes,
@@ -8,6 +13,8 @@ import {
 
 import CreateAccount from "./create_account";
 import Login from "./login";
+import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 import Settings from "./settings";
 import Dashboard from "./Dashboard";
 import Portfolio from "./portfolio";
@@ -37,7 +44,9 @@ function AppContent() {
   const hideNavbar =
     location.pathname === "/login" ||
     location.pathname === "/signup" ||
-    location.pathname === "/";
+    location.pathname === "/" ||
+    location.pathname === "/forgot-password" ||
+    location.pathname === "/reset-password";
 
   return (
     <>
@@ -47,6 +56,8 @@ function AppContent() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<CreateAccount />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<HomePage />} />

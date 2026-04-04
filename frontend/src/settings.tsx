@@ -1,9 +1,24 @@
+/*
+ * Settings.tsx
+ * User settings page for managing account information, updating the password,
+ * and configuring notification preferences.
+ */
 import React, { useEffect, useState, useRef } from "react";
-import { getCurrentUser, logout, deleteAccount, updateProfilePicture, updateProfile, changePassword } from "./utils/auth";
+import {
+  getCurrentUser,
+  logout,
+  deleteAccount,
+  updateProfilePicture,
+  updateProfile,
+  changePassword,
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  type NotificationPreferences,
+} from "./utils/auth";
 import { Link, useNavigate } from "react-router-dom";
 import "./settings.css";
 
-type TabType = "account" | "security";
+type TabType = "account" | "security" | "notifications";
 
 interface AccountFormData {
   name: string;
@@ -17,16 +32,9 @@ interface SecurityFormData {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
-  twoFactorEnabled: boolean;
 }
 
-interface NotificationSettings {
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  marketAlerts: boolean;
-  portfolioUpdates: boolean;
-  weeklyReport: boolean;
-}
+type NotificationSettings = NotificationPreferences;
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
@@ -37,6 +45,8 @@ const Settings: React.FC = () => {
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [notificationError, setNotificationError] = useState("");
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
   const [profileImage, setProfileImage] = useState<string>(
     "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
@@ -62,7 +72,6 @@ const Settings: React.FC = () => {
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-    twoFactorEnabled: false,
   });
 
   const [notifications, setNotifications] = useState<NotificationSettings>({
@@ -82,7 +91,10 @@ const Settings: React.FC = () => {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const user = await getCurrentUser();
+        const [user, prefs] = await Promise.all([
+          getCurrentUser(),
+          getNotificationPreferences(),
+        ]);
         setAccountForm({
           name: user.name || "",
           username: user.username || "",
@@ -90,6 +102,7 @@ const Settings: React.FC = () => {
           bio: user.bio || "",
           phone: user.phone || "",
         });
+        setNotifications(prefs);
         if (user.profile_picture) {
           setProfileImage(user.profile_picture);
         }
@@ -117,11 +130,35 @@ const Settings: React.FC = () => {
     }));
   };
 
-  const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNotificationChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const key = e.target.name as keyof NotificationSettings;
+    const nextValue = e.target.checked;
+    const previousValue = notifications[key];
+
+    setNotificationError("");
     setNotifications((prev) => ({
       ...prev,
-      [e.target.name]: e.target.checked,
+      [key]: nextValue,
     }));
+    setIsSavingNotifications(true);
+
+    try {
+      const updated = await updateNotificationPreferences({
+        [key]: nextValue,
+      });
+      setNotifications(updated);
+    } catch (err: any) {
+      setNotifications((prev) => ({
+        ...prev,
+        [key]: previousValue,
+      }));
+      const detail = err?.response?.data?.detail;
+      setNotificationError(
+        detail || "Failed to update notification preferences. Please try again."
+      );
+    } finally {
+      setIsSavingNotifications(false);
+    }
   };
 
   const handleSave = async () => {
@@ -313,6 +350,13 @@ const Settings: React.FC = () => {
             >
               <span className="tab-icon">🔒</span>
               Security
+            </button>
+            <button
+              className={`nav-tab ${activeTab === "notifications" ? "active" : ""}`}
+              onClick={() => setActiveTab("notifications")}
+            >
+              <span className="tab-icon">🔔</span>
+              Notifications
             </button>
           </nav>
 
@@ -577,6 +621,103 @@ const Settings: React.FC = () => {
                   "Update Password"
                 )}
               </button>
+            </div>
+          )}
+
+          {/* Notifications Tab */}
+          {activeTab === "notifications" && (
+            <div className="tab-content">
+              <div className="content-header">
+                <h3>Notification Preferences</h3>
+                <p>Choose which alerts and updates you want to receive</p>
+                {isSavingNotifications && <p>Saving preferences...</p>}
+              </div>
+              {notificationError && <div className="error-banner">{notificationError}</div>}
+
+              <div className="notifications-list">
+                <div className="notification-item">
+                  <div className="notification-info">
+                    <h4>Email Alerts</h4>
+                    <p>Master switch for all email delivery from StockSense</p>
+                  </div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      name="emailNotifications"
+                      checked={notifications.emailNotifications}
+                      onChange={handleNotificationChange}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div className="notification-item">
+                  <div className="notification-info">
+                    <h4>Market Alerts</h4>
+                    <p>Get notified when tracked stocks hit your target price</p>
+                  </div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      name="marketAlerts"
+                      checked={notifications.marketAlerts}
+                      onChange={handleNotificationChange}
+                      disabled={!notifications.emailNotifications}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div className="notification-item">
+                  <div className="notification-info">
+                    <h4>Portfolio Updates</h4>
+                    <p>Receive summaries when your portfolio value changes significantly</p>
+                  </div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      name="portfolioUpdates"
+                      checked={notifications.portfolioUpdates}
+                      onChange={handleNotificationChange}
+                      disabled={!notifications.emailNotifications}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div className="notification-item">
+                  <div className="notification-info">
+                    <h4>Weekly Report</h4>
+                    <p>Get a weekly summary of your portfolio performance</p>
+                  </div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      name="weeklyReport"
+                      checked={notifications.weeklyReport}
+                      onChange={handleNotificationChange}
+                      disabled={!notifications.emailNotifications}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div className="notification-item">
+                  <div className="notification-info">
+                    <h4>Push Notifications</h4>
+                    <p>Allow browser push notifications for real-time alerts</p>
+                  </div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      name="pushNotifications"
+                      checked={notifications.pushNotifications}
+                      onChange={handleNotificationChange}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
             </div>
           )}
         </div>
