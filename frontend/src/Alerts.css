@@ -14,7 +14,7 @@
 .alerts-title {
   font-size: 2rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #6D28D9 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #6d28d9 0%, #4f46e5 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -251,4 +251,409 @@
 .alert-delete-btn:hover {
   background: rgba(239, 68, 68, 0.2);
   border-color: rgba(239, 68, 68, 0.45);
+}
+
+/* Streak tracker */
+.streak-card {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 1.35rem;
+  text-align: left;
+  color: #e2e8f0;
+  border: 1px solid rgba(129, 140, 248, 0.22);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.22), transparent 34%),
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(16, 185, 129, 0.12),
+      transparent 28%
+    ),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.92));
+  box-shadow:
+    0 18px 40px rgba(15, 23, 42, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  cursor: default;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.streak-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(129, 140, 248, 0.36);
+  box-shadow:
+    0 22px 50px rgba(15, 23, 42, 0.34),
+    0 0 0 1px rgba(99, 102, 241, 0.08) inset,
+    0 0 30px rgba(99, 102, 241, 0.12);
+}
+
+.streak-card-sheen {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      120deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.03) 18%,
+      transparent 40%
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 20%);
+  pointer-events: none;
+}
+
+.streak-header {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.streak-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #c4b5fd 0%, #818cf8 48%, #22d3ee 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+
+.streak-subtitle {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.92rem;
+  margin: 0.15rem 0 0;
+}
+
+.streak-badge-pill {
+  align-self: center;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  background: rgba(34, 197, 94, 0.08);
+  color: rgba(167, 243, 208, 0.95);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Main row */
+.streak-main-row {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 0.9rem;
+  margin-bottom: 0.9rem;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 720px) {
+  .streak-main-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.streak-primary-box {
+  background:
+    linear-gradient(180deg, rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.08)),
+    rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(129, 140, 248, 0.26);
+  border-radius: 18px;
+  padding: 1.5rem 1.4rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow:
+    0 12px 28px rgba(15, 23, 42, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  position: relative;
+}
+
+.streak-primary-box::after {
+  content: "";
+  position: absolute;
+  inset: auto -20% -42% -20%;
+  height: 74%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2), transparent 66%);
+  pointer-events: none;
+}
+
+.streak-emoji {
+  font-size: 2.25rem;
+  margin-bottom: 0.25rem;
+  filter: drop-shadow(0 6px 18px rgba(99, 102, 241, 0.2));
+}
+
+.streak-number {
+  font-size: clamp(3.4rem, 8vw, 4.7rem);
+  font-weight: 900;
+  background: linear-gradient(
+    135deg,
+    #f5f3ff 0%,
+    #c4b5fd 28%,
+    #818cf8 58%,
+    #60a5fa 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  text-shadow: 0 0 30px rgba(99, 102, 241, 0.2);
+}
+
+.streak-days-label {
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  color: rgba(226, 232, 240, 0.62);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.streak-message {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: rgba(226, 232, 240, 0.84);
+  font-style: italic;
+  max-width: 30ch;
+}
+
+.streak-cta {
+  margin-top: 0.85rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.22);
+  background: rgba(129, 140, 248, 0.08);
+  color: rgba(199, 210, 254, 0.95);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.streak-stats-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.streak-stat-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0.95rem 1rem;
+  flex: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.streak-stat-box:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(129, 140, 248, 0.22);
+}
+
+.streak-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(148, 163, 184, 0.92);
+  margin-bottom: 0.35rem;
+}
+
+.streak-stat-val {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+/* Heatmap */
+.streak-heatmap-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 1rem 1rem 0.9rem;
+  margin-bottom: 0.9rem;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+.streak-heatmap-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(148, 163, 184, 0.9);
+  margin-bottom: 0.85rem;
+}
+
+.streak-heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 0.38rem;
+  margin-bottom: 0.8rem;
+}
+
+@media (max-width: 720px) {
+  .streak-heatmap-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+.streak-dot {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+  cursor: default;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.streak-dot:hover {
+  transform: scale(1.12);
+}
+
+.streak-dot.visited {
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.95),
+    rgba(59, 130, 246, 0.82)
+  );
+  box-shadow:
+    0 0 0 1px rgba(129, 140, 248, 0.2),
+    0 0 12px rgba(99, 102, 241, 0.28);
+}
+
+.streak-dot.today {
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.92),
+    rgba(34, 197, 94, 0.8)
+  );
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.24),
+    0 0 12px rgba(16, 185, 129, 0.35);
+}
+
+.streak-dot.small {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  aspect-ratio: auto;
+}
+
+.streak-heatmap-legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.streak-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.92);
+}
+
+/* Milestones */
+.streak-milestones {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+  position: relative;
+  z-index: 1;
+}
+
+.streak-milestones-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(148, 163, 184, 0.9);
+  margin-bottom: 0.9rem;
+}
+
+.streak-badges-row {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.streak-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid;
+  min-width: 78px;
+  text-align: center;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.streak-badge:hover {
+  transform: translateY(-2px);
+}
+
+.streak-badge.unlocked {
+  background: linear-gradient(
+    180deg,
+    rgba(99, 102, 241, 0.14),
+    rgba(99, 102, 241, 0.08)
+  );
+  border-color: rgba(129, 140, 248, 0.32);
+  box-shadow: 0 10px 22px rgba(99, 102, 241, 0.1);
+}
+
+.streak-badge.locked {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.07);
+  opacity: 0.56;
+}
+
+.streak-badge-emoji {
+  font-size: 1.25rem;
+}
+
+.streak-badge-label {
+  font-size: 0.7rem;
+  color: rgba(226, 232, 240, 0.72);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 720px) {
+  .streak-card {
+    padding: 1.1rem;
+  }
+
+  .streak-title {
+    font-size: 1.45rem;
+  }
+
+  .streak-header {
+    gap: 0.75rem;
+  }
 }

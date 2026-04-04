@@ -1,9 +1,7 @@
 /* ============================================================
-   Net Worth page styles
-   Follows the same dark-theme conventions as portfolio.css
+   Net Worth page styles + Investor Quiz (embedded)
    ============================================================ */
 
-/* Override home-card defaults: wider + dark bg to match dark-theme text colors */
 .home-card.nw-card {
   max-width: 1100px;
   width: calc(100% - 2rem);
@@ -69,12 +67,10 @@
   border-color: rgba(99, 102, 241, 0.3);
   background: rgba(99, 102, 241, 0.08);
 }
-
 .nw-stat-primary.positive {
   border-color: rgba(16, 185, 129, 0.3);
   background: rgba(16, 185, 129, 0.08);
 }
-
 .nw-stat-primary.negative {
   border-color: rgba(239, 68, 68, 0.3);
   background: rgba(239, 68, 68, 0.08);
@@ -93,13 +89,15 @@
   font-weight: 700;
   color: #f1f5f9;
 }
-
 .nw-stat-large {
   font-size: 1.9rem;
 }
-
-.nw-stat-value.positive { color: #10b981; }
-.nw-stat-value.negative { color: #ef4444; }
+.nw-stat-value.positive {
+  color: #10b981;
+}
+.nw-stat-value.negative {
+  color: #ef4444;
+}
 
 .nw-stat-sub {
   font-size: 0.75rem;
@@ -189,14 +187,13 @@
   color: #94a3b8;
   margin-bottom: 0.2rem;
 }
-
 .nw-tooltip-value {
   font-size: 0.9rem;
   font-weight: 600;
   color: #f1f5f9;
 }
 
-/* ---- Donut chart legend ---- */
+/* ---- Donut legend ---- */
 .nw-pie-legend {
   margin-top: 0.75rem;
   display: flex;
@@ -217,18 +214,15 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-
 .nw-pie-label {
   color: #cbd5e1;
   flex: 1;
 }
-
 .nw-pie-pct {
   color: #64748b;
   min-width: 38px;
   text-align: right;
 }
-
 .nw-pie-amount {
   color: #94a3b8;
   min-width: 85px;
@@ -312,7 +306,6 @@
   background: rgba(99, 102, 241, 0.2);
   color: #a5b4fc;
 }
-
 .nw-badge-liability {
   background: rgba(239, 68, 68, 0.15);
   color: #fca5a5;
@@ -335,8 +328,12 @@
   white-space: nowrap;
 }
 
-.nw-entry-balance.positive { color: #10b981; }
-.nw-entry-balance.negative { color: #ef4444; }
+.nw-entry-balance.positive {
+  color: #10b981;
+}
+.nw-entry-balance.negative {
+  color: #ef4444;
+}
 
 .nw-entry-actions {
   display: flex;
@@ -404,9 +401,12 @@
   color: #f1f5f9;
   font-variant-numeric: tabular-nums;
 }
-
-.nw-total-value.positive { color: #10b981; }
-.nw-total-value.negative { color: #ef4444; }
+.nw-total-value.positive {
+  color: #10b981;
+}
+.nw-total-value.negative {
+  color: #ef4444;
+}
 
 /* ---- Empty hint ---- */
 .nw-empty-hint {
@@ -428,4 +428,237 @@
 .nw-select option {
   background: #1e293b;
   color: #f1f5f9;
+}
+
+/* ============================================================
+   Investor Quiz — embedded below the net worth content
+   ============================================================ */
+
+.quiz-section {
+  margin-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 2rem;
+}
+
+.quiz-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.quiz-section-sub {
+  font-size: 0.8rem;
+  color: #475569;
+  margin: 0;
+}
+
+.quiz-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ---- Progress ---- */
+.quiz-progress-bar-track {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  height: 5px;
+  overflow: hidden;
+}
+
+.quiz-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.quiz-progress-label {
+  font-size: 0.75rem;
+  color: #475569;
+  margin-top: -0.25rem;
+}
+
+/* ---- Questions ---- */
+.quiz-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.quiz-question-block {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+}
+
+.quiz-question-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 0 0 0.875rem;
+  line-height: 1.45;
+}
+
+.quiz-q-num {
+  color: #818cf8;
+  margin-right: 0.25rem;
+}
+
+.quiz-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+@media (max-width: 700px) {
+  .quiz-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.quiz-option-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  border-radius: 10px;
+  padding: 0.6rem 0.875rem;
+  font-size: 0.825rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.35;
+}
+
+.quiz-option-btn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #cbd5e1;
+}
+
+.quiz-option-btn.selected {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(99, 102, 241, 0.45);
+  color: #a5b4fc;
+  font-weight: 500;
+}
+
+/* ---- Submit ---- */
+.quiz-submit-btn {
+  align-self: flex-start;
+  padding: 0.6rem 1.5rem;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  color: #a5b4fc;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quiz-submit-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.32);
+  border-color: rgba(99, 102, 241, 0.65);
+}
+
+.quiz-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---- Result card ---- */
+.quiz-result-card {
+  border-radius: 14px;
+  border: 1px solid;
+  padding: 1.5rem;
+}
+
+.quiz-result-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.3rem;
+}
+
+.quiz-result-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.65rem;
+}
+
+.quiz-result-desc {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin: 0 0 1.25rem;
+}
+
+.quiz-alloc-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.65rem;
+}
+
+.quiz-alloc-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.quiz-alloc-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.quiz-alloc-label {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.quiz-alloc-track {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  height: 7px;
+  overflow: hidden;
+}
+
+.quiz-alloc-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s ease;
+}
+
+.quiz-alloc-pct {
+  font-size: 0.78rem;
+  color: #64748b;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ---- Retake ---- */
+.quiz-retake-btn {
+  align-self: flex-start;
+  padding: 0.5rem 1.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #64748b;
+  border-radius: 8px;
+  font-size: 0.825rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quiz-retake-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
 }
