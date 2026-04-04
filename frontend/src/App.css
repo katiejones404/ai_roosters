@@ -81,6 +81,10 @@
   animation: slideUp 0.6s ease-out;
 }
 
+.landing-card {
+  max-width: 600px;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -105,8 +109,8 @@
 }
 
 .home-content p {
-  font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.906);
   margin-bottom: 2.5rem;
   line-height: 1.6;
   animation: fadeIn 0.8s ease-out 0.4s both;
@@ -140,7 +144,7 @@
   padding: 1rem 2rem;
   text-decoration: none;
   border-radius: 12px;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 600;
   transition: all 0.3s ease;
   cursor: pointer;
@@ -204,31 +208,61 @@
 }
 
 .feature-icon {
-  font-size: 2.5rem;
+  font-size: 3rem;
   margin-bottom: 0.5rem;
+  color: #8490fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .feature-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #e2e8f0;
-  margin-bottom: 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: rgb(255, 255, 255);
+  margin-bottom: 0.75rem;
 }
 
 .feature-description {
-  font-size: 0.85rem;
-  color: #6b7280;
+  font-size: 0.95rem;
+  color: #ffffffe6;
   line-height: 1.4;
+}
+
+/* LANDING FEATURE ALIGNMENT (re-added): keep all 3 cards vertically even */
+.landing-features-grid .feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-features-grid .feature-icon {
+  height: 3rem;
+  margin-bottom: 0.65rem;
+}
+
+.landing-features-grid .feature-title {
+  min-height: 2.8em;
+  line-height: 1.3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.landing-features-grid .feature-description {
+  min-height: 2.8em;
+  margin: 0;
 }
 
 /* Branding */
 .home-branding {
-  margin-top: 3rem;
+  margin-top: 3.5rem;
   animation: fadeIn 0.8s ease-out 1s both;
 }
 
 .home-brand-name {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 700;
   color: #e2e8f0;
 }
@@ -238,8 +272,8 @@
 }
 
 .home-tagline {
-  font-size: 0.9rem;
-  color: #9ca3af;
+  font-size: 1.25rem;
+  color: #eef0f3;
   margin-top: 0.25rem;
 }
 
@@ -249,12 +283,8 @@
     padding: 3rem 2rem;
   }
 
-  .home-content h1 {
-    font-size: 2rem;
-  }
-
-  .home-content p {
-    font-size: 1rem;
+  .landing-card {
+    max-width: 600px;
   }
 
   .features-grid {
@@ -277,9 +307,8 @@
     max-width: 960px;
   }
 
-
-  .home-content h1 {
-    font-size: 1.75rem;
+  .landing-card {
+    max-width: 100%;
   }
 
   .home-brand-name {

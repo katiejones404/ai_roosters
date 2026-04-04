@@ -2,10 +2,9 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  Link,
+  Navigate,
   useLocation,
 } from "react-router-dom";
-
 
 import CreateAccount from "./create_account";
 import Login from "./login";
@@ -18,82 +17,12 @@ import ProtectedRoute from "./ProtectedRoute";
 import StockDetail from "./StockDetail";
 import News from "./News";
 import Alerts from "./Alerts";
+import HomePage from "./HomePage";
+import LandingPage from "./LandingPage";
 
-import "./App.css"; // Keep up high for global CSS loads
-import "./index.css"; 
-// import "./styles.css";        // Add any missing CSS imports here
+import "./App.css";
+import "./index.css";
 
-
-
-// ---------------------- HOME PAGE ----------------------
-function Home() {
-
-
-  return (
-    <div className="app-container">
-      <div className="home-background-shapes">
-        <div className="home-shape home-shape-1"></div>
-        <div className="home-shape home-shape-2"></div>
-        <div className="home-shape home-shape-3"></div>
-      </div>
-
-      <div className="home-card">
-        <div className="home-content">
-          <h1>Welcome to StockSense</h1>
-          <p>
-            Make smarter investment decisions with real-time market insights,
-            portfolio tracking, and AI-powered analytics.
-          </p>
-
-          <div className="nav-links">
-            <Link to="/signup" className="nav-link nav-link-primary">
-              🚀 Create Account
-            </Link>
-            <Link to="/login" className="nav-link nav-link-secondary">
-              🔐 Sign In
-            </Link>
-          </div>
-
-          <div className="features-section">
-            <div className="features-grid">
-              <div className="feature-item">
-                <div className="feature-icon">📊</div>
-                <div className="feature-title">Live Analytics</div>
-                <div className="feature-description">
-                  Real-time market insights
-                </div>
-              </div>
-
-              <div className="feature-item">
-                <div className="feature-icon">🎯</div>
-                <div className="feature-title">Smart Tracking</div>
-                <div className="feature-description">
-                  Monitor your portfolio
-                </div>
-              </div>
-
-              <div className="feature-item">
-                <div className="feature-icon">🤖</div>
-                <div className="feature-title">AI Powered</div>
-                <div className="feature-description">Intelligent insights</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div className="home-branding">
-          <div className="home-brand-name">
-            Stock<span className="home-brand-highlight">Sense</span>
-          </div>
-          <div className="home-tagline">Smart investing made simple</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------- MAIN APP ----------------------
 function App() {
   return (
     <BrowserRouter>
@@ -102,11 +31,9 @@ function App() {
   );
 }
 
-// ---------------------- NAVBAR + ROUTER ----------------------
 function AppContent() {
   const location = useLocation();
 
-  // Hide navbar on auth pages + root page
   const hideNavbar =
     location.pathname === "/login" ||
     location.pathname === "/signup" ||
@@ -117,13 +44,12 @@ function AppContent() {
       {!hideNavbar && <Navbar />}
 
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<CreateAccount />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Authenticated Routes */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/home" element={<HomePage />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/networth" element={<NetWorth />} />
@@ -133,8 +59,7 @@ function AppContent() {
           <Route path="/alerts" element={<Alerts />} />
         </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Home />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );

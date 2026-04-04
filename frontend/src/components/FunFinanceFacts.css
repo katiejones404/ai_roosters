@@ -1,0 +1,38 @@
+.fff-card {
+  background: rgba(15, 23, 42, 0.97);
+  min-height: 300px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.fff-label {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.fff-fact {
+  font-size: 1rem;
+  color: #f0f4f9;
+  line-height: 1.7;
+  margin: 0;
+  flex: 1;
+}
+
+.fff-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.75rem;
+}
+
+.fff-next {
+  font-size: 0.85rem;
+  color: #e2ebf4;
+  margin: 0;
+  font-style: italic;
+}

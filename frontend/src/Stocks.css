@@ -1,3 +1,17 @@
+/* Dashboard container width override (keeps landing page narrow) */
+.home-card.dashboard-card {
+  max-width: 1600px;
+  width: min(1600px, calc(100vw - 4rem));
+  text-align: left;
+  padding: 2.5rem 3rem;
+}
+
+@media (max-width: 768px) {
+  .home-card.dashboard-card {
+    width: calc(100vw - 2rem);
+    padding: 2rem 1.5rem;
+  }
+}
 /* 
    DASHBOARD — CONTROLS
  */

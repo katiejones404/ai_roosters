@@ -4,10 +4,11 @@ Authentication API endpoints
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import timedelta, date
 from typing import Annotated
 import re
 import asyncio
+import json
 
 # Import using sys.path approach for Docker compatibility
 import sys
@@ -15,7 +16,7 @@ sys.path.insert(0, '/app')
 
 from app.db.main import get_db
 from app.models.models import User
-from app.schema.schemas import UserRegister, UserLogin, UserResponse, Token, ProfilePictureUpdate, DeleteAccountRequest, UserProfileUpdate, PasswordChange
+from app.schema.schemas import UserRegister, UserLogin, UserResponse, Token, ProfilePictureUpdate, DeleteAccountRequest, UserProfileUpdate, PasswordChange, StreakResponse
 from app.core.security import (
     hash_password,
     verify_password,
@@ -30,6 +31,65 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 # --- Token Blacklist (Feature #6) ---
 # In-memory set of invalidated tokens. Resets on server restart.
 token_blacklist: set[str] = set()
+
+
+def _normalize_visit_days(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+        if not isinstance(parsed, list):
+            return []
+        return [d for d in parsed if isinstance(d, str) and d]
+    except Exception:
+        return []
+
+
+def _serialize_streak(current_user: User) -> StreakResponse:
+    today = date.today()
+    today_s = today.isoformat()
+
+    current = current_user.streak_current if isinstance(current_user.streak_current, int) and current_user.streak_current > 0 else 1
+    best = current_user.streak_best if isinstance(current_user.streak_best, int) and current_user.streak_best > 0 else current
+    total = current_user.streak_total_visits if isinstance(current_user.streak_total_visits, int) and current_user.streak_total_visits > 0 else 1
+    last_visit_date = current_user.streak_last_visit if isinstance(current_user.streak_last_visit, date) else today
+    visit_days = _normalize_visit_days(current_user.streak_visit_days)
+
+    if not visit_days:
+        visit_days = [last_visit_date.isoformat()]
+
+    diff_days = (today - last_visit_date).days
+    if diff_days == 1:
+        current += 1
+        best = max(best, current)
+        total += 1
+        last_visit_date = today
+        if today_s not in visit_days:
+            visit_days.append(today_s)
+    elif diff_days > 1:
+        current = 1
+        total += 1
+        last_visit_date = today
+        if today_s not in visit_days:
+            visit_days.append(today_s)
+
+    visit_days = visit_days[-365:]
+    best = max(best, current)
+    total = max(total, len(visit_days))
+
+    current_user.streak_current = current
+    current_user.streak_best = best
+    current_user.streak_last_visit = last_visit_date
+    current_user.streak_visit_days = json.dumps(visit_days)
+    current_user.streak_total_visits = total
+
+    return StreakResponse(
+        currentStreak=current,
+        bestStreak=best,
+        lastVisit=last_visit_date.isoformat(),
+        visitDays=visit_days,
+        totalVisits=total,
+    )
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -147,6 +207,17 @@ async def get_current_user(
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information"""
     return current_user
+
+
+@router.get("/me/streak", response_model=StreakResponse)
+async def get_current_user_streak(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get and update the authenticated user's daily streak."""
+    streak = _serialize_streak(current_user)
+    db.commit()
+    return streak
 
 
 @router.post("/logout")

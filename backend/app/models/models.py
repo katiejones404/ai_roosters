@@ -2,7 +2,7 @@
 Database models
 """
 import uuid
-from sqlalchemy import Column, String, DateTime, Text, Numeric, ForeignKey, TIMESTAMP, Boolean
+from sqlalchemy import Column, String, DateTime, Date, Text, Numeric, ForeignKey, TIMESTAMP, Boolean, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -24,6 +24,11 @@ class User(Base):
     profile_picture = Column(Text, nullable=True)
     name = Column(Text, nullable=True)
     phone = Column(Text, nullable=True)
+    streak_current = Column(Integer, nullable=True)
+    streak_best = Column(Integer, nullable=True)
+    streak_last_visit = Column(Date, nullable=True)
+    streak_visit_days = Column(Text, nullable=True)  # JSON string list of YYYY-MM-DD dates
+    streak_total_visits = Column(Integer, nullable=True)
 
     portfolio_items = relationship("Portfolio", back_populates="user", cascade="all, delete-orphan")
 
