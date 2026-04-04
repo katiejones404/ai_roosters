@@ -1,3 +1,8 @@
+/*
+ * StockChartBg.tsx
+ * Decorative background component that renders animated scrolling stock chart
+ * lines on an HTML canvas, used behind the login and news pages.
+ */
 import { useEffect, useRef } from "react";
 
 // Visual settings for each animated line

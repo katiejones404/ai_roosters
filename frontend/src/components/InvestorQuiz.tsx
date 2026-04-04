@@ -1,3 +1,8 @@
+/*
+ * InvestorQuiz.tsx
+ * Interactive quiz component that determines the user's investor personality type
+ * based on their answers to a series of risk and strategy questions.
+ */
 import { useState } from "react";
 import { FaArrowRight, FaBalanceScale, FaBullseye, FaChartLine, FaRocket, FaShieldAlt } from "react-icons/fa";
 import type { IconType } from "react-icons";

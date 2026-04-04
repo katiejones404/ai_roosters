@@ -1,3 +1,8 @@
+/*
+ * SentimentIndicators.tsx
+ * Reusable component that renders bullish, neutral, and bearish sentiment
+ * labels for 30-day, 120-day, and 360-day windows for a given stock.
+ */
 import React from "react";
 import type { StockIndicators, SentimentLabel, StockNewsExplanations } from "./utils/sentiment";
 

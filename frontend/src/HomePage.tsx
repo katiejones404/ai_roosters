@@ -1,3 +1,8 @@
+/*
+ * HomePage.tsx
+ * Home page displayed after login, showing the user's portfolio summary,
+ * active price alerts, investor personality quiz, and daily finance fact.
+ */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";

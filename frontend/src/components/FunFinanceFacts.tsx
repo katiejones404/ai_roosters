@@ -1,3 +1,8 @@
+/*
+ * FunFinanceFacts.tsx
+ * Widget component that displays a daily finance fact selected from a curated list,
+ * rotating to a new fact each calendar day.
+ */
 import "./FunFinanceFacts.css";
 
 const FACTS: string[] = [

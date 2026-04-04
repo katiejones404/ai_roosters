@@ -1,3 +1,8 @@
+/*
+ * StockDetail.tsx
+ * Stock detail page showing historical price charts, return metrics,
+ * AI sentiment indicators, and recent news for a single ticker.
+ */
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";

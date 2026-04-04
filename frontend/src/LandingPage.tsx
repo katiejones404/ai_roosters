@@ -1,3 +1,8 @@
+/*
+ * LandingPage.tsx
+ * Public landing page introducing StockSense with feature highlights
+ * and links to log in or create a new account.
+ */
 import { Link } from "react-router-dom";
 import { FaChartLine, FaRobot, FaWallet } from "react-icons/fa";
 

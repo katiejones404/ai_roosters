@@ -1,3 +1,8 @@
+/*
+ * Portfolio.tsx
+ * Portfolio management page where users track stock positions, view gain and
+ * loss metrics, compare historical price performance, and export data as CSV or PDF.
+ */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";

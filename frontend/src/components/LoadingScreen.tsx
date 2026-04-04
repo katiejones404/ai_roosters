@@ -1,3 +1,8 @@
+/*
+ * LoadingScreen.tsx
+ * Animated loading screen component displayed while page data is being fetched,
+ * with an optional custom message.
+ */
 import "./LoadingScreen.css";
 
 interface LoadingScreenProps {

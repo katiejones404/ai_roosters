@@ -1,3 +1,8 @@
+/*
+ * ProtectedRoute.tsx
+ * Route guard component that verifies the user is authenticated.
+ * Unauthenticated users are redirected to the login page.
+ */
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { getCurrentUser, getToken, removeToken } from "./utils/auth";
