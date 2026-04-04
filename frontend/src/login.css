@@ -506,6 +506,24 @@ input.error:focus {
   }
 }
 
+/* Forgot Password */
+.forgot-password-row {
+  text-align: right;
+  margin-top: 0.4rem;
+}
+
+.forgot-password-link {
+  font-size: 0.82rem;
+  color: #818cf8;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.forgot-password-link:hover {
+  color: #a5b4fc;
+  text-decoration: underline;
+}
+
 /* Signup Prompt */
 .signup-prompt {
   text-align: center;

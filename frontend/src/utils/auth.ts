@@ -126,6 +126,32 @@ export const changePassword = async (
   );
 };
 
+export interface NotificationPreferences {
+  emailNotifications: boolean;
+  marketAlerts: boolean;
+  portfolioUpdates: boolean;
+  weeklyReport: boolean;
+  pushNotifications: boolean;
+}
+
+export const getNotificationPreferences = async (): Promise<NotificationPreferences> => {
+  const token = getToken();
+  const response = await axios.get(`${API_URL}/api/auth/me/notifications`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const updateNotificationPreferences = async (
+  data: Partial<NotificationPreferences>
+): Promise<NotificationPreferences> => {
+  const token = getToken();
+  const response = await axios.patch(`${API_URL}/api/auth/me/notifications`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 axios.interceptors.request.use(
   (config) => {
     const token = getToken();
@@ -147,7 +173,11 @@ axios.interceptors.response.use(
 
       const path = window.location.pathname;
       const isPublicRoute =
-        path === "/" || path === "/login" || path === "/signup";
+        path === "/" ||
+        path === "/login" ||
+        path === "/signup" ||
+        path === "/forgot-password" ||
+        path === "/reset-password";
 
       if (!isPublicRoute) {
         window.location.href = "/login";

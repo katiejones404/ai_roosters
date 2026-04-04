@@ -281,3 +281,61 @@
   background: rgba(239, 68, 68, 0.2);
   border-color: rgba(239, 68, 68, 0.45);
 }
+
+/* Email notify toggle in the form */
+.alert-field-toggle {
+  flex: 0 0 auto;
+  min-width: 80px;
+  align-items: center;
+}
+
+.alert-notify-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.alert-notify-toggle.on {
+  background: #10b981;
+}
+
+.alert-notify-knob {
+  position: absolute;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.alert-notify-toggle.on .alert-notify-knob {
+  transform: translateX(20px);
+}
+
+/* Email status pill in the table */
+.alert-notify-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.alert-notify-pill.on {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}

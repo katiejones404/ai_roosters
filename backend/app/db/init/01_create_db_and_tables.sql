@@ -6,7 +6,12 @@ CREATE TABLE IF NOT EXISTS users (
   username text UNIQUE NOT NULL,
   email text UNIQUE NOT NULL,
   password_hash text NOT NULL,
-  created_at timestamptz DEFAULT now()
+  created_at timestamptz DEFAULT now(),
+  notify_email_enabled boolean NOT NULL DEFAULT true,
+  notify_market_alerts_enabled boolean NOT NULL DEFAULT true,
+  notify_portfolio_updates_enabled boolean NOT NULL DEFAULT true,
+  notify_weekly_report_enabled boolean NOT NULL DEFAULT false,
+  notify_push_enabled boolean NOT NULL DEFAULT false
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
@@ -184,6 +189,11 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_best INTEGER;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_last_visit DATE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_visit_days TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_total_visits INTEGER;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_email_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_market_alerts_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_portfolio_updates_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_weekly_report_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_push_enabled BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- Net Worth: manual assets
 CREATE TABLE IF NOT EXISTS networth_assets (
@@ -239,6 +249,7 @@ CREATE TABLE IF NOT EXISTS price_alerts (
   target_price numeric NOT NULL,
   direction text NOT NULL,
   is_active boolean NOT NULL DEFAULT true,
+  email_notify boolean NOT NULL DEFAULT true,
   triggered_at timestamptz,
   created_at timestamptz DEFAULT now(),
   CONSTRAINT fk_price_alerts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

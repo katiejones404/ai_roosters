@@ -20,6 +20,7 @@ class AlertCreate(BaseModel):
     ticker: str
     target_price: float
     direction: str  # "above" or "below"
+    email_notify: bool = True
 
 
 class AlertOut(BaseModel):
@@ -28,6 +29,7 @@ class AlertOut(BaseModel):
     target_price: float
     direction: str
     is_active: bool
+    email_notify: bool
     triggered_at: Optional[str]
     created_at: Optional[str]
 
@@ -53,6 +55,7 @@ def list_alerts(
             target_price=float(a.target_price),
             direction=a.direction,
             is_active=a.is_active,
+            email_notify=a.email_notify,
             triggered_at=a.triggered_at.isoformat() if a.triggered_at else None,
             created_at=a.created_at.isoformat() if a.created_at else None,
         )
@@ -78,6 +81,7 @@ def create_alert(
         target_price=body.target_price,
         direction=body.direction,
         is_active=True,
+        email_notify=body.email_notify,
         created_at=datetime.now(timezone.utc),
     )
     db.add(alert)
@@ -90,6 +94,7 @@ def create_alert(
         target_price=float(alert.target_price),
         direction=alert.direction,
         is_active=alert.is_active,
+        email_notify=alert.email_notify,
         triggered_at=None,
         created_at=alert.created_at.isoformat() if alert.created_at else None,
     )
