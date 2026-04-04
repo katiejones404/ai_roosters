@@ -4,10 +4,13 @@ import { useNavigate, Link } from "react-router-dom";
 import { getToken } from "./utils/auth";
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip,
-    LineChart, Line, CartesianGrid, ResponsiveContainer, Cell, Legend,
+    LineChart, Line, AreaChart, Area,
+    CartesianGrid, ResponsiveContainer, Cell, Legend,
 } from "recharts";
 import AddToPortfolioModal from "./components/AddToPortfolio";
 import LoadingScreen from "./components/LoadingScreen";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import './portfolio.css';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
@@ -47,7 +50,45 @@ interface PricePoint {
     close: number;
 }
 
-const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981'];
+const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ec4899', '#06b6d4', '#f97316'];
+
+/*
+AnimatedValue
+
+Counts up from 0 to the target value on mount using requestAnimationFrame.
+Used in the portfolio summary stat cards for a polished entry animation.
+
+Notes
+-----
+Uses easeOutCubic easing so the animation starts fast and decelerates smoothly.
+*/
+const AnimatedValue: React.FC<{
+    value: number;
+    format?: 'currency' | 'integer';
+    duration?: number;
+}> = ({ value, format = 'currency', duration = 1200 }) => {
+    const [display, setDisplay] = useState(0);
+    useEffect(() => {
+        if (!value) { setDisplay(0); return; }
+        const start = performance.now();
+        let rafId: number;
+        const step = (now: number) => {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setDisplay(value * eased);
+            if (progress < 1) rafId = requestAnimationFrame(step);
+            else setDisplay(value);
+        };
+        rafId = requestAnimationFrame(step);
+        return () => cancelAnimationFrame(rafId);
+    }, [value, duration]);
+    if (format === 'integer') return <>{Math.round(display)}</>;
+    return <>{new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: 'USD',
+        minimumFractionDigits: 2, maximumFractionDigits: 2,
+    }).format(display)}</>;
+};
 
 const Portfolio = () => {
     const navigate = useNavigate();
@@ -275,6 +316,47 @@ const Portfolio = () => {
         URL.revokeObjectURL(url);
     };
 
+    const handleExportPDF = () => {
+        const { portfolio_items = [] } = portfolioData || {};
+        const summ = portfolioData?.summary;
+        if (portfolio_items.length === 0) return;
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text('Portfolio Report', 14, 22);
+        doc.setFontSize(10);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+        doc.setTextColor(0, 0, 0);
+        const rows = portfolio_items.map((item: PortfolioItemWithMetrics) => [
+            item.ticker,
+            item.quantity.toString(),
+            `$${item.avg_price?.toFixed(2) ?? 'N/A'}`,
+            `$${item.current_price?.toFixed(2) ?? 'N/A'}`,
+            `$${item.cost_basis?.toFixed(2) ?? 'N/A'}`,
+            `$${item.current_value?.toFixed(2) ?? 'N/A'}`,
+            `$${item.total_gain_loss?.toFixed(2) ?? 'N/A'}`,
+            item.gain_loss_pct != null ? `${(item.gain_loss_pct * 100).toFixed(2)}%` : 'N/A',
+        ]);
+        autoTable(doc, {
+            head: [['Ticker', 'Qty', 'Avg Price', 'Current', 'Cost Basis', 'Value', 'Gain/Loss', 'Return %']],
+            body: rows,
+            startY: 36,
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [99, 102, 241] },
+        });
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(12);
+        doc.text('Summary', 14, finalY);
+        doc.setFontSize(10);
+        if (summ) {
+            doc.text(`Total Value: ${formatCurrency(summ.total_current_value)}`, 14, finalY + 8);
+            doc.text(`Total Invested: ${formatCurrency(summ.total_cost_basis)}`, 14, finalY + 16);
+            doc.text(`Total Gain/Loss: ${formatCurrency(summ.total_gain_loss)} (${formatPercent(summ.total_gain_loss_pct)})`, 14, finalY + 24);
+            doc.text(`Positions: ${summ.num_positions}`, 14, finalY + 32);
+        }
+        doc.save('portfolio.pdf');
+    };
+
     // Build merged chart dataset for the comparison LineChart
     const buildChartData = () => {
         const tickers = Object.keys(compareData);
@@ -355,6 +437,13 @@ const Portfolio = () => {
 
     const chartData = buildChartData();
 
+    // Data for per-holding P&L bar chart
+    const plChartData = portfolio_items.map(item => ({
+        ticker: item.ticker,
+        gainLoss: parseFloat((item.total_gain_loss ?? 0).toFixed(2)),
+        pct: parseFloat(((item.gain_loss_pct ?? 0) * 100).toFixed(2)),
+    }));
+
     return (
         <div className="app-container">
             <div className="home-background-shapes">
@@ -376,14 +465,14 @@ const Portfolio = () => {
                             <div className="stat-icon">💰</div>
                             <div className="stat-content">
                                 <div className="stat-labelP">Total Value</div>
-                                <div className="stat-valueP">{formatCurrency(summary.total_current_value)}</div>
+                                <div className="stat-valueP"><AnimatedValue value={summary.total_current_value ?? 0} /></div>
                             </div>
                         </div>
                         <div className="summary-stat-card">
                             <div className="stat-icon">📊</div>
                             <div className="stat-content">
                                 <div className="stat-labelP">Total Invested</div>
-                                <div className="stat-valueP">{formatCurrency(summary.total_cost_basis)}</div>
+                                <div className="stat-valueP"><AnimatedValue value={summary.total_cost_basis ?? 0} /></div>
                             </div>
                         </div>
                         <div className={`summary-stat-card ${getReturnColor(summary.total_gain_loss)}`}>
@@ -393,7 +482,7 @@ const Portfolio = () => {
                             <div className="stat-content">
                                 <div className="stat-labelP">Total Gain/Loss</div>
                                 <div className={`stat-valueP ${getReturnColor(summary.total_gain_loss)}`}>
-                                    {formatCurrency(summary.total_gain_loss)}
+                                    <AnimatedValue value={summary.total_gain_loss ?? 0} />
                                 </div>
                                 <div className={`stat-subvalue ${getReturnColor(summary.total_gain_loss_pct)}`}>
                                     {formatPercent(summary.total_gain_loss_pct)}
@@ -404,7 +493,7 @@ const Portfolio = () => {
                             <div className="stat-icon">🎯</div>
                             <div className="stat-content">
                                 <div className="stat-labelP">Positions</div>
-                                <div className="stat-valueP">{summary.num_positions || 0}</div>
+                                <div className="stat-valueP"><AnimatedValue value={summary.num_positions ?? 0} format="integer" /></div>
                             </div>
                         </div>
                     </div>
@@ -419,13 +508,22 @@ const Portfolio = () => {
                                     <h2 className="section-title">Holdings</h2>
                                     <div className="section-header-actions">
                                         {portfolio_items.length > 0 && (
-                                            <button
-                                                className="csv-export-btn"
-                                                onClick={handleExportCSV}
-                                                title="Download portfolio as CSV"
-                                            >
-                                                ↓ Export CSV
-                                            </button>
+                                            <>
+                                                <button
+                                                    className="csv-export-btn"
+                                                    onClick={handleExportCSV}
+                                                    title="Download portfolio as CSV"
+                                                >
+                                                    Export CSV
+                                                </button>
+                                                <button
+                                                    className="csv-export-btn"
+                                                    onClick={handleExportPDF}
+                                                    title="Download portfolio as PDF"
+                                                >
+                                                    Export PDF
+                                                </button>
+                                            </>
                                         )}
                                         {portfolio_items.length >= 2 && (
                                             <button
@@ -615,6 +713,32 @@ const Portfolio = () => {
                         {/* Right: Trending widget + Comparison chart */}
                         <div className="portfolio-right">
 
+                            {/* Per-holding Gain/Loss chart */}
+                            {plChartData.length > 0 && (
+                                <div className="trending-widget">
+                                    <h3 className="widget-title">Gain / Loss by Holding</h3>
+                                    <ResponsiveContainer width="100%" height={200}>
+                                        <BarChart data={plChartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                                            <XAxis dataKey="ticker" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                                            <YAxis tickFormatter={(v: number) => `$${v}`} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                                            <Tooltip
+                                                formatter={(v, name) =>
+                                                    name === 'gainLoss'
+                                                        ? [`$${(v as number).toFixed(2)}`, 'Gain/Loss']
+                                                        : [`${(v as number).toFixed(2)}%`, 'Return']
+                                                }
+                                                contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                                            />
+                                            <Bar dataKey="gainLoss" radius={[4, 4, 0, 0]}>
+                                                {plChartData.map((entry, index) => (
+                                                    <Cell key={`pl-${index}`} fill={entry.gainLoss >= 0 ? '#10b981' : '#ef4444'} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            )}
+
                             {/* Trending widget */}
                             {trendingData.length > 0 && (
                                 <div className="trending-widget">
@@ -677,7 +801,15 @@ const Portfolio = () => {
                                         <div className="chart-loading">Loading chart...</div>
                                     ) : chartData.length > 0 ? (
                                         <ResponsiveContainer width="100%" height={260}>
-                                            <LineChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                                            <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                                                <defs>
+                                                    {selectedTickers.map((ticker, i) => (
+                                                        <linearGradient key={ticker} id={`grad-${ticker}`} x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor={CHART_COLORS[i % CHART_COLORS.length]} stopOpacity={0.25} />
+                                                            <stop offset="95%" stopColor={CHART_COLORS[i % CHART_COLORS.length]} stopOpacity={0} />
+                                                        </linearGradient>
+                                                    ))}
+                                                </defs>
                                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
                                                 <XAxis
                                                     dataKey="date"
@@ -690,23 +822,24 @@ const Portfolio = () => {
                                                 />
                                                 <Tooltip
                                                     formatter={(v, name) =>
-                                                        compareView === 'pct' ? [`${v as number}%`, name] : [`$${v as number}`, name]
+                                                        compareView === 'pct' ? [`${(v as number).toFixed(2)}%`, name] : [`$${(v as number).toFixed(2)}`, name]
                                                     }
                                                     contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
                                                     labelStyle={{ color: '#94a3b8', fontSize: 11 }}
                                                 />
                                                 <Legend />
                                                 {selectedTickers.map((ticker, i) => (
-                                                    <Line
+                                                    <Area
                                                         key={ticker}
                                                         type="monotone"
                                                         dataKey={ticker}
                                                         stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                                                        fill={`url(#grad-${ticker})`}
                                                         dot={false}
                                                         strokeWidth={2}
                                                     />
                                                 ))}
-                                            </LineChart>
+                                            </AreaChart>
                                         </ResponsiveContainer>
                                     ) : (
                                         <div className="chart-loading">No data available</div>

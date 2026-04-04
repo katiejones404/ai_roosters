@@ -15,8 +15,13 @@ router = APIRouter(prefix="/sentiment", tags=["sentiment"])
 
 WEBSITE_TICKERS: List[str] = [
     "KSS", "ALK", "NVS", "AXP", "FCX",
-    "CSX", "DAL", "NTAP", "AMZN", "AAPL",
-    "MRK", "NVDA", "COP", "BHP", "EA",
+    "CSX", "DAL", "NTAP", "MRK", "COP",
+    "BHP", "EA",
+    "TSLA", "NVDA", "AAPL", "MSFT", "AMZN",
+    "AMD", "META", "GOOGL", "GOOG", "PLTR",
+    "MU", "NFLX",
+    "NKE", "AAL", "BAC", "F", "INTC", "XOM", "T",
+    "SOFI", "PLUG", "MARA", "SNAP", "COIN", "AMC", "RIVN", "CCL", "ENPH",
 ]
 TICKER_ORDER: Dict[str, int] = {ticker: idx for idx, ticker in enumerate(WEBSITE_TICKERS)}
 TICKER_SQL_LIST = ", ".join(f"'{ticker}'" for ticker in WEBSITE_TICKERS)

@@ -3,13 +3,19 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import "./News.css";
 import StockChartBg from "./components/StockChartBg";
+import LoadingScreen from "./components/LoadingScreen";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
 const WEBSITE_TICKERS = [
   "KSS", "ALK", "NVS", "AXP", "FCX",
-  "CSX", "DAL", "NTAP", "AMZN", "AAPL",
-  "MRK", "NVDA", "COP", "BHP", "EA",
+  "CSX", "DAL", "NTAP", "MRK", "COP",
+  "BHP", "EA",
+  "TSLA", "NVDA", "AAPL", "MSFT", "AMZN",
+  "AMD", "META", "GOOGL", "GOOG", "PLTR",
+  "MU", "NFLX",
+  "NKE", "AAL", "BAC", "F", "INTC", "XOM", "T",
+  "SOFI", "PLUG", "MARA", "SNAP", "COIN", "AMC", "RIVN", "CCL", "ENPH",
 ];
 
 interface NewsArticle {
@@ -130,7 +136,10 @@ export default function News() {
         ))}
       </div>
 
-      {loading && (
+      {loading && articles.length === 0 && (
+        <LoadingScreen message="Loading news..." />
+      )}
+      {loading && articles.length > 0 && (
         <div className="news-loading">
           <div className="news-spinner" />
         </div>

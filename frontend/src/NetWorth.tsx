@@ -8,6 +8,8 @@ import {
 } from "recharts";
 import "./networth.css";
 import LoadingScreen from "./components/LoadingScreen";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
@@ -345,6 +347,65 @@ const NetWorth = () => {
         }
     };
 
+    const handleExportCSVNW = () => {
+        if (!summary) return;
+        const s = summary;
+        const rows: string[][] = [['Section', 'Name', 'Category', 'Balance']];
+        rows.push(['Assets', 'Stock Portfolio', 'Portfolio', s.portfolio_value.toFixed(2)]);
+        s.assets.forEach(a => rows.push(['Assets', a.name, CATEGORY_LABELS[a.category] || a.category, a.balance.toFixed(2)]));
+        s.liabilities.forEach(l => rows.push(['Liabilities', l.name, CATEGORY_LABELS[l.category] || l.category, l.balance.toFixed(2)]));
+        rows.push(['', 'Total Assets', '', s.total_assets.toFixed(2)]);
+        rows.push(['', 'Total Liabilities', '', s.total_liabilities.toFixed(2)]);
+        rows.push(['', 'Net Worth', '', s.net_worth.toFixed(2)]);
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'networth.csv'; a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleExportPDFNW = () => {
+        if (!summary) return;
+        const s = summary;
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text('Net Worth Report', 14, 22);
+        doc.setFontSize(10);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.text('Summary', 14, 40);
+        doc.setFontSize(10);
+        doc.text(`Net Worth: ${formatCurrency(s.net_worth)}`, 14, 48);
+        doc.text(`Portfolio Value: ${formatCurrency(s.portfolio_value)}`, 14, 56);
+        doc.text(`Total Assets: ${formatCurrency(s.total_assets)}`, 14, 64);
+        doc.text(`Total Liabilities: ${formatCurrency(s.total_liabilities)}`, 14, 72);
+        const assetRows = [
+            ['Stock Portfolio', 'Portfolio', `$${s.portfolio_value.toFixed(2)}`],
+            ...s.assets.map(a => [a.name, CATEGORY_LABELS[a.category] || a.category, `$${a.balance.toFixed(2)}`]),
+        ];
+        autoTable(doc, {
+            head: [['Asset', 'Category', 'Balance']],
+            body: assetRows,
+            startY: 80,
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [16, 185, 129] },
+        });
+        if (s.liabilities.length > 0) {
+            const finalY = (doc as any).lastAutoTable.finalY + 10;
+            autoTable(doc, {
+                head: [['Liability', 'Category', 'Balance']],
+                body: s.liabilities.map(l => [l.name, CATEGORY_LABELS[l.category] || l.category, `$${l.balance.toFixed(2)}`]),
+                startY: finalY,
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [239, 68, 68] },
+            });
+        }
+        doc.save('networth.pdf');
+    };
+
     // ---------------------------------------------------------------------------
     // Render: loading / error
     // ---------------------------------------------------------------------------
@@ -412,8 +473,14 @@ const NetWorth = () => {
 
                     {/* Header */}
                     <div className="nw-header">
-                        <h1>Net Worth</h1>
-                        <p>Your complete financial picture</p>
+                        <div>
+                            <h1>Net Worth</h1>
+                            <p>Your complete financial picture</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <button className="csv-export-btn" onClick={handleExportCSVNW}>Export CSV</button>
+                            <button className="csv-export-btn" onClick={handleExportPDFNW}>Export PDF</button>
+                        </div>
                     </div>
 
                     {/* Summary stat cards */}

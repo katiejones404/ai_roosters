@@ -47,11 +47,16 @@ if not logger.handlers:
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-# The 15 tickers tracked on the website -- keep this in sync with the other ingest scripts
+# Tickers tracked on the website -- keep this in sync with the other ingest scripts
 TARGET_TICKERS = [
     "KSS", "ALK", "NVS", "AXP", "FCX",
-    "CSX", "DAL", "NTAP", "AMZN", "AAPL",
-    "MRK", "NVDA", "COP", "BHP", "EA",
+    "CSX", "DAL", "NTAP", "MRK", "COP",
+    "BHP", "EA",
+    "TSLA", "NVDA", "AAPL", "MSFT", "AMZN",
+    "AMD", "META", "GOOGL", "GOOG", "PLTR",
+    "MU", "NFLX",
+    "NKE", "AAL", "BAC", "F", "INTC", "XOM", "T",
+    "SOFI", "PLUG", "MARA", "SNAP", "COIN", "AMC", "RIVN", "CCL", "ENPH",
 ]
 
 # NewsAPI works best with company name queries rather than raw tickers.
@@ -65,13 +70,38 @@ TICKER_QUERIES: Dict[str, str] = {
     "CSX":  "CSX railroad",
     "DAL":  "Delta Air Lines",
     "NTAP": "NetApp storage",
-    "AMZN": "Amazon",
-    "AAPL": "Apple Inc",
     "MRK":  "Merck pharmaceutical",
-    "NVDA": "NVIDIA GPU",
     "COP":  "ConocoPhillips oil",
     "BHP":  "BHP mining",
     "EA":   "Electronic Arts gaming",
+    "TSLA": "Tesla electric vehicle",
+    "NVDA": "NVIDIA GPU",
+    "AAPL": "Apple Inc",
+    "MSFT": "Microsoft",
+    "AMZN": "Amazon",
+    "AMD":  "AMD semiconductor",
+    "META": "Meta Facebook social media",
+    "GOOGL": "Alphabet Google",
+    "GOOG": "Alphabet Google",
+    "PLTR": "Palantir data analytics",
+    "MU":   "Micron memory chip",
+    "NFLX": "Netflix streaming",
+    "NKE":  "Nike athletic",
+    "AAL":  "American Airlines",
+    "BAC":  "Bank of America",
+    "F":    "Ford Motor",
+    "INTC": "Intel chip",
+    "XOM":  "ExxonMobil oil",
+    "T":    "AT&T telecom",
+    "SOFI": "SoFi financial",
+    "PLUG": "Plug Power hydrogen",
+    "MARA": "Marathon Digital bitcoin",
+    "SNAP": "Snap Snapchat",
+    "COIN": "Coinbase crypto",
+    "AMC":  "AMC Entertainment",
+    "RIVN": "Rivian electric truck",
+    "CCL":  "Carnival cruise",
+    "ENPH": "Enphase solar",
 }
 
 NEWSAPI_BASE_URL = "https://newsapi.org/v2/everything"
