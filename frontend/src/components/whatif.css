@@ -1,0 +1,241 @@
+/* ============================================================
+   What If Calculator — embedded section (matches app dark theme)
+   ============================================================ */
+
+.wi-section {
+  margin-top: 1.5rem;
+}
+
+.wi-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.wi-section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.wi-section-sub {
+  font-size: 0.8rem;
+  color: #475569;
+  margin: 0;
+}
+
+/* ---- Form card ---- */
+.wi-form-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.wi-form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.875rem;
+  flex-wrap: wrap;
+}
+
+.wi-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 140px;
+}
+
+.wi-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.wi-input,
+.wi-select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wi-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  padding-right: 2rem;
+}
+
+.wi-select option {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.wi-input:focus,
+.wi-select:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.wi-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.wi-input::-webkit-outer-spin-button,
+.wi-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.wi-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
+}
+
+/* ---- Calc button ---- */
+.wi-calc-btn {
+  padding: 0.6rem 1.5rem;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  color: #a5b4fc;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  align-self: flex-end;
+}
+
+.wi-calc-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.32);
+  border-color: rgba(99, 102, 241, 0.65);
+}
+
+.wi-calc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wi-error {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin: 0.65rem 0 0;
+}
+
+/* ---- Results ---- */
+.wi-result-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.wi-result-main {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+}
+
+.wi-result-main.positive {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.wi-result-main.negative {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.wi-result-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin-bottom: 0.3rem;
+}
+
+.wi-result-big {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  font-variant-numeric: tabular-nums;
+}
+
+.wi-result-change {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0.2rem 0;
+}
+
+.wi-result-change.positive { color: #10b981; }
+.wi-result-change.negative { color: #ef4444; }
+
+.wi-result-sub {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+/* ---- Stat boxes ---- */
+.wi-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+@media (max-width: 700px) {
+  .wi-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.wi-stat-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+}
+
+.wi-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.3rem;
+}
+
+.wi-stat-val {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  font-variant-numeric: tabular-nums;
+}
+
+.wi-stat-val.positive { color: #10b981; }
+.wi-stat-val.negative { color: #ef4444; }
+
+/* ---- Verdict ---- */
+.wi-verdict {
+  background: rgba(99, 102, 241, 0.07);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  border-radius: 12px;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.875rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
