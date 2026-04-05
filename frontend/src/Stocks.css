@@ -1,14 +1,15 @@
 /* Dashboard container width override (keeps landing page narrow) */
 .home-card.dashboard-card {
-  max-width: 1600px;
-  width: min(1600px, calc(100vw - 4rem));
+  max-width: none;
+  width: 100%;
   text-align: left;
   padding: 2.5rem 3rem;
+  margin: 0;
+  min-width: 0;
 }
 
 @media (max-width: 768px) {
   .home-card.dashboard-card {
-    width: calc(100vw - 2rem);
     padding: 2rem 1.5rem;
   }
 }
@@ -587,10 +588,13 @@
 }
 .dashboard-page-layout {
   position: relative;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 24px 32px;
+  width: min(1320px, calc(100vw - 2rem));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding: 24px 0;
   box-sizing: border-box;
 }
 
@@ -604,25 +608,21 @@
   backdrop-filter: blur(10px);
 }
 
-.dashboard-page-layout {
-  position: relative;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 24px 32px;
-  box-sizing: border-box;
-}
-
 .dashboard-sidebar {
-  position: absolute;
-  top: 46px;
-  width: 210px;
-  /* Keep the filter rail offset from the dashboard card edge as it widens. */
-  left: calc(50% - min(800px, calc((100vw - 4rem) / 2)) - 230px);
+  position: sticky;
+  top: 92px;
+  width: 100%;
 }
 
-.home-card {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
+@media (max-width: 980px) {
+  .dashboard-page-layout {
+    width: calc(100vw - 2rem);
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px 0;
+  }
+
+  .dashboard-sidebar {
+    position: static;
+  }
 }

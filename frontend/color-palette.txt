@@ -12,10 +12,19 @@ AI_ROOSTERS COLOR PALETTE
      WHITE       #ffffff   Backgrounds/text on dark
      OFF-WHITE   #f9fafb   Card/surface backgrounds
      GREY LT     #e5e7eb   Borders/dividers
-     GREY MID    #9ca3af   Placeholder/disabled text
+     GREY LT2    #e2e8f0   Text
+     GREY MID2   #cbd5e1   Text 
+     GREY MID    #acb3c0   Placeholder/disabled text 
      GREY        #6b7280   Secondary text
      GREY DK     #374151   Body text on light bg
      GREY DKR    #1f2937   Headings on light bg
      BLACK       #0b0b0b   App header / deep backgrounds
      BLACK ALT   #000000   Pure black
  
+
+ COLORS TO AVOID FOR TEXT:
+
+Too dark, doesn't show up well:
+ #475569
+ #94a3b8
+ #64748b

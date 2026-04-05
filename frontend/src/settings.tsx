@@ -666,53 +666,6 @@ const Settings: React.FC = () => {
                   </label>
                 </div>
 
-                <div className="notification-item">
-                  <div className="notification-info">
-                    <h4>Portfolio Updates</h4>
-                    <p>Receive summaries when your portfolio value changes significantly</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="portfolioUpdates"
-                      checked={notifications.portfolioUpdates}
-                      onChange={handleNotificationChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-
-                <div className="notification-item">
-                  <div className="notification-info">
-                    <h4>Weekly Report</h4>
-                    <p>Get a weekly summary of your portfolio performance</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="weeklyReport"
-                      checked={notifications.weeklyReport}
-                      onChange={handleNotificationChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-
-                <div className="notification-item">
-                  <div className="notification-info">
-                    <h4>Push Notifications</h4>
-                    <p>Allow browser push notifications for real-time alerts</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="pushNotifications"
-                      checked={notifications.pushNotifications}
-                      onChange={handleNotificationChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
               </div>
             </div>
           )}

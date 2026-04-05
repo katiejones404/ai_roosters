@@ -1,14 +1,14 @@
 /* Card container: mirrors .home-card.nw-card from networth.css */
 .alerts-card {
-  max-width: 1400px;
+  max-width: 1200px;
   text-align: left;
   padding: 2.5rem 3rem;
   color: #e2e8f0;
 }
 
 .app-container.app-container-wide .home-card.alerts-card {
-  max-width: 1600px;
-  width: min(1600px, calc(100vw - 4rem)); /* responsive */
+  max-width: 1200px;
+  width: min(1400px, calc(100vw - 4rem)); /* responsive */
 }
 
 .alerts-header {

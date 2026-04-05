@@ -1,12 +1,12 @@
 /*
  * Alerts.tsx
  * Price alerts page where users create, view, and delete stock price alerts.
- * Each alert can optionally send an email notification when the target price is reached.
  */
 import { useState, useEffect, type FormEvent } from "react";
 import axios from "axios";
 import "./Alerts.css";
 import LoadingScreen from "./components/LoadingScreen";
+import { getNotificationPreferences } from "./utils/auth";
 
 const API_BASE = (
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
@@ -48,10 +48,10 @@ export default function Alerts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [emailEnabled, setEmailEnabled] = useState(false);
   const [ticker, setTicker] = useState(WEBSITE_TICKERS[0]);
   const [targetPrice, setTargetPrice] = useState("");
   const [direction, setDirection] = useState<"above" | "below">("above");
-  const [emailNotify, setEmailNotify] = useState(true);
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -70,6 +70,9 @@ export default function Alerts() {
 
   useEffect(() => {
     fetchAlerts();
+    getNotificationPreferences()
+      .then((prefs) => setEmailEnabled(prefs.emailNotifications))
+      .catch(() => setEmailEnabled(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -88,7 +91,7 @@ export default function Alerts() {
         ticker,
         target_price: price,
         direction,
-        email_notify: emailNotify,
+        email_notify: emailEnabled,
       });
       setTargetPrice("");
       await fetchAlerts();
@@ -117,7 +120,9 @@ export default function Alerts() {
         <div className="alerts-header">
           <h1 className="alerts-title">Price Alerts</h1>
           <p className="alerts-subtitle">
-            Get notified by email when a stock hits your target price
+            {emailEnabled
+              ? "Get notified when a stock hits your target price"
+              : "Get notified when a stock hits your target price. Turn on email notifications in settings to receive email alerts."}
           </p>
         </div>
 
@@ -164,17 +169,6 @@ export default function Alerts() {
                   onChange={(e) => setTargetPrice(e.target.value)}
                 />
               </div>
-              <div className="alert-field alert-field-toggle">
-                <label className="alert-label">Email Me</label>
-                <button
-                  type="button"
-                  className={`alert-notify-toggle${emailNotify ? " on" : ""}`}
-                  onClick={() => setEmailNotify((v) => !v)}
-                  title={emailNotify ? "Email notification on" : "Email notification off"}
-                >
-                  <span className="alert-notify-knob" />
-                </button>
-              </div>
               <button
                 className="alert-create-btn"
                 type="submit"
@@ -205,7 +199,6 @@ export default function Alerts() {
                       <th>Ticker</th>
                       <th>Condition</th>
                       <th>Target Price</th>
-                      <th>Email</th>
                       <th>Created</th>
                       <th></th>
                     </tr>
@@ -221,14 +214,6 @@ export default function Alerts() {
                         </td>
                         <td className="alert-price">
                           ${a.target_price.toFixed(2)}
-                        </td>
-                        <td>
-                          <span
-                            className={`alert-notify-pill${a.email_notify ? " on" : ""}`}
-                            title={a.email_notify ? "Email notification enabled" : "Email notification disabled"}
-                          >
-                            {a.email_notify ? "✉ On" : "Off"}
-                          </span>
                         </td>
                         <td className="alert-date">{formatDate(a.created_at)}</td>
                         <td>

@@ -6,7 +6,6 @@ import './ImportPortfolio.css';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
-const DATA_START = new Date("2020-01-01");
 interface StockOption {
   ticker: string;
   close: number | null;
@@ -30,7 +29,7 @@ interface ImportPortfolioMoalProps {
     onSuccess: () => void;
 }
 
-const genId = () => Math.random().toString(36).substr(2, 9);
+const genId = () => Math.random().toString(36).slice(2, 11);
 
 const emptyEntry = (): ImportEntry => ({
     id: genId(),
@@ -142,20 +141,6 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({ onClose, onS
 
   const lookupPrice = async (entryId: string, ticker: string, dateStr: string) => {
     if (!ticker || !dateStr) return;
-
-    const purchaseDate = new Date(dateStr);
-
-    //Date before stored data -> manual entry
-    if (purchaseDate < DATA_START) {
-      setEntries((prev) =>
-        prev.map((e) =>
-          e.id === entryId
-            ? { ...e, needs_manual_price: true, price_found: null, price_loading: false }
-            : e
-        )
-      );
-      return;
-    }
 
     // Start loading state
     setEntries((prev) =>
@@ -318,7 +303,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({ onClose, onS
             color: '#475569',
             fontStyle: 'italic',
         }}>
-            *Dates before 2020 will prompt manual price input due to available stored data
+            *If no price data is found for a date, manual price input will be required
         </p>
         </div>
       <button className="imp-close" onClick={onClose} aria-label="Close">✕</button>

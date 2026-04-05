@@ -101,7 +101,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #475569;
+  color: #cbd5e1;
   background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -205,11 +205,11 @@
 .imp-total-val {
   font-size: 0.88rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
 .imp-total-empty {
-  color: #334155;
+  color: #cbd5e1;
   font-size: 0.9rem;
 }
 
@@ -218,7 +218,7 @@
 .imp-remove-btn {
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #475569;
+  color: #cbd5e1;
   border-radius: 6px;
   width: 30px;
   height: 30px;
@@ -313,7 +313,7 @@
 .imp-cancel-btn {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #94a3b8;
+  color: #cbd5e1;
   border-radius: 10px;
   padding: 0.65rem 1.4rem;
   font-size: 0.9rem;
@@ -406,7 +406,7 @@
 }
 
 .imp-ticker-opt-symbol {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #a5b4fc;
   letter-spacing: 0.04em;
@@ -414,8 +414,9 @@
 }
 
 .imp-ticker-opt-name {
-  font-size: 0.8rem;
-  color: #64748b;
+  font-size: 0.9rem;
+  color: #94a3b8;
+  font-weight: 500;
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -423,9 +424,9 @@
 }
 
 .imp-ticker-opt-price {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: #cbd5e1;
   white-space: nowrap;
 }
 

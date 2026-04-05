@@ -14,24 +14,24 @@
 }
 
 .wi-section-title {
-  font-size: 0.875rem;
+  font-size: 1.2rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #94a3b8;
+  color: #cbd5e1;
   margin: 0;
 }
 
 .wi-section-sub {
-  font-size: 0.8rem;
-  color: #475569;
+  font-size: 0.9rem;
+  color: #acb3c0;
   margin: 0;
 }
 
 /* ---- Form card ---- */
 .wi-form-card {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.148);
   border-radius: 14px;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.25rem;
@@ -53,11 +53,11 @@
 }
 
 .wi-label {
-  font-size: 0.75rem;
+  font-size: 0.80rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #64748b;
-  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: #919bad;
+  font-weight: 700;
 }
 
 .wi-input,
@@ -115,7 +115,7 @@
   border: 1px solid rgba(99, 102, 241, 0.45);
   color: #a5b4fc;
   border-radius: 10px;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -164,10 +164,11 @@
 }
 
 .wi-result-label {
-  font-size: 0.72rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #94a3b8;
+  font-weight:500;
+  color: #cbd5e1;
   margin-bottom: 0.3rem;
 }
 
@@ -179,7 +180,7 @@
 }
 
 .wi-result-change {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   margin: 0.2rem 0;
 }
@@ -188,9 +189,10 @@
 .wi-result-change.negative { color: #ef4444; }
 
 .wi-result-sub {
-  font-size: 0.78rem;
-  color: #64748b;
-  margin-top: 0.2rem;
+  font-size: 0.92rem;
+  color: #acb3c0;
+  font-weight: 500;
+  margin-top: 0.4rem;
 }
 
 /* ---- Stat boxes ---- */
@@ -212,15 +214,16 @@
 }
 
 .wi-stat-label {
-  font-size: 0.7rem;
+  font-size: .9rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #acb3c0;
+  font-weight: 600;
   margin-bottom: 0.3rem;
 }
 
 .wi-stat-val {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #f1f5f9;
   font-variant-numeric: tabular-nums;
@@ -235,7 +238,7 @@
   border: 1px solid rgba(99, 102, 241, 0.18);
   border-radius: 12px;
   padding: 0.875rem 1.25rem;
-  font-size: 0.875rem;
+  font-size: 1.1rem;
   color: #cbd5e1;
   line-height: 1.55;
 }

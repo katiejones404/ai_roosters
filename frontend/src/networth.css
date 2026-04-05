@@ -32,7 +32,7 @@
 }
 
 .nw-header p {
-  color: #94a3b8;
+  color: #cbd5e1;
   font-size: 0.95rem;
   margin: 0;
 }
@@ -77,10 +77,10 @@
 }
 
 .nw-stat-label {
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #94a3b8;
+  letter-spacing: 0.07em;
+  color: #c7d3e4;
   margin-bottom: 0.4rem;
 }
 
@@ -100,8 +100,8 @@
 }
 
 .nw-stat-sub {
-  font-size: 0.75rem;
-  color: #64748b;
+  font-size: 0.85rem;
+  color: #cbd5e1;
   margin-top: 0.3rem;
 }
 
@@ -151,7 +151,7 @@
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
+  color: #cbd5e1;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -184,7 +184,7 @@
 
 .nw-tooltip-date {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #cbd5e1;
   margin-bottom: 0.2rem;
 }
 .nw-tooltip-value {
@@ -219,12 +219,12 @@
   flex: 1;
 }
 .nw-pie-pct {
-  color: #64748b;
+  color: #cbd5e1;
   min-width: 38px;
   text-align: right;
 }
 .nw-pie-amount {
-  color: #94a3b8;
+  color: #cbd5e1;
   min-width: 85px;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -265,7 +265,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #94a3b8;
+  color: #cbd5e1;
   margin: 0;
 }
 
@@ -297,7 +297,7 @@
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  color: #cbd5e1;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -306,6 +306,17 @@
   background: rgba(99, 102, 241, 0.2);
   color: #a5b4fc;
 }
+
+.nw-portfolio-link {
+  border: 0;
+  cursor: pointer;
+}
+
+.nw-portfolio-link:focus-visible {
+  outline: 2px solid #a5b4fc;
+  outline-offset: 2px;
+}
+
 .nw-badge-liability {
   background: rgba(239, 68, 68, 0.15);
   color: #fca5a5;
@@ -392,7 +403,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #64748b;
+  color: #cbd5e1;
 }
 
 .nw-total-value {
@@ -411,7 +422,8 @@
 /* ---- Empty hint ---- */
 .nw-empty-hint {
   font-size: 0.8rem;
-  color: #475569;
+  color: #bbc5d1;
+  font-weight:400;
   padding: 0.75rem;
   text-align: center;
 }
@@ -522,7 +534,7 @@
 .quiz-option-btn {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  color: #cbd5e1;
   border-radius: 10px;
   padding: 0.6rem 0.875rem;
   font-size: 0.825rem;
@@ -591,7 +603,7 @@
 
 .quiz-result-desc {
   font-size: 0.875rem;
-  color: #94a3b8;
+  color: #cbd5e1;
   line-height: 1.6;
   margin: 0 0 1.25rem;
 }
@@ -600,7 +612,7 @@
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #cbd5e1;
   margin-bottom: 0.65rem;
 }
 
@@ -618,7 +630,7 @@
 
 .quiz-alloc-label {
   font-size: 0.78rem;
-  color: #94a3b8;
+  color: #cbd5e1;
   width: 48px;
   flex-shrink: 0;
 }
@@ -639,7 +651,7 @@
 
 .quiz-alloc-pct {
   font-size: 0.78rem;
-  color: #64748b;
+  color: #cbd5e1;
   width: 32px;
   text-align: right;
   flex-shrink: 0;
@@ -651,7 +663,7 @@
   padding: 0.5rem 1.25rem;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #64748b;
+  color: #cbd5e1;
   border-radius: 8px;
   font-size: 0.825rem;
   cursor: pointer;
@@ -660,7 +672,7 @@
 
 .quiz-retake-btn:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
 /* ---- Start screen ---- */

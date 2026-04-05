@@ -679,9 +679,14 @@ const NetWorth = () => {
                 </button>
               </div>
               <div className="nw-entry-row nw-portfolio-row">
-                <span className="nw-category-badge nw-badge-portfolio">
+                <button
+                  type="button"
+                  className="nw-category-badge nw-badge-portfolio nw-portfolio-link"
+                  onClick={() => navigate("/portfolio")}
+                  aria-label="Go to portfolio"
+                >
                   Portfolio
-                </span>
+                </button>
                 <span className="nw-entry-name">Stock Portfolio</span>
                 <span className="nw-entry-balance positive">
                   {formatCurrency(s.portfolio_value)}
@@ -791,7 +796,7 @@ const NetWorth = () => {
               </button>
             </div>
             <div className="modal-body">
-              <label className="modal-labe">Name</label>
+              <label className="modal-label">Name</label>
               <input
                 className="modal-input"
                 type="text"
@@ -804,7 +809,7 @@ const NetWorth = () => {
                   setFormError(null);
                 }}
               />
-              <label className="modal-labe" style={{ marginTop: "0.75rem" }}>
+              <label className="modal-label" style={{ marginTop: "0.75rem" }}>
                 Category
               </label>
               <select
@@ -818,7 +823,7 @@ const NetWorth = () => {
                   </option>
                 ))}
               </select>
-              <label className="modal-labe" style={{ marginTop: "0.75rem" }}>
+              <label className="modal-label" style={{ marginTop: "0.75rem" }}>
                 Balance ($)
               </label>
               <input

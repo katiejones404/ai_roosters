@@ -118,12 +118,16 @@ services:
     container_name: stock_frontend
     ports:
       - "5173:5173"
+    environment:
+      # Reliable file-change detection for bind mounts (Docker Desktop/Windows).
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
       - api
-    command: ["npm", "run", "dev", "--", "--host"]
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
     restart: unless-stopped
 
 volumes:

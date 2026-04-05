@@ -723,8 +723,55 @@ def _ensure_snapshot_columns(cur) -> None:
     """)
 
 
+_UPDATE_CLAUSE = """UPDATE SET
+                close_price      = EXCLUDED.close_price,
+                return_1d        = EXCLUDED.return_1d,
+                return_30d       = EXCLUDED.return_30d,
+                return_120d      = EXCLUDED.return_120d,
+                return_360d      = EXCLUDED.return_360d,
+                sentiment_mean   = EXCLUDED.sentiment_mean,
+                sentiment_max    = EXCLUDED.sentiment_max,
+                sentiment_min    = EXCLUDED.sentiment_min,
+                num_articles     = EXCLUDED.num_articles,
+                num_pos_articles = EXCLUDED.num_pos_articles,
+                num_neg_articles = EXCLUDED.num_neg_articles,
+                pos_share        = EXCLUDED.pos_share,
+                neg_share        = EXCLUDED.neg_share,
+                prob_pos_mean    = EXCLUDED.prob_pos_mean,
+                prob_neg_mean    = EXCLUDED.prob_neg_mean,
+                prob_neu_mean    = EXCLUDED.prob_neu_mean,
+                prob_pos_max     = EXCLUDED.prob_pos_max,
+                prob_neg_max     = EXCLUDED.prob_neg_max,
+                pred_return_1d   = EXCLUDED.pred_return_1d,
+                pred_return_30d  = EXCLUDED.pred_return_30d,
+                pred_return_120d = EXCLUDED.pred_return_120d,
+                pred_return_360d = EXCLUDED.pred_return_360d"""
+
+_SQL_SKIP = f"ON CONFLICT (ticker, snapshot_date) DO NOTHING"
+_SQL_UPSERT = f"ON CONFLICT (ticker, snapshot_date) DO {_UPDATE_CLAUSE}"
+
+
 def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
-    logger.info("[WriteSnapshots] Writing sentiment snapshots to database")
+    skip_existing = _truthy_env("AGG_SKIP_EXISTING", "0")
+
+    # AGG_SKIP_BEFORE_DATE: when set alongside AGG_SKIP_EXISTING=1, only skip rows
+    # whose snapshot_date is strictly before this date — rows on or after this date
+    # are always upserted. Use this to preserve stable historical data while still
+    # refreshing recent rows where new articles (from Azure jobs) may have arrived.
+    # Example: AGG_SKIP_BEFORE_DATE=2026-03-01
+    skip_before_date: Optional[date] = None
+    raw_cutoff = (os.getenv("AGG_SKIP_BEFORE_DATE") or "").strip()
+    if skip_existing and raw_cutoff:
+        try:
+            skip_before_date = datetime.fromisoformat(raw_cutoff).date()
+            logger.info(f"[WriteSnapshots] AGG_SKIP_BEFORE_DATE={skip_before_date}: skipping existing rows before this date, upserting the rest")
+        except ValueError:
+            logger.warning(f"[WriteSnapshots] Invalid AGG_SKIP_BEFORE_DATE={raw_cutoff!r}, ignoring")
+
+    if skip_existing and skip_before_date is None:
+        logger.info("[WriteSnapshots] AGG_SKIP_EXISTING=1: skipping all existing rows (DO NOTHING)")
+    elif not skip_existing:
+        logger.info("[WriteSnapshots] Upserting all rows (DO UPDATE)")
 
     n = len(agg.ticker)
     if n == 0:
@@ -777,8 +824,18 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
             pred_return_1d, pred_return_30d, pred_return_120d, pred_return_360d
         ) = row
 
+        # Determine conflict strategy for this row
+        if skip_existing:
+            if skip_before_date is not None:
+                row_date = _parse_date(snapshot_date) if isinstance(snapshot_date, str) else snapshot_date
+                conflict_sql = _SQL_SKIP if row_date < skip_before_date else _SQL_UPSERT
+            else:
+                conflict_sql = _SQL_SKIP
+        else:
+            conflict_sql = _SQL_UPSERT
+
         cur.execute(
-            """
+            f"""
             INSERT INTO sentiment_snapshots (
                 ticker,
                 snapshot_date,
@@ -831,29 +888,7 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
                 %(pred_return_120d)s,
                 %(pred_return_360d)s
             )
-            ON CONFLICT (ticker, snapshot_date) DO UPDATE SET
-                close_price      = EXCLUDED.close_price,
-                return_1d        = EXCLUDED.return_1d,
-                return_30d       = EXCLUDED.return_30d,
-                return_120d      = EXCLUDED.return_120d,
-                return_360d      = EXCLUDED.return_360d,
-                sentiment_mean   = EXCLUDED.sentiment_mean,
-                sentiment_max    = EXCLUDED.sentiment_max,
-                sentiment_min    = EXCLUDED.sentiment_min,
-                num_articles     = EXCLUDED.num_articles,
-                num_pos_articles = EXCLUDED.num_pos_articles,
-                num_neg_articles = EXCLUDED.num_neg_articles,
-                pos_share        = EXCLUDED.pos_share,
-                neg_share        = EXCLUDED.neg_share,
-                prob_pos_mean    = EXCLUDED.prob_pos_mean,
-                prob_neg_mean    = EXCLUDED.prob_neg_mean,
-                prob_neu_mean    = EXCLUDED.prob_neu_mean,
-                prob_pos_max     = EXCLUDED.prob_pos_max,
-                prob_neg_max     = EXCLUDED.prob_neg_max,
-                pred_return_1d   = EXCLUDED.pred_return_1d,
-                pred_return_30d  = EXCLUDED.pred_return_30d,
-                pred_return_120d = EXCLUDED.pred_return_120d,
-                pred_return_360d = EXCLUDED.pred_return_360d;
+            {conflict_sql}
             """,
             {
                 "ticker": ticker,

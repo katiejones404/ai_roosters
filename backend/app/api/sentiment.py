@@ -94,11 +94,11 @@ def get_sentiment_indicators(
     ticker: Optional[str] = Query(None, description="If provided, filter by ticker"),
     db: Session = Depends(get_db),
 ):
-    where_clauses = [f"ticker IN ({TICKER_SQL_LIST})"]
+    where_clauses = [f"UPPER(ticker) IN ({TICKER_SQL_LIST})"]
     params = {}
     if ticker:
-        where_clauses.append("ticker ILIKE :ticker")
-        params["ticker"] = f"%{ticker}%"
+        where_clauses.append("UPPER(ticker) = :ticker")
+        params["ticker"] = ticker.strip().upper()
 
     sql = f"""
         SELECT DISTINCT ON (ticker)
@@ -143,11 +143,11 @@ def get_news_explanations(
     ticker: Optional[str] = Query(None, description="If provided, filter by ticker"),
     db: Session = Depends(get_db),
 ):
-    where_clauses = [f"ticker IN ({TICKER_SQL_LIST})", "window_days IN (7, 30)"]
+    where_clauses = [f"UPPER(ticker) IN ({TICKER_SQL_LIST})", "window_days IN (7, 30)"]
     params = {}
     if ticker:
-        where_clauses.append("ticker ILIKE :ticker")
-        params["ticker"] = f"%{ticker}%"
+        where_clauses.append("UPPER(ticker) = :ticker")
+        params["ticker"] = ticker.strip().upper()
 
     sql = f"""
         SELECT DISTINCT ON (ticker, window_days)
@@ -241,6 +241,21 @@ def get_stock_overview(
                 news_explanations=explanation_map.get(row.ticker),
             )
         )
+
+    # Include tickers that have summaries but no sentiment snapshot yet
+    covered = {r.ticker for r in indicator_rows}
+    for exp_row in explanation_rows:
+        if exp_row.ticker not in covered:
+            results.append(
+                StockOverviewOut(
+                    id=exp_row.ticker,
+                    ticker=exp_row.ticker,
+                    snapshot_date="",
+                    close_price=None,
+                    indicators=TimeRangeIndicators(d30="neutral", d120="neutral", d360="neutral"),
+                    news_explanations=exp_row,
+                )
+            )
 
     return results
 

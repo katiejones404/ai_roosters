@@ -237,10 +237,22 @@ async def _alert_check_loop() -> None:
 
     await asyncio.sleep(max(initial_delay_seconds, 0))
     while True:
-        try:
-            run_alert_checks()
-        except Exception as e:
-            logger.error(f"Alert check loop error: {e}", exc_info=True)
+        # Retry up to 5 times on connection errors (Neon cold-start) before
+        # waiting the full interval. Retries use a short 15-second backoff.
+        max_retries = 5
+        for attempt in range(1, max_retries + 1):
+            try:
+                run_alert_checks()
+                break  # success
+            except Exception as e:
+                err_str = str(e).lower()
+                is_conn_err = any(kw in err_str for kw in ("connection refused", "could not connect", "operationalerror"))
+                if is_conn_err and attempt < max_retries:
+                    logger.warning(f"Alert check: DB connection failed (attempt {attempt}/{max_retries}), retrying in 15s...")
+                    await asyncio.sleep(15)
+                else:
+                    logger.error(f"Alert check loop error: {e}", exc_info=True)
+                    break
         await asyncio.sleep(interval_seconds)
 
 
