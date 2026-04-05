@@ -269,10 +269,11 @@ class StockNewsIngestor:
     def ingest_recent_news(
         self,
         tickers: Optional[List[str]] = None,
-        lookback_hours: int = 48,
+        lookback_hours: int = 24,
         overlap_minutes: int = 30,
-        max_pages_per_ticker: int = 3,
-        api_limit_per_page: int = 3,
+        max_pages_per_ticker: int = 1,
+        api_limit_per_page: int = 2,
+        max_articles_per_ticker: int = 2,
         flush_batch_size: int = 100,
         language: str = "en",
     ) -> None:
@@ -291,7 +292,8 @@ class StockNewsIngestor:
             f"tickers={tickers} "
             f"lookback_hours={lookback_hours} "
             f"max_pages_per_ticker={max_pages_per_ticker} "
-            f"api_limit_per_page={api_limit_per_page}"
+            f"api_limit_per_page={api_limit_per_page} "
+            f"max_articles_per_ticker={max_articles_per_ticker}"
         )
 
         buffer: List[Dict[str, Any]] = []
@@ -314,6 +316,7 @@ class StockNewsIngestor:
             buffer = []
 
         for idx, ticker in enumerate(tickers, start=1):
+            articles_kept_for_ticker = 0
             published_before = utc_now()
             published_after = self.resolve_published_after(
                 ticker=ticker,
@@ -361,11 +364,17 @@ class StockNewsIngestor:
                         continue
 
                     buffer.append(record)
+                    articles_kept_for_ticker += 1
 
                     if len(buffer) >= flush_batch_size:
                         flush()
 
+                    if articles_kept_for_ticker >= max_articles_per_ticker:
+                        break
+
                 if returned < api_limit_per_page:
+                    break
+                if articles_kept_for_ticker >= max_articles_per_ticker:
                     break
 
         flush()
@@ -380,6 +389,36 @@ class StockNewsIngestor:
         )
 
 
+def run_daily_news_ingest_from_env(db_url: Optional[str] = None) -> None:
+    """
+    Run Marketaux daily ingest with env-configured conservative defaults.
+
+    Defaults are tuned for API quota safety:
+    - one page per ticker
+    - two articles per ticker max
+    - 24h lookback
+    """
+    ing = StockNewsIngestor(db_url=db_url)
+
+    lookback_hours = int(os.getenv("NEWS_LOOKBACK_HOURS", "24"))
+    overlap_minutes = int(os.getenv("NEWS_OVERLAP_MINUTES", "30"))
+    max_pages_per_ticker = int(os.getenv("NEWS_MAX_PAGES_PER_TICKER", "1"))
+    api_limit_per_page = int(os.getenv("NEWS_API_LIMIT_PER_PAGE", "2"))
+    max_articles_per_ticker = int(os.getenv("NEWS_MAX_ARTICLES_PER_TICKER", "2"))
+    flush_batch_size = int(os.getenv("NEWS_FLUSH_BATCH_SIZE", "100"))
+    language = (os.getenv("NEWS_LANGUAGE", "en") or "en").strip() or "en"
+
+    ing.ingest_recent_news(
+        tickers=None,
+        lookback_hours=max(1, lookback_hours),
+        overlap_minutes=max(0, overlap_minutes),
+        max_pages_per_ticker=max(1, max_pages_per_ticker),
+        api_limit_per_page=max(1, min(api_limit_per_page, 3)),
+        max_articles_per_ticker=max(1, min(max_articles_per_ticker, 2)),
+        flush_batch_size=max(1, flush_batch_size),
+        language=language,
+    )
+
+
 if __name__ == "__main__":
-    ing = StockNewsIngestor()
-    ing.ingest_recent_news()
+    run_daily_news_ingest_from_env()

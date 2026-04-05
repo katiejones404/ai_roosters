@@ -29,6 +29,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Free disk space on runner
+        shell: bash
+        run: |
+          echo "Disk before cleanup:"
+          df -h
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+          docker system prune -af || true
+          echo "Disk after cleanup:"
+          df -h
+
       - name: Compute image name
         shell: bash
         run: |
@@ -59,7 +72,11 @@ jobs:
           context: ./backend
           file: ./backend/Pipeline.Dockerfile
           push: true
+          provenance: false
+          sbom: false
+          build-args: |
+            PRELOAD_FINBERT=0
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min

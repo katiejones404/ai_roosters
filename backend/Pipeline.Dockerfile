@@ -27,11 +27,16 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements-pipeline.txt
 ENV HF_HOME=/cache/huggingface
 ENV PATH="/install/bin:$PATH"
 ENV PYTHONPATH="/install/lib/python3.11/site-packages"
-RUN python -c "\
+ARG PRELOAD_FINBERT=1
+RUN if [ "$PRELOAD_FINBERT" = "1" ]; then \
+      python -c "\
 from transformers import AutoModelForSequenceClassification, AutoTokenizer; \
 AutoModelForSequenceClassification.from_pretrained('ProsusAI/finbert'); \
 AutoTokenizer.from_pretrained('ProsusAI/finbert'); \
-print('FinBERT model cached successfully')"
+print('FinBERT model cached successfully')"; \
+    else \
+      echo "Skipping FinBERT pre-download at build time"; \
+    fi
 
 
 FROM python:3.11-slim
