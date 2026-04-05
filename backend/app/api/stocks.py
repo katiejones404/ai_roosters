@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from app.db.main import get_db
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
+RETURNS_START_DATE = "2020-01-01"
 
 # ---------------------------------------------------------------------------
 # Pydantic models
@@ -149,10 +150,12 @@ def get_all_latest_prices(db: Session = Depends(get_db)):
                 date,
                 close,
                 CASE
+                    WHEN date < :returns_start_date THEN NULL
                     WHEN px_1 IS NULL OR px_1 = 0 THEN NULL
                     ELSE (px - px_1) / px_1
                 END AS return_1d,
                 CASE
+                    WHEN date < :returns_start_date THEN NULL
                     WHEN px_21 IS NULL OR px_21 = 0 THEN NULL
                     ELSE (px - px_21) / px_21
                 END AS return_30d
@@ -163,7 +166,7 @@ def get_all_latest_prices(db: Session = Depends(get_db)):
         FROM computed
         ORDER BY ticker, date DESC
     """)
-    rows = db.execute(sql).mappings().all()
+    rows = db.execute(sql, {"returns_start_date": RETURNS_START_DATE}).mappings().all()
 
     return [
         StockLatestRow(
@@ -194,7 +197,7 @@ def get_stock_prices(
     - Keeps ORDER BY date ASC for charts.
     """
     normalized_ticker = ticker.strip().upper()
-    params = {"ticker": normalized_ticker}
+    params = {"ticker": normalized_ticker, "returns_start_date": RETURNS_START_DATE}
     date_clause = _build_date_clause(start_date, end_date, params)
 
     sql = text(f"""
@@ -227,10 +230,26 @@ def get_stock_prices(
             date,
             close,
             adjusted_close,
-            CASE WHEN px_1   IS NULL OR px_1   = 0 THEN NULL ELSE (px - px_1)   / px_1   END AS return_1d,
-            CASE WHEN px_21  IS NULL OR px_21  = 0 THEN NULL ELSE (px - px_21)  / px_21  END AS return_30d,
-            CASE WHEN px_84  IS NULL OR px_84  = 0 THEN NULL ELSE (px - px_84)  / px_84  END AS return_120d,
-            CASE WHEN px_252 IS NULL OR px_252 = 0 THEN NULL ELSE (px - px_252) / px_252 END AS return_360d
+            CASE
+                WHEN date < :returns_start_date THEN NULL
+                WHEN px_1 IS NULL OR px_1 = 0 THEN NULL
+                ELSE (px - px_1) / px_1
+            END AS return_1d,
+            CASE
+                WHEN date < :returns_start_date THEN NULL
+                WHEN px_21 IS NULL OR px_21 = 0 THEN NULL
+                ELSE (px - px_21) / px_21
+            END AS return_30d,
+            CASE
+                WHEN date < :returns_start_date THEN NULL
+                WHEN px_84 IS NULL OR px_84 = 0 THEN NULL
+                ELSE (px - px_84) / px_84
+            END AS return_120d,
+            CASE
+                WHEN date < :returns_start_date THEN NULL
+                WHEN px_252 IS NULL OR px_252 = 0 THEN NULL
+                ELSE (px - px_252) / px_252
+            END AS return_360d
         FROM with_lags
         ORDER BY date ASC
     """)

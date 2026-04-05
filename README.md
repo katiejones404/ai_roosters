@@ -1,333 +1,143 @@
-# StockSense - AI-Powered Stock Sentiment Dashboard
+# StockSense
 
-Live website: https://ai-roosters-webpage.vercel.app/
+StockSense is an AI-powered stock sentiment and portfolio platform. It combines market news sentiment with stock price data so users can track portfolios, monitor alerts, and understand how sentiment relates to returns.
 
-Backend API health: 
+Live frontend: https://ai-roosters-webpage.vercel.app/
 
----
+Deployment and operations guide: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
-## About StockSense
+## What The App Does
 
-StockSense is a full-stack web application that helps investors understand how financial news sentiment relates to stock performance. Users can build a personal portfolio, track real price data and historical returns, and read AI-generated summaries explaining what market sentiment means for each stock.
+- Auth and profiles: signup, login, JWT sessions, profile editing, profile picture upload.
+- Portfolio tracking: holdings, gain/loss, return metrics, comparisons, CSV/PDF export.
+- Net worth tracking: assets/liabilities, history charts, CSV/PDF export.
+- Stocks dashboard: live prices, return metrics, sentiment context.
+- Alerts: price-above/price-below triggers with optional email notifications.
+- News and sentiment: article ingest + FinBERT scoring + aggregated snapshots + GPT explanations.
 
-The core question the project addresses: **does the tone of financial news predict short, medium, and long-term stock returns?** StockSense answers this visually and in plain language using a machine learning pipeline built on FinBERT, XGBoost, and GPT-4o-mini.
+## Data Policy (Current)
 
----
+- `stocks` stores full historical price data when full backfill is run.
+- Return calculations are clamped to `2020-01-01` onward.
+- Sentiment/AI snapshot pipeline uses 2020+ data only.
+- API responses keep full price history but return fields are `null` for pre-2020 dates.
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + TypeScript, Recharts, Vite |
-| Backend | FastAPI (Python) |
-| Database | PostgreSQL via Neon (serverless, cloud) |
-| Sentiment | FinBERT (HuggingFace transformers) |
-| Prediction | XGBoost regression |
-| Summaries | GPT-4o-mini (OpenAI) |
-| Auth | JWT (JSON Web Tokens) |
-| Deployment | Frontend on Vercel, Backend on Azure Container Apps |
+| Frontend | React + TypeScript + Vite |
+| Backend | FastAPI + SQLAlchemy |
+| Database | PostgreSQL (Neon in cloud) |
+| Price data | yfinance |
+| Sentiment | FinBERT (transformers) |
+| Prediction | XGBoost |
+| LLM summaries | OpenAI API |
+| Deployment | Vercel (frontend), Azure Container Apps (backend/jobs), GHCR (images) |
 
----
+## Supported Tickers
 
-## Features
+`KSS, ALK, NVS, AXP, FCX, CSX, DAL, NTAP, MRK, COP, BHP, EA, TSLA, NVDA, AAPL, MSFT, AMZN, AMD, META, GOOGL, GOOG, PLTR, MU, NFLX, NKE, AAL, BAC, F, INTC, XOM, T, SOFI, PLUG, MARA, SNAP, COIN, AMC, RIVN, CCL, ENPH`
 
-### Authentication and User Management
-- JWT-based authentication: register, login, logout, and persistent sessions
-- Secure password hashing
-- Profile picture upload stored as base64
-- User profile editing: name, phone, username
-- Account deletion with password confirmation
+## Quick Start (Local)
 
-### Portfolio
-- Add any supported ticker with quantity and average purchase price
-- Real-time display of: current price, cost basis, total gain/loss, 1D/30D/120D/360D returns
-- Animated count-up for all summary stat cards
-- Per-holding gain/loss bar chart (green/red by position)
-- Portfolio comparison mode: select 2 or more holdings to compare with an area chart and side-by-side metrics table
-- Export portfolio to CSV or PDF
-
-### Net Worth Tracker
-- Track manual assets (cash, savings, real estate, vehicle, other) and liabilities
-- Summary cards: net worth, portfolio value, total assets, total liabilities
-- Net worth history line chart (30D/90D/1Y range)
-- Asset distribution donut chart
-- Export net worth to CSV or PDF
-
-### Dashboard and Stock Discovery
-- Card-based dashboard showing all 40 supported tickers with sentiment indicators
-- Each card shows: current price, 1D/30D/120D/360D return metrics, and FinBERT sentiment label
-- Live search by ticker or company name
-- Trending widget showing top portfolio performers by 1D return
-
-### Market News
-- Latest financial news articles from tracked stocks
-- Filter by ticker
-- Load-more pagination
-- Linked directly to source articles
-
-### Price Alerts
-- Set price alerts: trigger above or below a target price
-- Notification bell in navbar
-- Email notification on trigger (SMTP-based)
-
-### Sentiment Analysis
-- FinBERT sentiment scores (positive/neutral/negative) per article
-- Sentiment snapshots aggregated per (ticker, date)
-- XGBoost-predicted returns shown alongside realized returns
-- GPT-4o-mini explanations of sentiment context per ticker
-
----
-
-## Supported Tickers (40 total)
-
-| Group | Tickers |
-|---|---|
-| Original | KSS, ALK, NVS, AXP, FCX, CSX, DAL, NTAP, MRK, COP, BHP, EA |
-| Large Cap Tech | TSLA, NVDA, AAPL, MSFT, AMZN, AMD, META, GOOGL, GOOG, PLTR, MU, NFLX |
-| Diversified | NKE, AAL, BAC, F, INTC, XOM, T |
-| High Volatility | SOFI, PLUG, MARA, SNAP, COIN, AMC, RIVN, CCL, ENPH |
-
----
-
-## Data Pipeline
-
-Steps are run via Docker Compose pipeline profile:
-
-```
-1. Historical news ingest    -> articles table (HuggingFace filtered subsets)
-2. Daily news ingest         -> stock_news_articles table (Marketaux API, scheduled)
-3. Price ingest              -> stocks table (yfinance)
-4. FinBERT scoring           -> scores all unscored articles
-5. Returns pipeline          -> computes 1D/30D/120D/360D forward returns
-6. Sentiment aggregator      -> sentiment_snapshots table
-7. GPT summaries             -> one explanation per ticker
-```
-
-### Key Database Tables
-
-| Table | Rows | Description |
-|---|---|---|
-| articles | ~63,000 | Historical news (HuggingFace) |
-| stock_news_articles | varies | Daily news (Marketaux scheduled ingest, capped per ticker) |
-| stocks | ~23,000+ | Price data (yfinance) |
-| sentiment_snapshots | ~23,000+ | Aggregated sentiment and returns per ticker/date |
-
----
-
-## Deployment
-
-### Backend (Azure Container Apps)
-
-```powershell
-az containerapp create --name stocksense-api --resource-group stocksense-rg --environment stocksense-env --image "ghcr.io/katiejones404/stocksense-api:latest" --registry-server "ghcr.io" --registry-username katiejones404 --registry-password $GH_PAT --target-port 8000 --ingress external --min-replicas 1 --cpu 1.0 --memory 2.0Gi
-```
-
-### Production Scheduling (Azure Container Apps Jobs)
-
-For production, run recurring work as Container Apps Jobs (not in-process API loops).
-
-1. Disable API in-process schedulers:
-
-```powershell
-az containerapp update `
-  --name stocksense-api `
-  --resource-group stocksense-rg `
-  --set-env-vars ENABLE_BACKGROUND_SCHEDULERS=0 RUN_ARTICLE_INGEST=0 RUN_PRICE_INGEST=0 RUN_ML_PIPELINES=0
-```
-
-2. Create scheduled jobs (cron is UTC):
-
-```powershell
-# Alerts every 5 minutes
-az containerapp job create `
-  --name stocksense-alerts-job `
-  --resource-group stocksense-rg `
-  --environment stocksense-env `
-  --trigger-type Schedule `
-  --cron-expression "*/5 * * * *" `
-  --image ghcr.io/katiejones404/stocksense-api:latest `
-  --registry-server ghcr.io `
-  --registry-username katiejones404 `
-  --registry-password $GH_PAT `
-  --cpu 0.5 --memory 1.0Gi `
-  --replica-timeout 900 --replica-retry-limit 1 `
-  --command sh `
-  --args "-c" "python -m app.jobs.run_alert_checks_once" `
-  --secrets database-url="$DATABASE_URL" smtp-user="$SMTP_USER" smtp-pass="$SMTP_PASS" alert-from="$ALERT_FROM_EMAIL" `
-  --env-vars DATABASE_URL=secretref:database-url SMTP_USER=secretref:smtp-user SMTP_PASS=secretref:smtp-pass ALERT_FROM_EMAIL=secretref:alert-from SMTP_HOST=smtp.gmail.com SMTP_PORT=587
-
-# Price ingest every 15 minutes during market hours (job itself runs all day; ingestion module handles data window)
-az containerapp job create `
-  --name stocksense-prices-job `
-  --resource-group stocksense-rg `
-  --environment stocksense-env `
-  --trigger-type Schedule `
-  --cron-expression "*/15 * * * 1-5" `
-  --image ghcr.io/katiejones404/stocksense-api:latest `
-  --registry-server ghcr.io `
-  --registry-username katiejones404 `
-  --registry-password $GH_PAT `
-  --cpu 0.5 --memory 1.0Gi `
-  --replica-timeout 1800 --replica-retry-limit 1 `
-  --command sh `
-  --args "-c" "python -m app.services.ingesting_pipelines.prices_ingest" `
-  --secrets database-url="$DATABASE_URL" `
-  --env-vars DATABASE_URL=secretref:database-url PRICE_UPDATE_EXISTING=1
-
-# News ingest once daily (13:00 UTC ~= 8:00 AM EST / 9:00 AM EDT)
-az containerapp job create `
-  --name stocksense-news-job `
-  --resource-group stocksense-rg `
-  --environment stocksense-env `
-  --trigger-type Schedule `
-  --cron-expression "0 13 * * *" `
-  --image ghcr.io/katiejones404/stocksense-api:latest `
-  --registry-server ghcr.io `
-  --registry-username katiejones404 `
-  --registry-password $GH_PAT `
-  --cpu 0.5 --memory 1.0Gi `
-  --replica-timeout 1800 --replica-retry-limit 1 `
-  --command sh `
-  --args "-c" "python -m app.services.ingesting_pipelines.daily_news_ingest" `
-  --secrets database-url="$DATABASE_URL" marketaux-token="$MARKETAUX_API_TOKEN" `
-  --env-vars DATABASE_URL=secretref:database-url MARKETAUX_API_TOKEN=secretref:marketaux-token NEWS_MAX_PAGES_PER_TICKER=1 NEWS_API_LIMIT_PER_PAGE=2 NEWS_MAX_ARTICLES_PER_TICKER=2 NEWS_LOOKBACK_HOURS=24
-
-# Sentiment refresh every 6 hours (pipeline image with ML deps)
-az containerapp job create `
-  --name stocksense-sentiment-job `
-  --resource-group stocksense-rg `
-  --environment stocksense-env `
-  --trigger-type Schedule `
-  --cron-expression "25 */6 * * *" `
-  --image ghcr.io/katiejones404/stocksense-pipeline:latest `
-  --registry-server ghcr.io `
-  --registry-username katiejones404 `
-  --registry-password $GH_PAT `
-  --cpu 1.0 --memory 2.0Gi `
-  --replica-timeout 3600 --replica-retry-limit 1 `
-  --command sh `
-  --args "-c" "python -m app.services.sentiment.article_processing && python -m app.services.sentiment.stock_processing && python -m app.services.sentiment.aggregator" `
-  --secrets database-url="$DATABASE_URL" openai-key="$OPENAI_API_KEY" `
-  --env-vars DATABASE_URL=secretref:database-url OPENAI_API_KEY=secretref:openai-key
-```
-
-3. Validate and run on demand:
-
-```powershell
-az containerapp job execution list --name stocksense-news-job --resource-group stocksense-rg -o table
-az containerapp job start --name stocksense-news-job --resource-group stocksense-rg
-```
-
-### Build Pipeline Image In GitHub Actions (No Local Heavy Build)
-
-Workflow file:
-- `.github/workflows/build-pipeline-image.yml`
-
-What it does:
-- Builds `backend/Pipeline.Dockerfile` on GitHub-hosted runners.
-- Pushes to `ghcr.io/<repo-owner-lowercase>/stocksense-pipeline`.
-- Publishes tags:
-  - `latest` (default branch only)
-  - `sha-<commit>`
-
-How to run:
-1. Push to `main` (when pipeline-related files changed), or
-2. In GitHub: **Actions -> Build And Push Pipeline Image -> Run workflow**
-
-After it succeeds, use this image in Azure jobs:
-- `ghcr.io/<repo-owner-lowercase>/stocksense-pipeline:latest`
-
-### Frontend (Vercel)
-
-Deployed automatically from GitHub. Set environment variable:
-- `VITE_API_BASE_URL` = Azure Container App URL
-
-### Database (Neon PostgreSQL)
-
-Cloud-hosted serverless PostgreSQL. Connection via `DATABASE_URL` environment variable.
-
----
-
-## Environment Variables
-
-| Variable | Required | Description |
-|---|---|---|
-| DATABASE_URL | Yes | Neon PostgreSQL connection string |
-| OPENAI_API_KEY | Yes | GPT-4o-mini summaries |
-| MARKETAUX_API_TOKEN | For pipeline | Daily Marketaux ingest |
-| SECRET_KEY | Yes | JWT signing key |
-| FRONTEND_ORIGINS | Yes | CORS allowed origins |
-| RUN_ARTICLE_INGEST | Optional | Set to 1 to run historical article ingest on API startup (default 0) |
-| RUN_PRICE_INGEST | Optional | Set to 1 to run price ingest on startup |
-| RUN_ML_PIPELINES | Optional | Set to 1 to run FinBERT/XGBoost on startup |
-| ENABLE_BACKGROUND_SCHEDULERS | Optional | Set to 0 to disable in-process API loops (recommended when using ACA Jobs) |
-| ENABLE_ALERT_SCHEDULER | Optional | Enable/disable in-process alert loop |
-| ENABLE_PRICE_INGEST_SCHEDULER | Optional | Enable/disable in-process price loop |
-| ENABLE_NEWS_INGEST_SCHEDULER | Optional | Enable/disable in-process news loop |
-| ENABLE_SENTIMENT_SCHEDULER | Optional | Enable/disable in-process sentiment loop |
-| NEWS_INGEST_FILTERED_MODE | Optional | `1` uses filtered HF subsets (Colab-style) instead of full-dataset scan |
-| NEWS_INGEST_HF_SUBSETS | Optional | Comma-separated HF subset names for historical news ingest |
-| NEWS_MAX_PAGES_PER_TICKER | Optional | Daily Marketaux pages per ticker (recommended `1`) |
-| NEWS_API_LIMIT_PER_PAGE | Optional | Daily Marketaux page size (recommended `2`) |
-| NEWS_MAX_ARTICLES_PER_TICKER | Optional | Hard cap per ticker per run (recommended `2`) |
-| SMTP_HOST | For alerts | Email alert SMTP server |
-| SMTP_USER | For alerts | Email alert sender address |
-| SMTP_PASS | For alerts | Email alert password |
-
----
-
-## Running Locally
+### 1. Configure environment
 
 ```bash
-# 1. Clone the repo and set up .env
 cp .env.example .env
-# fill in required values
+```
 
-# 2. Start services
-docker compose up
+Fill required values in `.env` (at minimum `DATABASE_URL`, `SECRET_KEY`, and any API keys you need for features).
 
-# 3. (Optional) Run the data pipeline
+### 2. Start app stack
 
+```bash
+docker compose up --build
+```
+
+This brings up:
+- `postgres` on local port `5432`
+- `api` on `http://localhost:8000`
+- `frontend` on `http://localhost:5173`
+
+### 3. Common manual commands
+
+```bash
+# run only API + DB
+docker compose up --build postgres api
+
+# run API tests (PowerShell helper)
+./run_testing.ps1
+
+# run all tests (Python runner)
+python run_testing.py
+
+# run only stocks behavior tests
+python -m pytest Testing/Stocks/behavior/test_stocks_api.py -v
+```
+
+### 4. Manual pipeline commands (from repo root)
+
+```bash
+# price ingest
 docker compose --profile pipeline run --rm pipeline python -m app.services.ingesting_pipelines.prices_ingest
+
+# daily news ingest
 docker compose --profile pipeline run --rm pipeline python -m app.services.ingesting_pipelines.daily_news_ingest
+
+# historical HF news ingest
+docker compose --profile pipeline run --rm pipeline python -m app.services.ingesting_pipelines.news_ingest
+
+# FinBERT scoring
 docker compose --profile pipeline run --rm pipeline python -m app.services.sentiment.article_processing
+
+# returns recompute
+docker compose --profile pipeline run --rm pipeline python -m app.services.sentiment.stock_processing
+
+# sentiment aggregation + predictions
 docker compose --profile pipeline run --rm pipeline python -m app.services.sentiment.aggregator
 ```
 
----
+## Scheduler/Startup Behavior (Important)
 
-## Project Structure
+- API startup jobs are controlled by:
+  - `RUN_ARTICLE_INGEST`
+  - `RUN_PRICE_INGEST`
+  - `RUN_ML_PIPELINES`
+- Local `docker-compose.yml` keeps article ingest off in API by default.
+- Full-history startup price backfill is opt-in with:
+  - `INGEST_ALL_YEARS=1`
+- Default startup price mode is incremental:
+  - `INGEST_ALL_YEARS=0`
+  - `PRICE_INGEST_LOOKBACK_DAYS=30`
 
-```
+## Repository Structure
+
+```text
 ai_roosters/
   backend/
     app/
-      api/           # FastAPI route handlers
-      models/        # SQLAlchemy models
-      schema/        # Pydantic schemas
+      api/
+      core/
+      db/
+      jobs/
+      models/
+      schema/
       services/
-        ingesting_pipelines/   # News and price ingest scripts
-        sentiment/             # FinBERT, returns, aggregator, GPT
-      db/            # Database connection
+        ingesting_pipelines/
+        sentiment/
   frontend/
     src/
-      components/    # Navbar, LoadingScreen, AddToPortfolio, StockChartBg
-      utils/         # Auth, sentiment helpers, stock name mapping
-      *.tsx          # Page components
-  notebooks/         # Google Colab notebooks for Neon ingest
+  Testing/
   docker-compose.yml
   README.md
+  DEPLOYMENT.md
 ```
----
-## Authors
 
-Connor Thiele — cthiele@email.sc.edu
+## Team
 
-Katie Jones — Katie.jones4@outlook.com
-
-Sofia Bacha — sofbacha01@gmail.com
-
-Kevin Do — kdox1023@gmail.com
-
-Andrew Lim — andrew.lim0023@gmail.com
-
+- Connor Thiele
+- Katie Jones
+- Sofia Bacha
+- Kevin Do
+- Andrew Lim

@@ -28,6 +28,7 @@ TARGET_TICKERS = [
     "NKE", "AAL", "BAC", "F", "INTC", "XOM", "T",
     "SOFI", "PLUG", "MARA", "SNAP", "COIN", "AMC", "RIVN", "CCL", "ENPH",
 ]
+PIPELINE_MIN_DATE = date(2020, 1, 1)
 
 try:
     from pydantic import BaseModel
@@ -190,6 +191,18 @@ def _safe_num(x: Optional[float]) -> float:
     return v
 
 
+def _normalize_pipeline_start_date(raw_start: Optional[str]) -> str:
+    candidate = (raw_start or "").strip() or PIPELINE_MIN_DATE.isoformat()
+    try:
+        parsed = datetime.fromisoformat(candidate).date()
+    except ValueError:
+        logger.warning("Invalid AGG_START_DATE/start_date=%r, using %s", candidate, PIPELINE_MIN_DATE.isoformat())
+        return PIPELINE_MIN_DATE.isoformat()
+    if parsed < PIPELINE_MIN_DATE:
+        return PIPELINE_MIN_DATE.isoformat()
+    return parsed.isoformat()
+
+
 def _pick_tickers(req: SnapshotRequestArtifact) -> List[str]:
     if req.ticker:
         return [req.ticker]
@@ -209,7 +222,7 @@ def load_stock_rows(req: SnapshotRequestArtifact) -> StockRowsArtifact:
     cur = conn.cursor()
 
     tickers = _pick_tickers(req)
-    start_date = req.start_date or os.getenv("AGG_START_DATE") or "2020-01-01"
+    start_date = _normalize_pipeline_start_date(req.start_date or os.getenv("AGG_START_DATE"))
     end_date = req.end_date or os.getenv("AGG_END_DATE") or date.today().isoformat()
 
     sql = """
