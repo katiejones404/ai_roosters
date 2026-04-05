@@ -106,7 +106,9 @@ const StockMiniCard: React.FC<{
   data: StockCard;
   onClick: (ticker: string) => void;
   onAddToPortfolio: (ticker: string, price: number) => void;
-}> = ({ data, onClick, onAddToPortfolio }) => {
+  isWatchlisted: boolean;
+  onToggleWatchlist: (ticker: string) => void;
+}> = ({ data, onClick, onAddToPortfolio, isWatchlisted, onToggleWatchlist }) => {
   const returnColor = getReturnColor(data.return_1d);
 
   return (
@@ -114,20 +116,45 @@ const StockMiniCard: React.FC<{
       <div className="stock-card-accent" style={{ background: returnColor }} />
 
       <div className="stock-card-header">
-        <div>
-          <div className="stock-card-ticker">{data.ticker}</div>
-          {data.close != null && (
-            <div className="stock-card-price">${data.close.toFixed(2)}</div>
-          )}
+        {/* LEFT SIDE (⭐ + ticker + price) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleWatchlist(data.ticker);
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "16px",
+            }}
+          >
+            {isWatchlisted ? "⭐" : "☆"}
+          </button>
+
+          <div>
+            <div className="stock-card-ticker">{data.ticker}</div>
+            {data.close != null && (
+              <div className="stock-card-price">${data.close.toFixed(2)}</div>
+            )}
+          </div>
         </div>
+
+        {/* RIGHT SIDE (return badge — unchanged) */}
         {data.return_1d != null && (
           <span
             className="sentiment-badge"
             style={{
               color: returnColor,
-              background: data.return_1d >= 0 ? "rgba(22,163,74,0.1)" : "rgba(220,38,38,0.1)",
+              background:
+                data.return_1d >= 0
+                  ? "rgba(22,163,74,0.1)"
+                  : "rgba(220,38,38,0.1)",
               border: `1px solid ${
-                data.return_1d >= 0 ? "rgba(22,163,74,0.3)" : "rgba(220,38,38,0.3)"
+                data.return_1d >= 0
+                  ? "rgba(22,163,74,0.3)"
+                  : "rgba(220,38,38,0.3)"
               }`,
             }}
           >
@@ -162,14 +189,30 @@ const StockMiniCard: React.FC<{
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+
   const [cards, setCards] = useState<StockCard[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTicker, setSearchTicker] = useState("");
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
+  // Watchlist addition
+  const [watchlist, setWatchlist] = useState<string[]>(() => {
+    const saved = localStorage.getItem("watchlist");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [sortOption, setSortOption] = useState("default");
+
+  const [filters, setFilters] = useState({
+    positive: false,
+    negative: false,
+    watchlistOnly: false,
+  });
+
   // Articles sentiment summary
   const [articleSummary, setArticleSummary] = useState<ArticleSentimentSummary | null>(null);
+
 
   const fetchArticleSummary = async () => {
     try {
@@ -178,17 +221,28 @@ const Dashboard: React.FC = () => {
       );
       setArticleSummary(res.data);
     } catch {
-      // non-fatal; dashboard still works without this panel
       setArticleSummary(null);
     }
   };
-
   // Auto-load all stocks + summary on mount
   useEffect(() => {
     handleLoadAll();
     fetchArticleSummary();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const toggleWatchlist = (ticker: string) => {
+  let updated: string[];
+
+  if (watchlist.includes(ticker)) {
+    updated = watchlist.filter((t) => t !== ticker);
+  } else {
+    updated = [...watchlist, ticker];
+  }
+
+  setWatchlist(updated);
+  localStorage.setItem("watchlist", JSON.stringify(updated));
+};
 
   const fetchLatestForTicker = async (ticker: string): Promise<StockCard | null> => {
     try {
@@ -255,15 +309,41 @@ const Dashboard: React.FC = () => {
     navigate("/portfolio");
   };
 
-  // Live-filter cards by partial ticker OR company name
   const q = searchTicker.trim();
-  const filteredCards = q
-    ? cards.filter(
-        (c: StockCard) =>
-          c.ticker.toUpperCase().includes(q.toUpperCase()) ||
-          (TICKER_NAMES[c.ticker] || "").toLowerCase().includes(q.toLowerCase())
-      )
-    : cards;
+
+  const filteredCards = cards.filter((c: StockCard) => {
+    const matchesSearch =
+      !q ||
+      c.ticker.toUpperCase().includes(q.toUpperCase()) ||
+      (TICKER_NAMES[c.ticker] || "").toLowerCase().includes(q.toLowerCase());
+
+    const matchesWatchlist =
+      !filters.watchlistOnly || watchlist.includes(c.ticker);
+
+    const matchesPositive =
+      !filters.positive || (c.return_1d ?? 0) > 0;
+
+    const matchesNegative =
+      !filters.negative || (c.return_1d ?? 0) < 0;
+
+    return matchesSearch && matchesWatchlist && matchesPositive && matchesNegative;
+  });
+  const displayedCards = [...filteredCards].sort((a, b) => {
+    switch (sortOption) {
+      case "alphabetical":
+        return a.ticker.localeCompare(b.ticker);
+      case "priceHigh":
+        return (b.close ?? 0) - (a.close ?? 0);
+      case "priceLow":
+        return (a.close ?? 0) - (b.close ?? 0);
+      case "returnHigh":
+        return (b.return_30d ?? 0) - (a.return_30d ?? 0);
+      case "returnLow":
+        return (a.return_30d ?? 0) - (b.return_30d ?? 0);
+      default:
+        return 0;
+    }
+  });
 
   return (
     <div className="app-container app-container-wide">
@@ -273,8 +353,72 @@ const Dashboard: React.FC = () => {
         <div className="home-shape home-shape-3"></div>
       </div>
 
-      <div className="home-card dashboard-card">
-        <div className="home-content">
+      <div className="dashboard-page-layout">
+        <aside className="dashboard-sidebar">
+          <div className="filter-panel">
+            <div className="filter-panel-title">Filters</div>
+
+            <label className="filter-option">
+              <input
+                type="checkbox"
+                checked={filters.watchlistOnly}
+                onChange={() =>
+                  setFilters((f) => ({
+                    ...f,
+                    watchlistOnly: !f.watchlistOnly,
+                  }))
+                }
+              />
+              <span className="filter-label">Watchlist only</span>
+            </label>
+
+            <label className="filter-option">
+              <input
+                type="checkbox"
+                checked={filters.positive}
+                onChange={() =>
+                  setFilters((f) => ({
+                    ...f,
+                    positive: !f.positive,
+                    negative: false,
+                  }))
+                }
+              />
+              <span className="filter-label">Positive</span>
+            </label>
+
+            <label className="filter-option">
+              <input
+                type="checkbox"
+                checked={filters.negative}
+                onChange={() =>
+                  setFilters((f) => ({
+                    ...f,
+                    negative: !f.negative,
+                    positive: false,
+                  }))
+                }
+              />
+              <span className="filter-label">Negative</span>
+            </label>
+
+            <button
+              className="filter-clear"
+              onClick={() =>
+                setFilters({
+                  watchlistOnly: false,
+                  positive: false,
+                  negative: false,
+                })
+              }
+            >
+              Clear Filters
+            </button>
+          </div>
+        </aside>
+
+        <div className="home-card">
+          <div className="home-content">
           <h1>Dashboard</h1>
           <p>Overview of your tracked stocks and sentiment predictions.</p>
 
@@ -298,7 +442,7 @@ const Dashboard: React.FC = () => {
                   fontSize: "20px",
                   fontWeight: 700,
                   letterSpacing: "0.5px",
-                  color: "#6366f1", // matches Dashboard purple
+                  color: "#6366f1", 
                 }}
               >
                 Article Sentiment Overview
@@ -319,7 +463,7 @@ const Dashboard: React.FC = () => {
             </div>
           )}
 
-          {/* Search + Load All controls */}
+         {/* Search + Load All controls */}
           <div className="dashboard-controls">
             <input
               type="text"
@@ -333,38 +477,54 @@ const Dashboard: React.FC = () => {
             </button>
             <button className="btn-ghost" onClick={handleLoadAll}>
               Load All
-            </button>
+            </button>            
+            <select
+              className="btn-ghost"
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value)}
+            >
+              <option value="default">Sort</option>
+              <option value="alphabetical">A–Z</option>
+              <option value="priceHigh">Price: High → Low</option>
+              <option value="priceLow">Price: Low → High</option>
+              <option value="returnHigh">30D Return: High → Low</option>
+              <option value="returnLow">30D Return: Low → High</option>
+            </select>
           </div>
 
-          {loading && <LoadingScreen message="Loading stocks..." />}
-          {error && <p style={{ color: "#ef4444" }}>{error}</p>}
+          
+              {loading && <LoadingScreen message="Loading stocks..." />}
+              {error && <p style={{ color: "#ef4444" }}>{error}</p>}
 
-          {!loading && !error && !hasLoadedOnce && (
-            <div className="dashboard-empty">
-              <div className="empty-icon">📈</div>
-              <p>Search a ticker or load all stocks to get started.</p>
-            </div>
-          )}
+              {!loading && !error && !hasLoadedOnce && (
+                <div className="dashboard-empty">
+                  <div className="empty-icon">📈</div>
+                  <p>Search a ticker or load all stocks to get started.</p>
+                </div>
+              )}
 
-          {!loading && !error && hasLoadedOnce && filteredCards.length === 0 && (
-            <div className="dashboard-empty">
-              <p>No results found.</p>
-            </div>
-          )}
+              {!loading && !error && hasLoadedOnce && displayedCards.length === 0 && (
+                <div className="dashboard-empty">
+                  <p>No results found.</p>
+                </div>
+              )}
 
-          {!loading && !error && filteredCards.length > 0 && (
-            <div className="stock-grid">
-              {filteredCards.map((stock: StockCard) => (
-                <StockMiniCard
-                  key={stock.ticker}
-                  data={stock}
-                  onClick={(ticker) => navigate(`/stock/${ticker}`)}
-                  onAddToPortfolio={handleAddToPortfolio}
-                />
-              ))}
+              {!loading && !error && displayedCards.length > 0 && (
+                <div className="stock-grid">
+                  {displayedCards.map((stock: StockCard) => (
+                    <StockMiniCard
+                      key={stock.ticker}
+                      data={stock}
+                      onClick={(ticker) => navigate(`/stock/${ticker}`)}
+                      onAddToPortfolio={handleAddToPortfolio}
+                      isWatchlisted={watchlist.includes(stock.ticker)}
+                      onToggleWatchlist={toggleWatchlist}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
       </div>
 
       {modalStock && (
@@ -380,3 +540,4 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
