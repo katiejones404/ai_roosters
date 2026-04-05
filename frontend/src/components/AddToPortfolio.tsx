@@ -88,7 +88,7 @@ const AddToPortfolioModal: React.FC<AddToPortfolioModalProps> = ({
                         <span className="modal-price">${currentPrice.toFixed(2)}</span>
                     </div>
 
-                    <label className="modal-labe" htmlFor="qty-input">Number of Shares</label>
+                    <label className="modal-label" htmlFor="qty-input">Number of Shares</label>
                     <input
                         id="qty-input"
                         className="modal-input"

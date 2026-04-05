@@ -1,5 +1,6 @@
 # Environment variables
 
+.deploy.env
 backend/data/kaggle.json
 .env
 .env.*

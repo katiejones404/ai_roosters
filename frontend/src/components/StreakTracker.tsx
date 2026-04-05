@@ -23,16 +23,6 @@ function getTodayStr() {
   return new Date().toISOString().split("T")[0];
 }
 
-function getLastNDays(n: number): string[] {
-  const days: string[] = [];
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    days.push(d.toISOString().split("T")[0]);
-  }
-  return days;
-}
-
 function normalizeApiStreak(raw: unknown): StreakData {
   const obj = (raw && typeof raw === "object" ? raw : {}) as Partial<StreakData>;
 
@@ -86,9 +76,6 @@ export default function StreakTracker() {
 
   if (!streakData) return null;
 
-  const visitSet = new Set(streakData.visitDays ?? []);
-  const last7 = getLastNDays(7);
-  const today = getTodayStr();
   const flameCount =
     streakData.currentStreak >= 30
       ? 3
@@ -131,26 +118,6 @@ export default function StreakTracker() {
         day{streakData.currentStreak !== 1 ? "s" : ""} in a row
       </div>
       <p className="st-message">{message}</p>
-
-      <div className="st-dots">
-        {last7.map((day) => {
-          const visited = visitSet.has(day);
-          const isToday = day === today;
-          return (
-            <div
-              key={day}
-              className={[
-                "st-dot",
-                visited ? "st-dot-on" : "",
-                isToday ? "st-dot-today" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              title={day}
-            />
-          );
-        })}
-      </div>
 
       <div className="st-meta">Best: {streakData.bestStreak} days</div>
     </div>

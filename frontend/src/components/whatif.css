@@ -1,5 +1,5 @@
 /* ============================================================
-   What If Calculator — embedded section (matches app dark theme)
+   What If Calculator - embedded section (matches app dark theme)
    ============================================================ */
 
 .wi-section {
@@ -38,22 +38,21 @@
 }
 
 .wi-form-row {
-  display: flex;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
   gap: 0.875rem;
-  flex-wrap: wrap;
 }
 
 .wi-field {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  flex: 1;
-  min-width: 140px;
+  min-width: 0;
 }
 
 .wi-label {
-  font-size: 0.80rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: #919bad;
@@ -95,7 +94,7 @@
 }
 
 .wi-input::placeholder {
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.76);
 }
 
 .wi-input::-webkit-outer-spin-button,
@@ -103,9 +102,200 @@
   -webkit-appearance: none;
 }
 
-.wi-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.5);
+/* ---- Calendar field ---- */
+.wi-date-wrap {
+  position: relative;
+}
+
+.wi-date-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.wi-date-text-input {
+  height: 39px;
+  min-height: 39px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  line-height: 1.2;
+  padding-right: 2.6rem;
+}
+
+.wi-date-text-input:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+  outline: none;
+}
+
+.wi-date-text-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.wi-date-text-input:disabled {
+  opacity: 0.6;
+}
+
+.wi-date-text-input:-webkit-autofill,
+.wi-date-text-input:-webkit-autofill:hover,
+.wi-date-text-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #e2e8f0;
+  box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.05) inset;
+}
+
+.wi-date-picker-btn {
+  position: absolute;
+  right: 0.38rem;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1.85rem;
+  width: 1.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.347);
+  color: #e2e8f0;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.wi-date-picker-btn:hover,
+.wi-date-picker-btn:focus-visible {
+  border-color: rgba(99, 102, 241, 0.5);
+  outline: none;
+}
+
+.wi-date-picker-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wi-date-icon {
+  width: 0.82rem;
+  height: 0.82rem;
+  color: #9aa4b2;
+  flex: 0 0 auto;
+}
+
+.wi-date-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wi-date-hint {
+  margin: 0.55rem 0 0;
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.wi-calendar-popover {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  z-index: 20;
+  width: 280px;
+  max-width: min(85vw, 320px);
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.6);
+  padding: 0.7rem;
+}
+
+.wi-calendar-header {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  gap: 0.4rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.wi-month-nav {
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(148, 163, 184, 0.08);
+  color: #d2d8e2;
+  cursor: pointer;
+}
+
+.wi-month-nav:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wi-calendar-selects {
+  display: grid;
+  grid-template-columns: 1fr 0.9fr;
+  gap: 0.4rem;
+}
+
+.wi-calendar-select {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  padding: 0.42rem 0.5rem;
+  outline: none;
+}
+
+.wi-calendar-select:focus {
+  border-color: rgba(99, 102, 241, 0.55);
+}
+
+.wi-calendar-select option {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.wi-weekdays-row,
+.wi-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.22rem;
+}
+
+.wi-weekday-cell {
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: #9ca7b8;
+  padding: 0.2rem 0;
+}
+
+.wi-day-empty {
+  min-height: 30px;
+}
+
+.wi-day-btn {
+  min-height: 30px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #e2e8f0;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.wi-day-btn:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.14);
+}
+
+.wi-day-btn.selected {
+  background: rgba(99, 102, 241, 0.35);
+  border-color: rgba(129, 140, 248, 0.6);
+  color: #eef2ff;
+}
+
+.wi-day-btn:disabled {
+  color: rgba(148, 163, 184, 0.642);
+  cursor: not-allowed;
 }
 
 /* ---- Calc button ---- */
@@ -167,7 +357,7 @@
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-weight:500;
+  font-weight: 500;
   color: #cbd5e1;
   margin-bottom: 0.3rem;
 }
@@ -185,8 +375,13 @@
   margin: 0.2rem 0;
 }
 
-.wi-result-change.positive { color: #10b981; }
-.wi-result-change.negative { color: #ef4444; }
+.wi-result-change.positive {
+  color: #10b981;
+}
+
+.wi-result-change.negative {
+  color: #ef4444;
+}
 
 .wi-result-sub {
   font-size: 0.92rem;
@@ -203,7 +398,18 @@
 }
 
 @media (max-width: 700px) {
-  .wi-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .wi-form-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .wi-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .wi-calendar-popover {
+    width: min(92vw, 300px);
+  }
 }
 
 .wi-stat-box {
@@ -214,7 +420,7 @@
 }
 
 .wi-stat-label {
-  font-size: .9rem;
+  font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #acb3c0;
@@ -229,8 +435,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-.wi-stat-val.positive { color: #10b981; }
-.wi-stat-val.negative { color: #ef4444; }
+.wi-stat-val.positive {
+  color: #10b981;
+}
+
+.wi-stat-val.negative {
+  color: #ef4444;
+}
 
 /* ---- Verdict ---- */
 .wi-verdict {

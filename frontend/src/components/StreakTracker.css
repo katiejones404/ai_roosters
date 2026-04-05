@@ -19,15 +19,18 @@
 
 .st-label {
   font-size: 0.9rem;
-  font-weight: 600;
-  color: #64748b;
+  font-weight: 700;
+  color: #acb3c0;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .st-flame {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   line-height: 1;
+  color: #f97316;
+  display: inline-flex;
+  gap: 0.15rem;
 }
 
 .st-count {
@@ -42,47 +45,19 @@
 }
 
 .st-unit {
-  font-size: 0.9rem;
-  color: #475569;
+  font-size: 1rem;
+  color: #acb3c0f7;
   margin-bottom: 0.625rem;
 }
 
 .st-message {
-  font-size: 0.95rem;
+  font-size: 1rem;
+  font-weight:500;
   color: #f2f8ff;
   margin: 0 0 1rem;
 }
 
-.st-dots {
-  display: flex;
-  gap: 0.35rem;
-  margin-bottom: 0.875rem;
-}
-
-.st-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.304);
-  border: 1px solid rgba(255, 255, 255, 0.826);
-}
-
-.st-dot-on {
-  background: #f97316;
-  border-color: #f97316;
-}
-
-.st-dot-today {
-  border-color: #818cf8;
-}
-
-.st-dot-on.st-dot-today {
-  background: #f97316;
-  border-color: #818cf8;
-  box-shadow: 0 0 5px rgba(249, 115, 22, 0.5);
-}
-
 .st-meta {
-  font-size: 0.9rem;
+  font-size: .9rem;
   color: #e7f1ff;
 }

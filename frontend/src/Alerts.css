@@ -7,7 +7,7 @@
 }
 
 .app-container.app-container-wide .home-card.alerts-card {
-  max-width: 1200px;
+  max-width: 1400px;
   width: min(1400px, calc(100vw - 4rem)); /* responsive */
 }
 
@@ -16,7 +16,7 @@
 }
 
 .alerts-title {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 700;
   background: linear-gradient(135deg, #6d28d9 0%, #4f46e5 100%);
   -webkit-background-clip: text;
@@ -26,8 +26,8 @@
 }
 
 .alerts-subtitle {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.689);
+  font-size: 1.1rem;
   margin: 0;
 }
 
@@ -41,7 +41,7 @@
 }
 
 .alert-form-title {
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: #a5b4fc;
   margin: 0 0 1.25rem;
@@ -69,7 +69,7 @@
 }
 
 .alert-label {
-  font-size: 0.78rem;
+  font-size: 1rem;
   color: #a78bfa;
   font-weight: 500;
   letter-spacing: 0.03em;
@@ -205,7 +205,7 @@
   padding: 0.75rem 1rem;
   text-align: left;
   color: #a5b4fc;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
