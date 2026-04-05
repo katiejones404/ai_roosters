@@ -20,7 +20,8 @@ from app.schema.schemas import (
     PortfolioItem,
     PortfolioCreateItem,
     PortfolioUpdateItem,
-    PortfolioSummaryResponse
+    PortfolioSummaryResponse,
+    TransactionItem
 )
 from app.api.auth import get_current_user
 from app.services import portfolio
@@ -71,6 +72,22 @@ async def get_portfolio_summary(current_user: User = Depends(get_current_user), 
         and 1D/30D/120D/360D return percentages, plus a portfolio-level summary.
     """
     return portfolio.get_portfolio_summary(db, current_user.id)
+
+
+@router.get("/transactions", response_model=List[TransactionItem])
+async def get_transactions(
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    return portfolio.get_transactions(db, current_user.id)
+
+
+@router.get("/transactions/summary")
+async def get_realized_summary(
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    return portfolio.get_realized_summary(db, current_user.id)
 
 
 @router.get("/{ticker}", response_model=PortfolioItem)

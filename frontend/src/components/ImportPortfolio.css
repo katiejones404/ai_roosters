@@ -94,7 +94,7 @@
 
 .imp-col-headers {
   display: grid;
-  grid-template-columns: 120px 1fr 1fr 120px 48px;
+  grid-template-columns: 120px 1fr 1fr 1fr 120px 48px;
   gap: 0.5rem;
   padding: 0.6rem 1.75rem;
   font-size: 0.72rem;
