@@ -486,6 +486,12 @@ class NewsApiIngestor:
         )
 
 
+def run_newsapi_ingest_from_env(db_url: Optional[str] = None) -> None:
+    """Run NewsAPI news ingest using environment variable configuration."""
+    ing = NewsApiIngestor(db_url=db_url)
+    ing.ingest()
+
+
 if __name__ == "__main__":
     ing = NewsApiIngestor()
     ing.ingest()
