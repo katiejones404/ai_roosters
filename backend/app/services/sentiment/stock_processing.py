@@ -12,6 +12,8 @@ if not logger.handlers:
     logger.addHandler(_handler)
 logger.setLevel(logging.INFO)
 
+DEFAULT_RETURNS_START_DATE = "2020-01-01"
+
 
 def get_db_url() -> str:
     """Build DB URL from env vars (same pattern as PriceIngestor)."""
@@ -26,6 +28,21 @@ def get_db_url() -> str:
     db_name = os.getenv("PG_DB", "stock_db")
 
     return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+
+def get_returns_start_date() -> pd.Timestamp:
+    raw = (os.getenv("RETURNS_START_DATE", DEFAULT_RETURNS_START_DATE) or "").strip()
+    if not raw:
+        raw = DEFAULT_RETURNS_START_DATE
+    try:
+        return pd.Timestamp(raw).normalize()
+    except Exception:
+        logger.warning(
+            "Invalid RETURNS_START_DATE=%r; falling back to %s",
+            raw,
+            DEFAULT_RETURNS_START_DATE,
+        )
+        return pd.Timestamp(DEFAULT_RETURNS_START_DATE).normalize()
 
 
 def ensure_return_columns(engine) -> None:
@@ -92,6 +109,12 @@ def add_returns(df: pd.DataFrame) -> pd.DataFrame:
     df["return_120d"] = grouped["adjusted_close"].pct_change(periods=120)
     df["return_360d"] = grouped["adjusted_close"].pct_change(periods=360)
 
+    returns_start = get_returns_start_date()
+    date_series = pd.to_datetime(df["date"]).dt.normalize()
+    pre_cutoff_mask = date_series < returns_start
+    if pre_cutoff_mask.any():
+        df.loc[pre_cutoff_mask, ["return_1d", "return_30d", "return_120d", "return_360d"]] = pd.NA
+
     logger.info("Computed 1d, 30d, 120d, 360d returns")
     return df
 
@@ -115,6 +138,9 @@ def update_returns_in_db(
 
     return_cols = ["return_1d", "return_30d", "return_120d", "return_360d"]
     existing_cols = [f"existing_{c}" for c in return_cols]
+    returns_start = get_returns_start_date()
+    date_series = pd.to_datetime(df["date"]).dt.normalize()
+    pre_cutoff_mask = date_series < returns_start
 
     # In "only_missing" mode, only update rows where at least one return
     # value is currently NULL in DB and now computable.
@@ -125,8 +151,12 @@ def update_returns_in_db(
             missing_then_computable = missing_then_computable | (
                 df[existing_col].isna() & df[c].notna()
             )
+
+        pre_cutoff_needs_clear = pre_cutoff_mask & df[existing_cols].notna().any(axis=1)
+        rows_to_update = missing_then_computable | pre_cutoff_needs_clear
+
         before_count = len(df)
-        df = df.loc[missing_then_computable].copy()
+        df = df.loc[rows_to_update].copy()
         logger.info(
             "Only-missing mode enabled: %s/%s rows require return updates.",
             len(df),
@@ -148,10 +178,10 @@ def update_returns_in_db(
         """
         UPDATE stocks
         SET
-            return_1d   = COALESCE(:return_1d, return_1d),
-            return_30d  = COALESCE(:return_30d, return_30d),
-            return_120d = COALESCE(:return_120d, return_120d),
-            return_360d = COALESCE(:return_360d, return_360d)
+            return_1d   = :return_1d,
+            return_30d  = :return_30d,
+            return_120d = :return_120d,
+            return_360d = :return_360d
         WHERE ticker = :ticker AND date = :date
         """
     )

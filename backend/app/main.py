@@ -92,7 +92,8 @@ def ingest_stock_prices_on_startup():
     Notes
     -----
     Controlled by environment variables: RUN_ARTICLE_INGEST, RUN_PRICE_INGEST,
-    and RUN_ML_PIPELINES. Defaults are disabled for production-safe startups.
+    RUN_ML_PIPELINES, INGEST_ALL_YEARS, and PRICE_INGEST_LOOKBACK_DAYS.
+    Defaults are disabled for production-safe startups.
     Set to '1' to run.
     Also applies any pending schema migrations for columns added after initial deploy.
     """
@@ -153,33 +154,47 @@ def ingest_stock_prices_on_startup():
             logger.info("RUN_ARTICLE_INGEST != 1 — skipping article ingestion.")
 
         if run_price_ingest:
-            logger.info("RUN_PRICE_INGEST=1 — ingesting price data...")
+            logger.info("RUN_PRICE_INGEST=1 - ingesting price data...")
             ingestor = PriceIngestor(db_url)
             tickers = WEBSITE_TICKERS.copy()
 
-            _engine = create_engine(db_url)
-            cutoff = date.today() - timedelta(days=1000)
-            with _engine.connect() as _conn:
-                _count = _conn.execute(
-                    sa_text("SELECT COUNT(*) FROM stocks WHERE date < :d AND ticker = ANY(:tickers)"),
-                    {"d": str(cutoff), "tickers": tickers}
-                ).scalar()
-            _engine.dispose()
-            has_history = (_count or 0) > 0
-            price_start = str(date.today() - timedelta(days=30)) if has_history else "2020-01-01"
-            logger.info(f"Price ingest tickers={tickers}")
-            logger.info(f"Price ingest start_date={price_start} (has_history={has_history})")
+            ingest_all_years = _env_bool("INGEST_ALL_YEARS", "0")
+            try:
+                lookback_days = max(int(os.getenv("PRICE_INGEST_LOOKBACK_DAYS", "30")), 1)
+            except ValueError:
+                lookback_days = 30
 
-            ingestor.ingest_multiple_stocks(
-                tickers=tickers,
-                start_date=price_start,
-                end_date=str(date.today()),
-                period=None,
-                update_existing=False,
+            logger.info(f"Price ingest tickers={tickers}")
+            logger.info(
+                "Price ingest config: ingest_all_years=%s lookback_days=%s",
+                ingest_all_years,
+                lookback_days,
             )
+
+            if ingest_all_years:
+                logger.info("Running full-history price backfill with period=max...")
+                ingestor.ingest_multiple_stocks(
+                    tickers=tickers,
+                    start_date=None,
+                    end_date=None,
+                    period="max",
+                    update_existing=False,
+                    use_article_window_if_missing=False,
+                )
+            else:
+                price_start = str(date.today() - timedelta(days=lookback_days))
+                logger.info(f"Running incremental price ingest from {price_start} to {date.today()}.")
+                ingestor.ingest_multiple_stocks(
+                    tickers=tickers,
+                    start_date=price_start,
+                    end_date=str(date.today()),
+                    period=None,
+                    update_existing=True,
+                    use_article_window_if_missing=False,
+                )
             logger.info("Finished price ingestion.")
         else:
-            logger.info("RUN_PRICE_INGEST != 1 — skipping price ingestion.")
+            logger.info("RUN_PRICE_INGEST != 1 - skipping price ingestion.")
 
         if run_ml_pipelines and ML_AVAILABLE:
             logger.info("RUN_ML_PIPELINES=1 — running ML pipelines...")

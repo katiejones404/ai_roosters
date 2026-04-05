@@ -129,6 +129,13 @@ class PriceIngestor:
         if start_date and end_date:
             return start_date, end_date
 
+        if start_date and not end_date:
+            return start_date, str(date.today())
+
+        if end_date and not start_date:
+            end_dt = pd.to_datetime(end_date).date()
+            return str(end_dt - timedelta(days=365)), end_date
+
         if not use_article_window_if_missing:
             today = date.today()
             return str(today - timedelta(days=365)), str(today)
@@ -268,13 +275,15 @@ class PriceIngestor:
         update_existing: bool = False,
         use_article_window_if_missing: bool = True,
     ) -> None:
-        start_date, end_date = self.normalize_price_window(
-            start_date=start_date,
-            end_date=end_date,
-            use_article_window_if_missing=use_article_window_if_missing,
-        )
-
-        logger.info(f"Price ingest window: {start_date} -> {end_date} (inclusive)")
+        if period and not start_date and not end_date:
+            logger.info(f"Price ingest using period={period}")
+        else:
+            start_date, end_date = self.normalize_price_window(
+                start_date=start_date,
+                end_date=end_date,
+                use_article_window_if_missing=use_article_window_if_missing,
+            )
+            logger.info(f"Price ingest window: {start_date} -> {end_date} (inclusive)")
 
         for ticker in tickers:
             logger.info(f"Processing {ticker} ...")
@@ -294,15 +303,19 @@ if __name__ == "__main__":
     ingestor = PriceIngestor()
     tickers = ingestor.resolve_target_tickers()
 
-    start_date = os.getenv("PRICE_START_DATE") or "2020-01-01"
-    end_date = os.getenv("PRICE_END_DATE") or str(date.today())
+    start_date = (os.getenv("PRICE_START_DATE") or "").strip() or None
+    end_date = (os.getenv("PRICE_END_DATE") or "").strip() or None
+    period = (os.getenv("PRICE_PERIOD") or "").strip() or None
+    if not start_date and not end_date and not period:
+        # Default manual mode to full listing history.
+        period = "max"
     update_existing = (os.getenv("PRICE_UPDATE_EXISTING", "1").strip().lower() in {"1", "true", "yes", "on"})
 
     ingestor.ingest_multiple_stocks(
         tickers=tickers,
         start_date=start_date,
         end_date=end_date,
-        period=None,
+        period=period,
         update_existing=update_existing,
         use_article_window_if_missing=False,
     )
