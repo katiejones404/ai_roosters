@@ -274,13 +274,13 @@ async def _news_ingest_loop() -> None:
     Notes
     -----
     Runs continuously regardless of time of day.
-    Interval is controlled by NEWS_INGEST_INTERVAL_SECONDS (default 7200, i.e. 2 hours).
+    Interval is controlled by NEWS_INGEST_INTERVAL_SECONDS (default 86400, i.e. 24 hours).
     """
     try:
-        interval_seconds = int(os.getenv("NEWS_INGEST_INTERVAL_SECONDS", "7200"))
+        interval_seconds = int(os.getenv("NEWS_INGEST_INTERVAL_SECONDS", "86400"))
     except ValueError:
-        interval_seconds = 7200
-    interval_seconds = max(interval_seconds, 300)
+        interval_seconds = 86400
+    interval_seconds = max(interval_seconds, 3600)
 
     await asyncio.sleep(180)  # Allow startup to complete before first run
     while True:
@@ -291,8 +291,8 @@ async def _news_ingest_loop() -> None:
             await asyncio.sleep(interval_seconds)
             continue
         try:
-            from app.services.ingesting_pipelines.daily_news_ingest import StockNewsIngestor
-            StockNewsIngestor().ingest_recent_news()
+            from app.services.ingesting_pipelines.daily_news_ingest import run_daily_news_ingest_from_env
+            run_daily_news_ingest_from_env()
             logger.info("News ingest loop: ingestion complete.")
         except Exception as e:
             logger.error(f"News ingest loop error: {e}", exc_info=True)

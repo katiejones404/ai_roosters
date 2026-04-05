@@ -94,16 +94,13 @@ The core question the project addresses: **does the tone of financial news predi
 Steps are run via Docker Compose pipeline profile:
 
 ```
-1. Historical news ingest    -> articles table (HuggingFace, 2020-2023)
-2. Daily news ingest         -> stock_news_articles table (Marketaux API)
-3. NewsAPI ingest            -> stock_news_articles table
-4. AlphaVantage ingest       -> stock_news_articles table
-5. Guardian ingest           -> stock_news_articles table
-6. Price ingest              -> stocks table (yfinance)
-7. FinBERT scoring           -> scores all unscored articles
-8. Returns pipeline          -> computes 1D/30D/120D/360D forward returns
-9. Sentiment aggregator      -> sentiment_snapshots table
-10. GPT summaries            -> one explanation per ticker
+1. Historical news ingest    -> articles table (HuggingFace filtered subsets)
+2. Daily news ingest         -> stock_news_articles table (Marketaux API, scheduled)
+3. Price ingest              -> stocks table (yfinance)
+4. FinBERT scoring           -> scores all unscored articles
+5. Returns pipeline          -> computes 1D/30D/120D/360D forward returns
+6. Sentiment aggregator      -> sentiment_snapshots table
+7. GPT summaries             -> one explanation per ticker
 ```
 
 ### Key Database Tables
@@ -111,7 +108,7 @@ Steps are run via Docker Compose pipeline profile:
 | Table | Rows | Description |
 |---|---|---|
 | articles | ~63,000 | Historical news (HuggingFace) |
-| stock_news_articles | varies | Daily news (Marketaux, NewsAPI, AlphaVantage, Guardian) |
+| stock_news_articles | varies | Daily news (Marketaux scheduled ingest, capped per ticker) |
 | stocks | ~23,000+ | Price data (yfinance) |
 | sentiment_snapshots | ~23,000+ | Aggregated sentiment and returns per ticker/date |
 
@@ -154,8 +151,8 @@ az containerapp job create `
   --registry-password $GH_PAT `
   --cpu 0.5 --memory 1.0Gi `
   --replica-timeout 900 --replica-retry-limit 1 `
-  --command python `
-  --args -m app.jobs.run_alert_checks_once `
+  --command sh `
+  --args "-c" "python -m app.jobs.run_alert_checks_once" `
   --secrets database-url="$DATABASE_URL" smtp-user="$SMTP_USER" smtp-pass="$SMTP_PASS" alert-from="$ALERT_FROM_EMAIL" `
   --env-vars DATABASE_URL=secretref:database-url SMTP_USER=secretref:smtp-user SMTP_PASS=secretref:smtp-pass ALERT_FROM_EMAIL=secretref:alert-from SMTP_HOST=smtp.gmail.com SMTP_PORT=587
 
@@ -172,28 +169,28 @@ az containerapp job create `
   --registry-password $GH_PAT `
   --cpu 0.5 --memory 1.0Gi `
   --replica-timeout 1800 --replica-retry-limit 1 `
-  --command python `
-  --args -m app.services.ingesting_pipelines.prices_ingest `
+  --command sh `
+  --args "-c" "python -m app.services.ingesting_pipelines.prices_ingest" `
   --secrets database-url="$DATABASE_URL" `
   --env-vars DATABASE_URL=secretref:database-url PRICE_UPDATE_EXISTING=1
 
-# News ingest every 2 hours
+# News ingest once daily (13:00 UTC ~= 8:00 AM EST / 9:00 AM EDT)
 az containerapp job create `
   --name stocksense-news-job `
   --resource-group stocksense-rg `
   --environment stocksense-env `
   --trigger-type Schedule `
-  --cron-expression "5 */2 * * *" `
+  --cron-expression "0 13 * * *" `
   --image ghcr.io/katiejones404/stocksense-api:latest `
   --registry-server ghcr.io `
   --registry-username katiejones404 `
   --registry-password $GH_PAT `
   --cpu 0.5 --memory 1.0Gi `
   --replica-timeout 1800 --replica-retry-limit 1 `
-  --command python `
-  --args -m app.services.ingesting_pipelines.daily_news_ingest `
+  --command sh `
+  --args "-c" "python -m app.services.ingesting_pipelines.daily_news_ingest" `
   --secrets database-url="$DATABASE_URL" marketaux-token="$MARKETAUX_API_TOKEN" `
-  --env-vars DATABASE_URL=secretref:database-url MARKETAUX_API_TOKEN=secretref:marketaux-token
+  --env-vars DATABASE_URL=secretref:database-url MARKETAUX_API_TOKEN=secretref:marketaux-token NEWS_MAX_PAGES_PER_TICKER=1 NEWS_API_LIMIT_PER_PAGE=2 NEWS_MAX_ARTICLES_PER_TICKER=2 NEWS_LOOKBACK_HOURS=24
 
 # Sentiment refresh every 6 hours (pipeline image with ML deps)
 az containerapp job create `
@@ -209,7 +206,7 @@ az containerapp job create `
   --cpu 1.0 --memory 2.0Gi `
   --replica-timeout 3600 --replica-retry-limit 1 `
   --command sh `
-  --args -c "python -m app.services.sentiment.article_processing && python -m app.services.sentiment.stock_processing && python -m app.services.sentiment.aggregator" `
+  --args "-c" "python -m app.services.sentiment.article_processing && python -m app.services.sentiment.stock_processing && python -m app.services.sentiment.aggregator" `
   --secrets database-url="$DATABASE_URL" openai-key="$OPENAI_API_KEY" `
   --env-vars DATABASE_URL=secretref:database-url OPENAI_API_KEY=secretref:openai-key
 ```
@@ -257,10 +254,7 @@ Cloud-hosted serverless PostgreSQL. Connection via `DATABASE_URL` environment va
 |---|---|---|
 | DATABASE_URL | Yes | Neon PostgreSQL connection string |
 | OPENAI_API_KEY | Yes | GPT-4o-mini summaries |
-| MARKETAUX_API_TOKEN | For pipeline | Daily news ingest |
-| NEWSAPI_API_KEY | For pipeline | NewsAPI ingest |
-| ALPHAVANTAGE_API_KEY | For pipeline | AlphaVantage ingest |
-| GUARDIAN_API_KEY | For pipeline | Guardian ingest |
+| MARKETAUX_API_TOKEN | For pipeline | Daily Marketaux ingest |
 | SECRET_KEY | Yes | JWT signing key |
 | FRONTEND_ORIGINS | Yes | CORS allowed origins |
 | RUN_ARTICLE_INGEST | Optional | Set to 1 to run historical article ingest on API startup (default 0) |
@@ -273,6 +267,9 @@ Cloud-hosted serverless PostgreSQL. Connection via `DATABASE_URL` environment va
 | ENABLE_SENTIMENT_SCHEDULER | Optional | Enable/disable in-process sentiment loop |
 | NEWS_INGEST_FILTERED_MODE | Optional | `1` uses filtered HF subsets (Colab-style) instead of full-dataset scan |
 | NEWS_INGEST_HF_SUBSETS | Optional | Comma-separated HF subset names for historical news ingest |
+| NEWS_MAX_PAGES_PER_TICKER | Optional | Daily Marketaux pages per ticker (recommended `1`) |
+| NEWS_API_LIMIT_PER_PAGE | Optional | Daily Marketaux page size (recommended `2`) |
+| NEWS_MAX_ARTICLES_PER_TICKER | Optional | Hard cap per ticker per run (recommended `2`) |
 | SMTP_HOST | For alerts | Email alert SMTP server |
 | SMTP_USER | For alerts | Email alert sender address |
 | SMTP_PASS | For alerts | Email alert password |
