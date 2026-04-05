@@ -1,9 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ -f .deploy.env ]]; then
-  # shellcheck disable=SC1091
-  source .deploy.env
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+ENV_FILE="$SCRIPT_DIR/.deploy.env"
+
+if [[ ! -f "$ENV_FILE" && -f "$ROOT_DIR/.deploy.env" ]]; then
+  ENV_FILE="$ROOT_DIR/.deploy.env"
+fi
+
+if [[ -f "$ENV_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+else
+  echo "Missing .deploy.env. Expected at:"
+  echo "  - $SCRIPT_DIR/.deploy.env (recommended)"
+  echo "  - $ROOT_DIR/.deploy.env (fallback)"
+  exit 1
 fi
 
 require_var() {
@@ -17,16 +30,17 @@ require_var() {
 for v in SUBSCRIPTION_ID RG ENV_NAME API_APP GH_USER GH_PAT API_IMAGE PIPE_IMAGE DATABASE_URL FRONTEND_ORIGINS OPENAI_API_KEY SMTP_USER SMTP_PASS ALERT_FROM_EMAIL MARKETAUX_API_TOKEN NEWSAPI_API_KEY ALPHAVANTAGE_API_KEY GUARDIAN_API_KEY; do
   require_var "$v"
 done
+LOCATION="${LOCATION:-eastus2}"
 
 echo "[1/7] Checking Azure login..."
 az account show >/dev/null 2>&1 || az login >/dev/null
 az account set --subscription "$SUBSCRIPTION_ID"
 
 echo "[2/7] Ensuring resource group + ACA environment..."
-az group create --name "$RG" --location eastus >/dev/null
+az group create --name "$RG" --location "$LOCATION" >/dev/null
 
 if ! az containerapp env show --name "$ENV_NAME" --resource-group "$RG" >/dev/null 2>&1; then
-  az containerapp env create --name "$ENV_NAME" --resource-group "$RG" --location eastus >/dev/null
+  az containerapp env create --name "$ENV_NAME" --resource-group "$RG" --location "$LOCATION" >/dev/null
 fi
 
 echo "[3/7] Creating/updating API app..."
