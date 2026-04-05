@@ -106,70 +106,83 @@ def get_portfolio_item_by_ticker(
 def add_or_update_position(
     db: Session, user_id: UUID, item: PortfolioCreateItem
 ) -> PortfolioItem:
-    """Add a new position or update existing position with averaging"""
-    check_sql = text("""
-        SELECT id, quantity, avg_price
-        FROM portfolio
-        WHERE user_id = :user_id AND ticker = :ticker
-    """)
+    logger.info(f"add_or_update_position called: user={user_id}, ticker={item.ticker}, qty={item.quantity}, price={item.avg_price}")
     
-    existing = db.execute(
-        check_sql,
-        {"user_id": str(user_id), "ticker": item.ticker}
-    ).fetchone()
-    
-    if existing:
-        existing_dict = row_to_dict(existing)
-        old_quantity = float(existing_dict["quantity"])
-        old_avg_price = float(existing_dict["avg_price"])
-        new_quantity = old_quantity + item.quantity
-        new_avg_price = (
-            (old_quantity * old_avg_price + item.quantity * item.avg_price) / new_quantity
-        )
-        
-        update_sql = text("""
-            UPDATE portfolio
-            SET quantity = :quantity, avg_price = :avg_price
-            WHERE id = :id
-        """)
-        
-        db.execute(
-            update_sql,
-            {
-                "id": existing_dict["id"],
-                "quantity": new_quantity,
-                "avg_price": new_avg_price
-            }
-        )
-        db.commit()
-        
-        return get_portfolio_item_by_ticker(db, user_id, item.ticker)
-    else:
-        new_id = str(uuid4())
-        insert_sql = text("""
-            INSERT INTO portfolio (id, user_id, ticker, quantity, avg_price)
-            VALUES (:id, :user_id, :ticker, :quantity, :avg_price)
-        """)
-        
-        db.execute(
-            insert_sql,
-            {
-                "id": new_id,
-                "user_id": str(user_id),
-                "ticker": item.ticker,
-                "quantity": item.quantity,
-                "avg_price": item.avg_price
-            }
-        )
-    
-        db.commit()
+    try:
+        existing = db.execute(
+            text("""
+                SELECT id, quantity, avg_price
+                FROM portfolio
+                WHERE user_id = :user_id AND ticker = :ticker
+            """),
+            {"user_id": str(user_id), "ticker": item.ticker},
+        ).fetchone()
 
-        return get_portfolio_item_by_ticker(db, user_id, item.ticker)
+        logger.info(f"Existing position found: {existing is not None}")
 
+        if existing:
+            d = row_to_dict(existing)
+            old_qty   = float(d["quantity"])
+            old_price = float(d["avg_price"])
+            new_qty   = old_qty + item.quantity
+            new_price = (old_qty * old_price + item.quantity * item.avg_price) / new_qty
+            logger.info(f"Updating position: new_qty={new_qty}, new_price={new_price}")
+
+            db.execute(
+                text("UPDATE portfolio SET quantity = :qty, avg_price = :price WHERE id = :id"),
+                {"id": d["id"], "qty": new_qty, "price": new_price},
+            )
+        else:
+            new_id = str(uuid4())
+            logger.info(f"Inserting new position: id={new_id}")
+            db.execute(
+                text("""
+                    INSERT INTO portfolio (id, user_id, ticker, quantity, avg_price)
+                    VALUES (:id, :user_id, :ticker, :quantity, :avg_price)
+                """),
+                {
+                    "id":        new_id,
+                    "user_id":   str(user_id),
+                    "ticker":    item.ticker,
+                    "quantity":  item.quantity,
+                    "avg_price": item.avg_price,
+                },
+            )
+
+        _log_transaction(db, user_id, item.ticker, "buy", item.quantity, item.avg_price)
+        db.commit()
+        logger.info(f"Committed successfully for {item.ticker}")
+
+        result = get_portfolio_item_by_ticker(db, user_id, item.ticker)
+        logger.info(f"Fetched back result: {result}")
+        return result
+
+    except Exception as e:
+        logger.error(f"Error in add_or_update_position: {e}", exc_info=True)
+        db.rollback()
+        raise
+    
+def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quantity: float, price: float, realized_gain: Optional[float] = None) -> None:
+    db.execute(text("""
+        INSERT INTO transactions (user_id, ticker, action, quantity, price, realized_gain)
+        VALUES (:uid, :ticker, :action, :qty, :price, :gain)
+    """), {
+        "uid": str(user_id),
+        "ticker": ticker,
+        "action": action,
+        "qty": quantity,
+        "price": price,
+        "gain": realized_gain
+        },
+    )
 
 def update_portfolio_item(
     db: Session, user_id: UUID, ticker: str, item: PortfolioUpdateItem
 ) -> Optional[PortfolioItem]:
+    existing = get_portfolio_item_by_ticker(db, user_id, ticker)
+    if not existing:
+        return None
+    
     update_fields = []
     params = {"user_id": str(user_id), "ticker": ticker}
     
@@ -191,13 +204,33 @@ def update_portfolio_item(
     """)
     
     result = db.execute(sql, params)
+
+    if item.quantity is not None and item.quantity < existing.quantity:
+        qty_sold = existing.quantity - item.quantity
+        sell_price = _get_latest_price(db, ticker) or existing.avg_price
+        realized_gain = (sell_price - existing.avg_price) * qty_sold
+        _log_transaction(db, user_id, ticker, "sell", qty_sold, sell_price, realized_gain)
     db.commit()
     if result.rowcount == 0:
         return None
     return get_portfolio_item_by_ticker(db, user_id, ticker)
 
+def _get_latest_price(db: Session, ticker: str) -> Optional[float]:
+    row = db.execute(text("""
+        SELECT close FROM stocks
+        WHERE ticker = :ticker
+        ORDER BY date DESC LIMIT 1
+    """), {"ticker": ticker}).fetchone()
+    return float(row[0]) if row and row[0] is not None else None
 
 def remove_from_portfolio(db: Session, user_id: UUID, ticker: str) -> bool:
+    existing = get_portfolio_item_by_ticker(db, user_id, ticker)
+    if existing:
+        sell_price = _get_latest_price(db, ticker) or existing.avg_price
+        realized_gain = (sell_price - existing.avg_price) * existing.quantity \
+                        if sell_price else None
+        _log_transaction(db, user_id, ticker, "sell", existing.quantity, sell_price, realized_gain)
+
     sql = text("""
         DELETE FROM portfolio
         WHERE user_id = :user_id AND ticker = :ticker
@@ -272,30 +305,40 @@ def get_portfolio_summary(
     """)
     
     rows = db.execute(sql, {"user_id": str(user_id)}).fetchall()
+
+    realized_row = db.execute(
+        text("""
+            SELECT
+                COALESCE(SUM(realized_gain), 0) AS total_realized_gain
+            FROM transactions
+            WHERE user_id = :user_id AND action = 'sell' AND realized_gain IS NOT NULL
+        """), {"user_id": str(user_id)}
+    ).fetchone()
+
+    realized_dict = row_to_dict(realized_row)
+    total_realized_gain = float(realized_dict["total_realized_gain"]) if realized_dict and realized_dict["total_realized_gain"] is not None else 0.0
+
     portfolio_items = []
     total_cost_basis = 0.0
     total_current_value = 0.0
     
     for row in rows:
         row_dict = row_to_dict(row)
+
         # Log raw values from database
-        logger.info(f"Processing {row_dict['ticker']}: "
-                   f"qty={row_dict['quantity']}, "
-                   f"avg_price={row_dict['avg_price']}, "
-                   f"current_price={row_dict['current_price']}, "
-                   f"cost_basis={row_dict['cost_basis']}, "
-                   f"current_value={row_dict['current_value']}, "
-                   f"gain_loss={row_dict['total_gain_loss']}, "
-                   f"gain_loss_pct={row_dict['gain_loss_pct']}")
+        logger.info(
+            f"Processing {row_dict['ticker']}: qty={row_dict['quantity']}, avg_price={row_dict['avg_price']}, "
+                   f"current_price={row_dict['current_price']}, cost_basis={row_dict['cost_basis']}, "
+                   f"current_value={row_dict['current_value']}, gain_loss={row_dict['total_gain_loss']}, "
+                   f"gain_loss_pct={row_dict['gain_loss_pct']}"
+        )
         
         # Use safe_float for all conversions
         cost_basis = safe_float(row_dict["cost_basis"], 0.0)
         current_value = safe_float(row_dict["current_value"], 0.0)
-        total_gain_loss = safe_float(row_dict["total_gain_loss"], 0.0)
-        gain_loss_pct = safe_float(row_dict["gain_loss_pct"], 0.0)
-        
-        total_cost_basis += cost_basis if cost_basis is not None else 0.0
-        total_current_value += current_value if current_value is not None else 0.0
+
+        total_cost_basis += cost_basis
+        total_current_value += current_value
         
         portfolio_items.append(
             PortfolioItemWithMetrics(
@@ -306,8 +349,8 @@ def get_portfolio_summary(
                 current_price=safe_float(row_dict["current_price"]),
                 cost_basis=cost_basis,
                 current_value=current_value,
-                total_gain_loss=total_gain_loss,
-                gain_loss_pct=gain_loss_pct,
+                total_gain_loss=safe_float(row_dict["total_gain_loss"], 0.0),
+                gain_loss_pct=safe_float(row_dict["gain_loss_pct"], 0.0),
                 return_1d=safe_float(row_dict["return_1d"]),
                 return_30d=safe_float(row_dict["return_30d"]),
                 return_120d=safe_float(row_dict["return_120d"]),
@@ -315,24 +358,17 @@ def get_portfolio_summary(
                 added_at=safe_datetime_to_str(row_dict["added_at"])
             )
         )
-    
+
     # Safe final calculations
-    total_gain_loss = safe_float(total_current_value - total_cost_basis, 0.0)
-    total_gain_loss_pct = safe_float(
-        (total_gain_loss / total_cost_basis * 100) if total_cost_basis > 0 else 0.0,
-        0.0
-    )
-    
-    logger.info(f"Summary totals: cost_basis={total_cost_basis}, "
-               f"current_value={total_current_value}, "
-               f"gain_loss={total_gain_loss}, "
-               f"gain_loss_pct={total_gain_loss_pct}")
+    total_unrealized_gain = safe_float(total_current_value - total_cost_basis, 0.0)
+    total_unrealized_gain_pct = safe_float((total_unrealized_gain / total_cost_basis) if total_cost_basis > 0 else 0.0, 0.0)
     
     summary = PortfolioSummary(
         total_cost_basis=total_cost_basis,
         total_current_value=total_current_value,
-        total_gain_loss=total_gain_loss,
-        total_gain_loss_pct=total_gain_loss_pct,
+        total_gain_loss=total_unrealized_gain,
+        total_gain_loss_pct=total_unrealized_gain_pct,
+        total_realized_gain=total_realized_gain,
         num_positions=len(portfolio_items)
     )
     
@@ -340,3 +376,44 @@ def get_portfolio_summary(
         portfolio_items=portfolio_items,
         summary=summary
     )
+
+def get_transactions(db: Session, user_id: UUID) -> List[dict]:
+    rows = db.execute(text("""
+        SELECT id, ticker, action, quantity, price, realized_gain, executed_at
+        FROM transactions
+        WHERE user_id = :uid
+        ORDER BY executed_at DESC
+    """), {"uid": str(user_id)}).fetchall()
+    return [
+        {
+            "id":            str(d["id"]),
+            "ticker":        d["ticker"],
+            "action":        d["action"],
+            "quantity":      float(d["quantity"]),
+            "price":         float(d["price"]),
+            "realized_gain": safe_float(d["realized_gain"]),
+            "executed_at":   safe_datetime_to_str(d["executed_at"]),
+        }
+        for d in (row_to_dict(r) for r in rows)
+    ]
+
+def get_realized_summary(db: Session, user_id: UUID) -> List[dict]:
+    row = db.execute(
+        text("""
+            SELECT 
+                ticker,
+                COALESCE(SUM(realized_gain), 0) AS total_realized,
+                COUNT(*) AS num_sells
+            FROM transactions
+            WHERE user_id = :uid AND action = 'sell'
+            GROUP BY ticker
+            ORDER BY total_realized DESC
+        """), {"uid": str(user_id)}).mappings().all()
+    return  [
+        {
+            "ticker":        r["ticker"],
+            "total_realized": float(r["total_realized"]),
+            "num_sells":      int(r["num_sells"]),
+        }
+        for r in row
+    ]

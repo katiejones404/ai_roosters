@@ -9,7 +9,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { getToken } from "./utils/auth";
 import {
     BarChart, Bar, XAxis, YAxis, Tooltip,
-    LineChart, Line, AreaChart, Area,
+    AreaChart, Area,
     CartesianGrid, ResponsiveContainer, Cell, Legend,
 } from "recharts";
 import AddToPortfolioModal from "./components/AddToPortfolio";
@@ -21,6 +21,22 @@ import './portfolio.css';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
+interface Transaction {
+    id: string;
+    ticker: string;
+    action: 'buy' | 'sell';
+    quantity: number;
+    price: number;
+    realized_gain: number | null;
+    executed_at: string;
+}
+
+interface RealizedSummary {
+    ticker: string;
+    total_realized: number;
+    num_sells: number;
+}
+
 interface PortfolioItemWithMetrics {
     id: string;
     ticker: string;
@@ -30,7 +46,7 @@ interface PortfolioItemWithMetrics {
     cost_basis: number;
     current_value: number;
     total_gain_loss: number;
-    gain_loss_pct: number;
+    gain_loss_pct: number;   // decimal from backend, e.g. 0.15 = +15%
     return_1d: number | null;
     return_30d: number | null;
     return_120d: number | null;
@@ -41,8 +57,9 @@ interface PortfolioItemWithMetrics {
 interface PortfolioSummary {
     total_cost_basis: number;
     total_current_value: number;
-    total_gain_loss: number;
-    total_gain_loss_pct: number;
+    total_gain_loss: number;       // unrealized $
+    total_gain_loss_pct: number;   // unrealized % as decimal
+    total_realized_gain: number;   // locked-in $ from all sells
     num_positions: number;
 }
 
@@ -62,10 +79,6 @@ const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ec4899', '#06b6d4', '#f
 AnimatedValue
 
 Counts up from 0 to the target value on mount using requestAnimationFrame.
-Used in the portfolio summary stat cards for a polished entry animation.
-
-Notes
------
 Uses easeOutCubic easing so the animation starts fast and decelerates smoothly.
 */
 const AnimatedValue: React.FC<{
@@ -113,9 +126,13 @@ const Portfolio = () => {
     const [addSharesTicker, setAddSharesTicker] = useState<string | null>(null);
     const [addSharesPrice, setAddSharesPrice] = useState<number>(0);
     const [showImport, setShowImport] = useState(false);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [realizedSummary, setRealizedSummary] = useState<RealizedSummary[]>([]);
+    const [showTransactions, setShowTransactions] = useState(false);
 
     useEffect(() => {
         fetchPortfolioSummary();
+        fetchTransactions();
     }, []);
 
     // Fetch price history whenever selected tickers change (compare mode on)
@@ -150,6 +167,24 @@ const Portfolio = () => {
         fetchPriceData();
     }, [selectedTickers, compareMode]);
 
+    const fetchTransactions = async () => {
+        try {
+            const token = getToken();
+            const [txRes, summaryRes] = await Promise.all([
+                axios.get(`${API_BASE}/api/portfolio/transactions`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }),
+                axios.get(`${API_BASE}/api/portfolio/transactions/summary`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            ]);
+            setTransactions(txRes.data);
+            setRealizedSummary(summaryRes.data);
+        } catch {
+            // non-fatal — portfolio still works without transaction history
+        }
+    };
+
     const fetchPortfolioSummary = async () => {
         try {
             setLoading(true);
@@ -172,8 +207,9 @@ const Portfolio = () => {
                         total_cost_basis: 0,
                         total_current_value: 0,
                         total_gain_loss: 0,
+                        total_gain_loss_pct: 0,
+                        total_realized_gain: 0,   // BUG FIX: must be present to avoid crash
                         num_positions: 0,
-                        total_gain_loss_pct: 0
                     }
                 });
                 setError(null);
@@ -208,6 +244,7 @@ const Portfolio = () => {
             setSelectedTickers(prev => prev.filter(t => t !== ticker));
             closeActionPanel();
             fetchPortfolioSummary();
+            fetchTransactions();
         } catch {
             setActionError('Failed to remove position. Please try again.');
         }
@@ -235,6 +272,7 @@ const Portfolio = () => {
             }
             closeActionPanel();
             fetchPortfolioSummary();
+            fetchTransactions();
         } catch {
             setActionError('Failed to update position. Please try again.');
         }
@@ -254,17 +292,18 @@ const Portfolio = () => {
     const formatCurrency = (value: number | null) => {
         if (value === null || value === undefined) return 'N/A';
         return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+            style: 'currency', currency: 'USD',
+            minimumFractionDigits: 2, maximumFractionDigits: 2,
         }).format(value);
     };
 
+    // All percentage values from the backend are decimals (0.15 = 15%).
+    // This function multiplies by 100 before display.
     const formatPercent = (value: number | null) => {
         if (value === null || value === undefined) return 'N/A';
-        const sign = value >= 0 ? '+' : '';
-        return `${sign}${value.toFixed(2)}%`;
+        const pct = value * 100;
+        const sign = pct >= 0 ? '+' : '';
+        return `${sign}${pct.toFixed(2)}%`;
     };
 
     const getReturnColor = (value: number | null): string => {
@@ -277,7 +316,6 @@ const Portfolio = () => {
         return value >= 0 ? '▲' : '▼';
     };
 
-    // Get the first/last dates from the current chart slice (YYYY-MM-DD -> MM/DD/YYYY)
     const getChartDateRange = (): { start: string; end: string } | null => {
         const tickers = Object.keys(compareData);
         if (tickers.length === 0) return null;
@@ -358,13 +396,13 @@ const Portfolio = () => {
         if (summ) {
             doc.text(`Total Value: ${formatCurrency(summ.total_current_value)}`, 14, finalY + 8);
             doc.text(`Total Invested: ${formatCurrency(summ.total_cost_basis)}`, 14, finalY + 16);
-            doc.text(`Total Gain/Loss: ${formatCurrency(summ.total_gain_loss)} (${formatPercent(summ.total_gain_loss_pct)})`, 14, finalY + 24);
-            doc.text(`Positions: ${summ.num_positions}`, 14, finalY + 32);
+            doc.text(`Unrealized Gain/Loss: ${formatCurrency(summ.total_gain_loss)} (${formatPercent(summ.total_gain_loss_pct)})`, 14, finalY + 24);
+            doc.text(`Realized Gain: ${formatCurrency(summ.total_realized_gain)}`, 14, finalY + 32);
+            doc.text(`Positions: ${summ.num_positions}`, 14, finalY + 40);
         }
         doc.save('portfolio.pdf');
     };
 
-    // Build merged chart dataset for the comparison LineChart
     const buildChartData = () => {
         const tickers = Object.keys(compareData);
         if (tickers.length === 0) return [];
@@ -372,7 +410,6 @@ const Portfolio = () => {
         const days = rangeMap[compareRange];
         const baseSlice = (compareData[tickers[0]] || []).slice(-days);
 
-        // first close per ticker for % normalization
         const firstCloses: Record<string, number> = {};
         tickers.forEach((ticker: string) => {
             const slice = (compareData[ticker] || []).slice(-days);
@@ -380,7 +417,7 @@ const Portfolio = () => {
         });
 
         return baseSlice.map((point: PricePoint) => {
-            const row: Record<string, string | number> = { date: point.date.slice(5) }; // MM-DD
+            const row: Record<string, string | number> = { date: point.date.slice(5) };
             tickers.forEach((ticker: string) => {
                 const slice = (compareData[ticker] || []).slice(-days);
                 const match = slice.find((p: PricePoint) => p.date === point.date);
@@ -420,9 +457,7 @@ const Portfolio = () => {
                 <div className="home-card">
                     <div className="portfolio-error">
                         <p className="sentiment-error">{error}</p>
-                        <button onClick={fetchPortfolioSummary} className="retry-button">
-                            Retry
-                        </button>
+                        <button onClick={fetchPortfolioSummary} className="retry-button">Retry</button>
                     </div>
                 </div>
             </div>
@@ -432,19 +467,18 @@ const Portfolio = () => {
     const { portfolio_items = [], summary = {} as PortfolioSummary } = portfolioData || {};
     const comparedItems = portfolio_items.filter(item => selectedTickers.includes(item.ticker));
 
-    // Top performers for trending widget
     const trendingData = [...portfolio_items]
         .filter(item => item.return_1d !== null)
         .sort((a, b) => (b.return_1d ?? -Infinity) - (a.return_1d ?? -Infinity))
         .slice(0, 3)
         .map(item => ({
             ticker: item.ticker,
-            return: parseFloat((item.return_1d ?? 0).toFixed(2)),
+            // return_1d is a decimal from the backend; multiply by 100 for the chart axis
+            return: parseFloat(((item.return_1d ?? 0) * 100).toFixed(2)),
         }));
 
     const chartData = buildChartData();
 
-    // Data for per-holding P&L bar chart
     const plChartData = portfolio_items.map(item => ({
         ticker: item.ticker,
         gainLoss: parseFloat((item.total_gain_loss ?? 0).toFixed(2)),
@@ -472,22 +506,42 @@ const Portfolio = () => {
                             <div className="stat-icon">💰</div>
                             <div className="stat-content">
                                 <div className="stat-labelP">Total Value</div>
-                                <div className="stat-valueP"><AnimatedValue value={summary.total_current_value ?? 0} /></div>
+                                <div className="stat-valueP">
+                                    <AnimatedValue value={summary.total_current_value ?? 0} />
+                                </div>
                             </div>
                         </div>
+
                         <div className="summary-stat-card">
                             <div className="stat-icon">📊</div>
                             <div className="stat-content">
                                 <div className="stat-labelP">Total Invested</div>
-                                <div className="stat-valueP"><AnimatedValue value={summary.total_cost_basis ?? 0} /></div>
+                                <div className="stat-valueP">
+                                    <AnimatedValue value={summary.total_cost_basis ?? 0} />
+                                </div>
                             </div>
                         </div>
+
+                        {/* BUG FIX: stat-content div was missing, breaking layout */}
+                        <div className={`summary-stat-card ${(summary.total_realized_gain ?? 0) >= 0 ? 'positive' : 'negative'}`}>
+                            <div className="stat-icon">🔒</div>
+                            <div className="stat-content">
+                                <div className="stat-labelP">Realized Gain</div>
+                                <div className={`stat-valueP ${(summary.total_realized_gain ?? 0) >= 0 ? 'positive' : 'negative'}`}>
+                                    <AnimatedValue value={summary.total_realized_gain ?? 0} />
+                                </div>
+                                <div className="stat-subvalue" style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>
+                                    Locked in from sells
+                                </div>
+                            </div>
+                        </div>
+
                         <div className={`summary-stat-card ${getReturnColor(summary.total_gain_loss)}`}>
                             <div className="stat-icon">
-                                {summary.total_gain_loss >= 0 ? '📈' : '📉'}
+                                {(summary.total_gain_loss ?? 0) >= 0 ? '📈' : '📉'}
                             </div>
                             <div className="stat-content">
-                                <div className="stat-labelP">Total Gain/Loss</div>
+                                <div className="stat-labelP">Unrealized Gain/Loss</div>
                                 <div className={`stat-valueP ${getReturnColor(summary.total_gain_loss)}`}>
                                     <AnimatedValue value={summary.total_gain_loss ?? 0} />
                                 </div>
@@ -496,18 +550,20 @@ const Portfolio = () => {
                                 </div>
                             </div>
                         </div>
+
                         <div className="summary-stat-card">
                             <div className="stat-icon">🎯</div>
                             <div className="stat-content">
                                 <div className="stat-labelP">Positions</div>
-                                <div className="stat-valueP"><AnimatedValue value={summary.num_positions ?? 0} format="integer" /></div>
+                                <div className="stat-valueP">
+                                    <AnimatedValue value={summary.num_positions ?? 0} format="integer" />
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* 2-column layout: Holdings (left) | Widgets (right) */}
                     <div className="portfolio-layout">
-
                         {/* Left: Holdings */}
                         <div className="portfolio-left">
                             <div className="portfolio-holdings-section">
@@ -516,18 +572,10 @@ const Portfolio = () => {
                                     <div className="section-header-actions">
                                         {portfolio_items.length > 0 && (
                                             <>
-                                                <button
-                                                    className="csv-export-btn"
-                                                    onClick={handleExportCSV}
-                                                    title="Download portfolio as CSV"
-                                                >
+                                                <button className="csv-export-btn" onClick={handleExportCSV} title="Download portfolio as CSV">
                                                     Export CSV
                                                 </button>
-                                                <button
-                                                    className="csv-export-btn"
-                                                    onClick={handleExportPDF}
-                                                    title="Download portfolio as PDF"
-                                                >
+                                                <button className="csv-export-btn" onClick={handleExportPDF} title="Download portfolio as PDF">
                                                     Export PDF
                                                 </button>
                                             </>
@@ -544,25 +592,17 @@ const Portfolio = () => {
                                 </div>
 
                                 {compareMode && (
-                                    <p className="compare-hint">
-                                        Select 2 or more holdings to compare them side by side.
-                                    </p>
+                                    <p className="compare-hint">Select 2 or more holdings to compare them side by side.</p>
                                 )}
 
                                 {portfolio_items.length === 0 ? (
                                     <div className="empty-portfolio">
                                         <p className="empty-message">Your portfolio is empty</p>
                                         <div className="onboard-options">
-                                            <button
-                                                className="add-stocks-btn"
-                                                onClick={() => setShowImport(true)}
-                                            >
+                                            <button className="add-stocks-btn" onClick={() => setShowImport(true)}>
                                                 Import existing holdings
                                             </button>
-                                            <button
-                                                className="add-stocks-btn add-stocks-btn-secondary"
-                                                onClick={() => navigate('/dashboard')}
-                                            >
+                                            <button className="add-stocks-btn add-stocks-btn-secondary" onClick={() => navigate('/dashboard')}>
                                                 Browse the Dashboard
                                             </button>
                                         </div>
@@ -628,7 +668,9 @@ const Portfolio = () => {
                                                             <span className="price-value">{formatCurrency(item.avg_price)}</span>
                                                         </div>
                                                     </div>
+
                                                     <div className="holding-divider"></div>
+
                                                     <div className="holding-metrics">
                                                         <div className="metric-row">
                                                             <span className="metric-label">Cost Basis</span>
@@ -639,7 +681,7 @@ const Portfolio = () => {
                                                             <span className="metric-value">{formatCurrency(item.current_value)}</span>
                                                         </div>
                                                         <div className={`metric-row gain-loss-row ${getReturnColor(item.total_gain_loss)}`}>
-                                                            <span className="metric-label">Gain/Loss</span>
+                                                            <span className="metric-label">Unrealized Gain/Loss</span>
                                                             <span className={`metric-value ${getReturnColor(item.total_gain_loss)}`}>
                                                                 {getReturnIndicator(item.total_gain_loss)} {formatCurrency(item.total_gain_loss)}
                                                                 <span className="gain-loss-pct">
@@ -648,7 +690,9 @@ const Portfolio = () => {
                                                             </span>
                                                         </div>
                                                     </div>
+
                                                     <div className="holding-divider"></div>
+
                                                     <div className="holding-returns">
                                                         <div className="return-item">
                                                             <span className="return-label">1D</span>
@@ -680,9 +724,7 @@ const Portfolio = () => {
                                                     {actionTicker === item.ticker && (
                                                         <div className="action-panel">
                                                             <span className="action-panel-title">Manage {item.ticker}</span>
-                                                            {actionError && (
-                                                                <div className="action-error">{actionError}</div>
-                                                            )}
+                                                            {actionError && <div className="action-error">{actionError}</div>}
                                                             <input
                                                                 type="number"
                                                                 className="action-qty-input"
@@ -696,22 +738,13 @@ const Portfolio = () => {
                                                                 }}
                                                             />
                                                             <div className="action-btn-row">
-                                                                <button
-                                                                    className="action-sell-btn"
-                                                                    onClick={() => sellShares(item.ticker, item.quantity)}
-                                                                >
+                                                                <button className="action-sell-btn" onClick={() => sellShares(item.ticker, item.quantity)}>
                                                                     Sell
                                                                 </button>
-                                                                <button
-                                                                    className="action-remove-all-btn"
-                                                                    onClick={() => removeStock(item.ticker)}
-                                                                >
+                                                                <button className="action-remove-all-btn" onClick={() => removeStock(item.ticker)}>
                                                                     Remove All
                                                                 </button>
-                                                                <button
-                                                                    className="action-cancel-btn"
-                                                                    onClick={closeActionPanel}
-                                                                >
+                                                                <button className="action-cancel-btn" onClick={closeActionPanel}>
                                                                     Cancel
                                                                 </button>
                                                             </div>
@@ -725,10 +758,8 @@ const Portfolio = () => {
                             </div>
                         </div>
 
-                        {/* Right: Trending widget + Comparison chart */}
+                        {/* Right: Charts + Comparison */}
                         <div className="portfolio-right">
-
-                            {/* Per-holding Gain/Loss chart */}
                             {plChartData.length > 0 && (
                                 <div className="trending-widget">
                                     <h3 className="widget-title">Gain / Loss by Holding</h3>
@@ -754,7 +785,6 @@ const Portfolio = () => {
                                 </div>
                             )}
 
-                            {/* Trending widget */}
                             {trendingData.length > 0 && (
                                 <div className="trending-widget">
                                     <h3 className="widget-title">Top Performers Today</h3>
@@ -773,7 +803,6 @@ const Portfolio = () => {
                                 </div>
                             )}
 
-                            {/* Comparison chart */}
                             {compareMode && selectedTickers.length >= 2 && (
                                 <div className="comparison-chart-section">
                                     <h3 className="widget-title">Price Comparison</h3>
@@ -787,26 +816,12 @@ const Portfolio = () => {
                                     })()}
                                     <div className="compare-controls">
                                         <div className="compare-view-toggle">
-                                            <button
-                                                className={compareView === 'pct' ? 'active' : ''}
-                                                onClick={() => setCompareView('pct')}
-                                            >
-                                                % Return
-                                            </button>
-                                            <button
-                                                className={compareView === 'price' ? 'active' : ''}
-                                                onClick={() => setCompareView('price')}
-                                            >
-                                                Price
-                                            </button>
+                                            <button className={compareView === 'pct' ? 'active' : ''} onClick={() => setCompareView('pct')}>% Return</button>
+                                            <button className={compareView === 'price' ? 'active' : ''} onClick={() => setCompareView('price')}>Price</button>
                                         </div>
                                         <div className="compare-range-btns">
                                             {(['30', '120', '360'] as const).map(r => (
-                                                <button
-                                                    key={r}
-                                                    className={compareRange === r ? 'active' : ''}
-                                                    onClick={() => setCompareRange(r)}
-                                                >
+                                                <button key={r} className={compareRange === r ? 'active' : ''} onClick={() => setCompareRange(r)}>
                                                     {r}D
                                                 </button>
                                             ))}
@@ -826,11 +841,7 @@ const Portfolio = () => {
                                                     ))}
                                                 </defs>
                                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
-                                                <XAxis
-                                                    dataKey="date"
-                                                    tick={{ fontSize: 10, fill: '#94a3b8' }}
-                                                    interval={Math.floor(chartData.length / 5)}
-                                                />
+                                                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} interval={Math.floor(chartData.length / 5)} />
                                                 <YAxis
                                                     tick={{ fontSize: 10, fill: '#94a3b8' }}
                                                     tickFormatter={(v: number) => compareView === 'pct' ? `${v}%` : `$${v}`}
@@ -864,7 +875,7 @@ const Portfolio = () => {
                         </div>
                     </div>
 
-                    {/* Comparison table full width, below 2-col */}
+                    {/* Side-by-side comparison table */}
                     {compareMode && comparedItems.length >= 2 && (
                         <div className="comparison-section">
                             <h3 className="comparison-title">Side-by-Side Comparison</h3>
@@ -873,44 +884,32 @@ const Portfolio = () => {
                                     <thead>
                                         <tr>
                                             <th>Metric</th>
-                                            {comparedItems.map(item => (
-                                                <th key={item.ticker}>{item.ticker}</th>
-                                            ))}
+                                            {comparedItems.map(item => <th key={item.ticker}>{item.ticker}</th>)}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
                                             <td>Current Price</td>
-                                            {comparedItems.map(item => (
-                                                <td key={item.ticker}>{formatCurrency(item.current_price)}</td>
-                                            ))}
+                                            {comparedItems.map(item => <td key={item.ticker}>{formatCurrency(item.current_price)}</td>)}
                                         </tr>
                                         <tr>
                                             <td>Avg. Price</td>
-                                            {comparedItems.map(item => (
-                                                <td key={item.ticker}>{formatCurrency(item.avg_price)}</td>
-                                            ))}
+                                            {comparedItems.map(item => <td key={item.ticker}>{formatCurrency(item.avg_price)}</td>)}
                                         </tr>
                                         <tr>
                                             <td>Quantity</td>
-                                            {comparedItems.map(item => (
-                                                <td key={item.ticker}>{item.quantity}</td>
-                                            ))}
+                                            {comparedItems.map(item => <td key={item.ticker}>{item.quantity}</td>)}
                                         </tr>
                                         <tr>
                                             <td>Cost Basis</td>
-                                            {comparedItems.map(item => (
-                                                <td key={item.ticker}>{formatCurrency(item.cost_basis)}</td>
-                                            ))}
+                                            {comparedItems.map(item => <td key={item.ticker}>{formatCurrency(item.cost_basis)}</td>)}
                                         </tr>
                                         <tr>
                                             <td>Current Value</td>
-                                            {comparedItems.map(item => (
-                                                <td key={item.ticker}>{formatCurrency(item.current_value)}</td>
-                                            ))}
+                                            {comparedItems.map(item => <td key={item.ticker}>{formatCurrency(item.current_value)}</td>)}
                                         </tr>
                                         <tr>
-                                            <td>Gain / Loss</td>
+                                            <td>Unrealized Gain/Loss</td>
                                             {comparedItems.map(item => (
                                                 <td key={item.ticker} className={getReturnColor(item.total_gain_loss)}>
                                                     {formatCurrency(item.total_gain_loss)}
@@ -923,33 +922,25 @@ const Portfolio = () => {
                                         <tr>
                                             <td>1D Return</td>
                                             {comparedItems.map(item => (
-                                                <td key={item.ticker} className={getReturnColor(item.return_1d)}>
-                                                    {formatPercent(item.return_1d)}
-                                                </td>
+                                                <td key={item.ticker} className={getReturnColor(item.return_1d)}>{formatPercent(item.return_1d)}</td>
                                             ))}
                                         </tr>
                                         <tr>
                                             <td>30D Return</td>
                                             {comparedItems.map(item => (
-                                                <td key={item.ticker} className={getReturnColor(item.return_30d)}>
-                                                    {formatPercent(item.return_30d)}
-                                                </td>
+                                                <td key={item.ticker} className={getReturnColor(item.return_30d)}>{formatPercent(item.return_30d)}</td>
                                             ))}
                                         </tr>
                                         <tr>
                                             <td>120D Return</td>
                                             {comparedItems.map(item => (
-                                                <td key={item.ticker} className={getReturnColor(item.return_120d)}>
-                                                    {formatPercent(item.return_120d)}
-                                                </td>
+                                                <td key={item.ticker} className={getReturnColor(item.return_120d)}>{formatPercent(item.return_120d)}</td>
                                             ))}
                                         </tr>
                                         <tr>
                                             <td>360D Return</td>
                                             {comparedItems.map(item => (
-                                                <td key={item.ticker} className={getReturnColor(item.return_360d)}>
-                                                    {formatPercent(item.return_360d)}
-                                                </td>
+                                                <td key={item.ticker} className={getReturnColor(item.return_360d)}>{formatPercent(item.return_360d)}</td>
                                             ))}
                                         </tr>
                                     </tbody>
@@ -957,29 +948,86 @@ const Portfolio = () => {
                             </div>
                         </div>
                     )}
+
+                    {/* Transaction history */}
+                    {transactions.length > 0 && (
+                        <div className="comparison-section">
+                            <div className="section-header">
+                                <h3 className="comparison-title">Transaction History</h3>
+                                <button className="compare-btn" onClick={() => setShowTransactions(prev => !prev)}>
+                                    {showTransactions ? 'Hide' : 'Show'}
+                                </button>
+                            </div>
+                            {showTransactions && (
+                                <div className="comparison-table-wrapper">
+                                    <table className="comparison-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Ticker</th>
+                                                <th>Action</th>
+                                                <th>Shares</th>
+                                                <th>Price</th>
+                                                <th>Total</th>
+                                                <th>Realized Gain</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {transactions.map((tx) => (
+                                                <tr key={tx.id}>
+                                                    <td>{new Date(tx.executed_at).toLocaleDateString()}</td>
+                                                    <td>{tx.ticker}</td>
+                                                    <td style={{
+                                                        color: tx.action === 'buy' ? '#10b981' : '#f59e0b',
+                                                        fontWeight: 700,
+                                                        textTransform: 'uppercase',
+                                                    }}>
+                                                        {tx.action}
+                                                    </td>
+                                                    <td>{tx.quantity}</td>
+                                                    <td>{formatCurrency(tx.price)}</td>
+                                                    <td>{formatCurrency(tx.quantity * tx.price)}</td>
+                                                    <td className={
+                                                        tx.realized_gain === null ? '' :
+                                                        tx.realized_gain >= 0 ? 'positive' : 'negative'
+                                                    }>
+                                                        {tx.realized_gain === null ? '—' : formatCurrency(tx.realized_gain)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
-        {addSharesTicker && (
-            <AddToPortfolioModal
-                ticker={addSharesTicker}
-                currentPrice={addSharesPrice}
-                onClose={() => setAddSharesTicker(null)}
-                onSuccess={() => {
-                    setAddSharesTicker(null);
-                    fetchPortfolioSummary();
-                }}
-            />
-        )}
-        {showImport && (
-            <ImportPortfolioModal
-                onClose={() => setShowImport(false)}
-                onSuccess={() => {
-                    setShowImport(false);
-                    fetchPortfolioSummary();
-                }}
-            />
-        )}
-    </div>
-);
+
+            {addSharesTicker && (
+                <AddToPortfolioModal
+                    ticker={addSharesTicker}
+                    currentPrice={addSharesPrice}
+                    onClose={() => setAddSharesTicker(null)}
+                    onSuccess={() => {
+                        setAddSharesTicker(null);
+                        fetchPortfolioSummary();
+                        fetchTransactions();
+                    }}
+                />
+            )}
+            {showImport && (
+                <ImportPortfolioModal
+                    onClose={() => setShowImport(false)}
+                    onSuccess={() => {
+                        setShowImport(false);
+                        fetchPortfolioSummary();
+                        fetchTransactions();
+                    }}
+                />
+            )}
+        </div>
+    );
 };
+
 export default Portfolio;

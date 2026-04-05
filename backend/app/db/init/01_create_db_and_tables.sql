@@ -246,3 +246,18 @@ CREATE TABLE IF NOT EXISTS price_alerts (
 
 CREATE INDEX IF NOT EXISTS idx_price_alerts_user ON price_alerts (user_id);
 CREATE INDEX IF NOT EXISTS idx_price_alerts_active ON price_alerts (is_active) WHERE is_active = true;
+
+-- Transactions: log of all buys and sells
+CREATE TABLE IF NOT EXISTS transactions (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    ticker         VARCHAR NOT NULL,
+    action         VARCHAR NOT NULL CHECK (action IN ('buy', 'sell')),
+    quantity       NUMERIC NOT NULL CHECK (quantity > 0),
+    price          NUMERIC NOT NULL CHECK (price >= 0),
+    realized_gain  NUMERIC,
+    executed_at    TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_user_ticker 
+    ON transactions (user_id, ticker, executed_at);

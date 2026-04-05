@@ -124,12 +124,24 @@ class PortfolioSummary(BaseModel):
     total_current_value: float
     total_gain_loss: float
     total_gain_loss_pct: float
+    total_realized_gain: float
     num_positions: int
 
 class PortfolioSummaryResponse(BaseModel):
     portfolio_items: list[PortfolioItemWithMetrics]
     summary: PortfolioSummary
 
+class TransactionItem(BaseModel):
+    id: str
+    ticker: str
+    action: str
+    quantity: float
+    price: float
+    realized_gain: Optional[float] = None
+    executed_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 # ============ SENTIMENT SCHEMAS ============
 
