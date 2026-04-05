@@ -543,13 +543,13 @@
   border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
-  color: #374151;
+  color: #dce9ff;
   transition: background 0.15s ease;
   box-sizing: border-box;
 }
 
 .filter-option:hover {
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .filter-option input {
@@ -557,6 +557,7 @@
   width: 16px;
   height: 16px;
   cursor: pointer;
+  accent-color: #6366f1;
   flex-shrink: 0;
 }
 
@@ -566,21 +567,23 @@
 }
 
 .filter-clear {
-  margin-top: 10px;
+  margin-top: 12px;
   width: 100%;
-  padding: 9px 10px;
-  border: none;
+  padding: 10px 12px;
+  border: 1px solid rgba(99, 102, 241, 0.25);
   border-radius: 10px;
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(99, 102, 241, 0.12);
+  color: #c7d2fe;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+
 .filter-clear:hover {
-  background: #e5e7eb;
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 .dashboard-page-layout {
   position: relative;
@@ -593,12 +596,12 @@
 
 .filter-panel {
   width: 100%;
-  padding: 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(229, 231, 235, 0.9);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(8px);
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
 }
 
 .dashboard-page-layout {
