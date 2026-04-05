@@ -54,7 +54,11 @@ def load_prices(engine, tickers: Optional[List[str]] = None) -> pd.DataFrame:
         SELECT
             ticker,
             date,
-            adjusted_close
+            adjusted_close,
+            return_1d AS existing_return_1d,
+            return_30d AS existing_return_30d,
+            return_120d AS existing_return_120d,
+            return_360d AS existing_return_360d
         FROM stocks
     """
 
@@ -92,7 +96,12 @@ def add_returns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def update_returns_in_db(engine, df: pd.DataFrame, batch_size: int = 500) -> None:
+def update_returns_in_db(
+    engine,
+    df: pd.DataFrame,
+    batch_size: int = 500,
+    only_missing: bool = True,
+) -> None:
     """
     Update stocks table with computed returns.
     Matches rows on (ticker, date).
@@ -104,24 +113,45 @@ def update_returns_in_db(engine, df: pd.DataFrame, batch_size: int = 500) -> Non
         logger.warning("No data to update in DB.")
         return
 
-    # Replace NaN with None so Postgres sees NULL
-    for col in ["return_1d", "return_30d", "return_120d", "return_360d"]:
+    return_cols = ["return_1d", "return_30d", "return_120d", "return_360d"]
+    existing_cols = [f"existing_{c}" for c in return_cols]
+
+    # In "only_missing" mode, only update rows where at least one return
+    # value is currently NULL in DB and now computable.
+    if only_missing and all(c in df.columns for c in existing_cols):
+        missing_then_computable = pd.Series(False, index=df.index)
+        for c in return_cols:
+            existing_col = f"existing_{c}"
+            missing_then_computable = missing_then_computable | (
+                df[existing_col].isna() & df[c].notna()
+            )
+        before_count = len(df)
+        df = df.loc[missing_then_computable].copy()
+        logger.info(
+            "Only-missing mode enabled: %s/%s rows require return updates.",
+            len(df),
+            before_count,
+        )
+
+    # Replace NaN with None so Postgres sees NULL/None in params.
+    for col in return_cols:
         df[col] = df[col].where(pd.notnull(df[col]), None)
 
-    rows = df[
-        ["ticker", "date", "return_1d", "return_30d", "return_120d", "return_360d"]
-    ].to_dict("records")
+    rows = df[["ticker", "date"] + return_cols].to_dict("records")
 
     total = len(rows)
+    if total == 0:
+        logger.info("No return rows need updating.")
+        return
     logger.info(f"Updating {total} rows with returns (batch_size={batch_size})...")
     update_sql = text(
         """
         UPDATE stocks
         SET
-            return_1d   = :return_1d,
-            return_30d  = :return_30d,
-            return_120d = :return_120d,
-            return_360d = :return_360d
+            return_1d   = COALESCE(:return_1d, return_1d),
+            return_30d  = COALESCE(:return_30d, return_30d),
+            return_120d = COALESCE(:return_120d, return_120d),
+            return_360d = COALESCE(:return_360d, return_360d)
         WHERE ticker = :ticker AND date = :date
         """
     )
@@ -136,7 +166,11 @@ def update_returns_in_db(engine, df: pd.DataFrame, batch_size: int = 500) -> Non
     logger.info("Database update complete.")
 
 
-def run_returns_pipeline(tickers: Optional[List[str]] = None) -> None:
+def run_returns_pipeline(
+    tickers: Optional[List[str]] = None,
+    only_missing: bool = True,
+    batch_size: int = 500,
+) -> None:
     """
     Public entry point: compute & update returns for all tickers (or a subset).
     This is what we'll call from FastAPI startup.
@@ -155,7 +189,12 @@ def run_returns_pipeline(tickers: Optional[List[str]] = None) -> None:
     df_with_returns = add_returns(df)
 
     # 4. Update DB
-    update_returns_in_db(engine, df_with_returns)
+    update_returns_in_db(
+        engine,
+        df_with_returns,
+        batch_size=batch_size,
+        only_missing=only_missing,
+    )
 
     # Optional: peek at first few rows
     logger.info("Sample rows with returns:")
@@ -167,4 +206,11 @@ def run_returns_pipeline(tickers: Optional[List[str]] = None) -> None:
 
 if __name__ == "__main__":
     # CLI usage: python app/services/returns_pipeline.py
-    run_returns_pipeline()
+    only_missing = os.getenv("RETURNS_ONLY_MISSING", "1").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    batch_size = int(os.getenv("RETURNS_BATCH_SIZE", "500"))
+    run_returns_pipeline(only_missing=only_missing, batch_size=batch_size)
