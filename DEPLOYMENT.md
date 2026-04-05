@@ -22,7 +22,8 @@ File: `.github/workflows/build-api-image.yml`
   - `backend/requirements-api.txt`
   - `backend/app/**`
   - `.github/workflows/build-api-image.yml`
-- After push, workflow updates Azure Container App image.
+- Workflow builds/pushes image to GHCR.
+- Azure deploy is run manually via `azuredeployment/deploy_update.sh`.
 
 ### Pipeline image workflow
 
@@ -36,6 +37,17 @@ File: `.github/workflows/build-pipeline-image.yml`
   - `backend/app/services/sentiment/**`
   - `backend/app/services/ingesting_pipelines/**`
   - `.github/workflows/build-pipeline-image.yml`
+- Workflow builds/pushes image to GHCR.
+
+### University Tenant Note (No Service Principal Access)
+
+If your tenant blocks service principal creation, skip GitHub-to-Azure auth (`AZURE_CREDENTIALS`) and deploy manually:
+
+```bash
+cd azuredeployment
+source .deploy.env
+bash deploy_update.sh
+```
 
 ## Azure Setup
 
@@ -74,6 +86,30 @@ az containerapp update `
 ```
 
 ## Azure Container Apps Jobs (Recommended)
+
+### Job Purpose + Schedule (Current)
+
+- `stocksense-prices` (`*/15 * * * *`): pulls latest market prices into your DB every 15 minutes.
+- `stocksense-news-ingest` (`0 12,20 * * *`): ingests news from your configured news sources twice daily.
+- `stocksense-sentiment-summary` (`30 13,21 * * *`): runs article sentiment, stock sentiment aggregation, and GPT summary after news ingest.
+- `stocksense-alerts` (`*/5 * * * *`): runs alert checks and email delivery every 5 minutes (only if this job exists in your environment).
+
+### About `stocksense-sentiment`
+
+`stocksense-sentiment` is a legacy/extra sentiment job from an older setup. It is not created by the current `setup_azure_once.sh` script.
+
+- If it runs similar sentiment modules, it can duplicate work done by `stocksense-sentiment-summary`.
+- Recommended: keep only one sentiment pipeline job unless you intentionally want both.
+
+To check exact live cron values:
+
+```bash
+az containerapp job show --name stocksense-prices --resource-group "$RG" --query properties.configuration.scheduleTriggerConfig.cronExpression -o tsv
+az containerapp job show --name stocksense-news-ingest --resource-group "$RG" --query properties.configuration.scheduleTriggerConfig.cronExpression -o tsv
+az containerapp job show --name stocksense-sentiment --resource-group "$RG" --query properties.configuration.scheduleTriggerConfig.cronExpression -o tsv
+az containerapp job show --name stocksense-sentiment-summary --resource-group "$RG" --query properties.configuration.scheduleTriggerConfig.cronExpression -o tsv
+az containerapp job show --name stocksense-alerts --resource-group "$RG" --query properties.configuration.scheduleTriggerConfig.cronExpression -o tsv
+```
 
 ### Alerts job (every 5 minutes)
 
