@@ -397,9 +397,9 @@ class GuardianIngestor:
     def ingest(
         self,
         tickers: Optional[List[str]] = None,
-        lookback_days: int = 30,
-        max_pages: int = 5,
-        page_size: int = 50,
+        lookback_days: int = 10,
+        max_pages: int = 2,
+        page_size: int = 10,
         flush_batch_size: int = 200,
     ) -> None:
         """Fetch and store articles for all target tickers from The Guardian.

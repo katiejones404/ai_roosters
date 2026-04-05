@@ -127,7 +127,9 @@ const StockMiniCard: React.FC<{
               background: "none",
               border: "none",
               cursor: "pointer",
-              fontSize: "16px",
+              fontSize: "22px",
+              lineHeight: "1",
+              padding: "0 2px",
             }}
           >
             {isWatchlisted ? "⭐" : "☆"}
@@ -417,10 +419,12 @@ const Dashboard: React.FC = () => {
           </div>
         </aside>
 
-        <div className="home-card">
+        <div className="home-card dashboard-card">
           <div className="home-content">
           <h1>Dashboard</h1>
-          <p>Overview of your tracked stocks and sentiment predictions.</p>
+          <p>Overview of your tracked stocks and sentiment predictions.
+          
+          Due to scale constraints for the Capstone project, we only have 40 stocks in our portfolio.</p>
 
           {/* Article sentiment counts */}
           {articleSummary && (

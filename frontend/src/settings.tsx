@@ -35,6 +35,7 @@ interface SecurityFormData {
 }
 
 type NotificationSettings = NotificationPreferences;
+const DEFAULT_PROFILE_PICTURE = "/public/default_pfp.jpg";
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ const Settings: React.FC = () => {
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
   const [profileImage, setProfileImage] = useState<string>(
-    "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
+    DEFAULT_PROFILE_PICTURE
   );
   const [pictureUploading, setPictureUploading] = useState(false);
   const [pictureError, setPictureError] = useState("");
@@ -103,9 +104,7 @@ const Settings: React.FC = () => {
           phone: user.phone || "",
         });
         setNotifications(prefs);
-        if (user.profile_picture) {
-          setProfileImage(user.profile_picture);
-        }
+        setProfileImage(user.profile_picture || DEFAULT_PROFILE_PICTURE);
       } catch (err) {
         console.error("Failed to load user info", err);
       }
@@ -662,7 +661,6 @@ const Settings: React.FC = () => {
                       name="marketAlerts"
                       checked={notifications.marketAlerts}
                       onChange={handleNotificationChange}
-                      disabled={!notifications.emailNotifications}
                     />
                     <span className="toggle-slider"></span>
                   </label>
@@ -679,7 +677,6 @@ const Settings: React.FC = () => {
                       name="portfolioUpdates"
                       checked={notifications.portfolioUpdates}
                       onChange={handleNotificationChange}
-                      disabled={!notifications.emailNotifications}
                     />
                     <span className="toggle-slider"></span>
                   </label>
@@ -696,7 +693,6 @@ const Settings: React.FC = () => {
                       name="weeklyReport"
                       checked={notifications.weeklyReport}
                       onChange={handleNotificationChange}
-                      disabled={!notifications.emailNotifications}
                     />
                     <span className="toggle-slider"></span>
                   </label>

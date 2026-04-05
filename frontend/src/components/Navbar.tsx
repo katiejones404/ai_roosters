@@ -11,6 +11,7 @@ import { TICKER_NAMES } from "../utils/stockNames";
 import "./Navbar.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
+const DEFAULT_PROFILE_PICTURE = "/public/default_pfp.jpg";
 
 interface CurrentUser {
   email?: string;
@@ -183,10 +184,9 @@ const Navbar = () => {
 
   const isActive = (path: string) =>
     location.pathname === path ? "nav-link active" : "nav-link";
-//Random avatars. Can be changed in settings.
   const avatarSrc =
     user?.profile_picture ||
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || "default"}`;
+    DEFAULT_PROFILE_PICTURE;
 
   return (
     <nav className="navbar">
