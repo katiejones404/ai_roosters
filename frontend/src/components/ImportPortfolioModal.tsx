@@ -312,6 +312,14 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({ onClose, onS
         <div>
           <h2 className="imp-title">Import Your Portfolio</h2>
           <p className="imp-subtitle">Add stocks you already own and when you bought them</p>
+          <p style={{
+            margin: '6px 0 0',
+            fontSize: '0.75rem',
+            color: '#475569',
+            fontStyle: 'italic',
+        }}>
+            *Dates before 2020 will prompt manual price input due to available stored data
+        </p>
         </div>
       <button className="imp-close" onClick={onClose} aria-label="Close">✕</button>
     </div>
