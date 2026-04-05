@@ -442,7 +442,7 @@ const Dashboard: React.FC = () => {
                   fontSize: "20px",
                   fontWeight: 700,
                   letterSpacing: "0.5px",
-                  color: "#6366f1", // matches Dashboard purple
+                  color: "#6366f1", 
                 }}
               >
                 Article Sentiment Overview
