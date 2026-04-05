@@ -43,6 +43,7 @@ from app.core.security import (
 from app.services.email_service import send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+DEFAULT_PROFILE_PICTURE = os.getenv("DEFAULT_PROFILE_PICTURE", "/public/default_pfp.jpg")
 
 # --- Token Blacklist (Feature #6) ---
 # In-memory set of invalidated tokens. Resets on server restart.
@@ -128,6 +129,18 @@ def _serialize_notification_preferences(current_user: User) -> NotificationPrefe
     )
 
 
+def _needs_default_profile_picture(profile_picture: str | None) -> bool:
+    """
+    Return True when the profile picture should be replaced with the app default.
+
+    This treats empty values and legacy random Dicebear URLs as needing the
+    default image, while preserving user-uploaded/custom pictures.
+    """
+    if not profile_picture or not profile_picture.strip():
+        return True
+    return "api.dicebear.com" in profile_picture
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserRegister, db: Session = Depends(get_db)):
     """Register a new user"""
@@ -196,6 +209,11 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # Normalize legacy/random avatars to the app's default profile picture.
+    if _needs_default_profile_picture(user.profile_picture):
+        user.profile_picture = DEFAULT_PROFILE_PICTURE
+        db.commit()
 
     # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

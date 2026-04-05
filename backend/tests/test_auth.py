@@ -15,6 +15,8 @@ LOGIN_URL = "/api/auth/login"
 ME_URL = "/api/auth/me"
 CHANGE_PW_URL = "/api/auth/me/password"
 FORGOT_PW_URL = "/api/auth/forgot-password"
+NOTIFICATIONS_URL = "/api/auth/me/notifications"
+DEFAULT_PROFILE_PICTURE = "/public/default_pfp.jpg"
 
 VALID_USER = {
     "email": "auth_test@example.com",
@@ -123,6 +125,7 @@ class TestGetCurrentUser:
         data = res.json()
         assert data["email"] == VALID_USER["email"]
         assert "id" in data
+        assert data["profile_picture"] == DEFAULT_PROFILE_PICTURE
 
     def test_get_me_unauthenticated(self, client):
         """Unauthenticated GET /me returns 401."""
@@ -158,3 +161,39 @@ class TestForgotPassword:
         """Forgot password with unknown email still returns 204."""
         res = client.post(FORGOT_PW_URL, json={"email": "ghost@nowhere.com"})
         assert res.status_code == 204
+
+
+class TestNotificationPreferences:
+    def test_get_notification_preferences(self, client, headers):
+        """GET /me/notifications returns the persisted preference object."""
+        res = client.get(NOTIFICATIONS_URL, headers=headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert data.keys() == {
+            "emailNotifications",
+            "marketAlerts",
+            "portfolioUpdates",
+            "weeklyReport",
+            "pushNotifications",
+        }
+
+    def test_update_each_notification_preference(self, client, headers):
+        """
+        PATCH /me/notifications updates individual toggles one at a time.
+
+        This mirrors how the settings UI sends updates.
+        """
+        updates = [
+            {"emailNotifications": False},
+            {"marketAlerts": False},
+            {"portfolioUpdates": False},
+            {"weeklyReport": True},
+            {"pushNotifications": True},
+        ]
+
+        for payload in updates:
+            res = client.patch(NOTIFICATIONS_URL, headers=headers, json=payload)
+            assert res.status_code == 200
+            body = res.json()
+            key, value = next(iter(payload.items()))
+            assert body[key] is value
