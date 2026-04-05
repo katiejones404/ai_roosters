@@ -374,7 +374,7 @@ class AlphaVantageIngestor:
     def ingest(
         self,
         tickers: Optional[List[str]] = None,
-        lookback_days: int = 7,
+        lookback_days: int = 3,
         limit_per_ticker: int = 1000,
         request_delay_secs: float = 12.0,
     ) -> None:

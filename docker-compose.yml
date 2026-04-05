@@ -39,6 +39,11 @@ services:
       # To ingest articles (in backend folder):
       #docker compose --profile pipeline run --rm pipeline python -m app.services.ingesting_pipelines.news_ingest
       RUN_ARTICLE_INGEST: "0"
+      # Local API behavior: run only the price scheduler, never news/article ingest.
+      ENABLE_BACKGROUND_SCHEDULERS: "1"
+      ENABLE_PRICE_INGEST_SCHEDULER: "1"
+      ENABLE_NEWS_INGEST_SCHEDULER: "0"
+      ENABLE_SENTIMENT_SCHEDULER: "0"
 
       # --- GPT explanations (server-side only) ---
       OPENAI_API_KEY: ${OPENAI_API_KEY}

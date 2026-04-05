@@ -615,10 +615,10 @@
 
 .dashboard-sidebar {
   position: absolute;
-  left: 50%;
   top: 46px;
-  transform: translateX(-610px);
   width: 210px;
+  /* Keep the filter rail offset from the dashboard card edge as it widens. */
+  left: calc(50% - min(800px, calc((100vw - 4rem) / 2)) - 230px);
 }
 
 .home-card {
