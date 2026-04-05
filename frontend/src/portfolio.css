@@ -903,3 +903,33 @@
   transform: translateY(-1px);
 
 }
+
+/* Empty portfolio onboarding buttons */
+.onboard-options {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.onboard-options .add-stocks-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  min-width: 180px;
+  max-width: 240px;
+}
+
+.add-stocks-btn-secondary {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: none !important;
+}
+
+.add-stocks-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}

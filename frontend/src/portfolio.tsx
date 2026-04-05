@@ -570,6 +570,12 @@ const Portfolio = () => {
                                 <div className="section-header">
                                     <h2 className="section-title">Holdings</h2>
                                     <div className="section-header-actions">
+                                        <button className="csv-export-btn"
+                                        onClick={() => setShowImport(true)}
+                                        title="Add stock by purchase date"
+                                        >
+                                            + Add By Date
+                                        </button>
                                         {portfolio_items.length > 0 && (
                                             <>
                                                 <button className="csv-export-btn" onClick={handleExportCSV} title="Download portfolio as CSV">
@@ -600,9 +606,9 @@ const Portfolio = () => {
                                         <p className="empty-message">Your portfolio is empty</p>
                                         <div className="onboard-options">
                                             <button className="add-stocks-btn" onClick={() => setShowImport(true)}>
-                                                Import existing holdings
+                                                Import Existing Holdings
                                             </button>
-                                            <button className="add-stocks-btn add-stocks-btn-secondary" onClick={() => navigate('/dashboard')}>
+                                            <button className="add-stocks-btn" onClick={() => navigate('/dashboard')}>
                                                 Browse the Dashboard
                                             </button>
                                         </div>
@@ -723,7 +729,7 @@ const Portfolio = () => {
                                                     {/* Inline action panel */}
                                                     {actionTicker === item.ticker && (
                                                         <div className="action-panel">
-                                                            <span className="action-panel-title">Manage {item.ticker}</span>
+                                                            <span className="metric-label">Manage {item.ticker}</span>
                                                             {actionError && <div className="action-error">{actionError}</div>}
                                                             <input
                                                                 type="number"
