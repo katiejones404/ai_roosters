@@ -27,6 +27,7 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements-pipeline.txt
 ENV HF_HOME=/cache/huggingface
 ENV PATH="/install/bin:$PATH"
 ENV PYTHONPATH="/install/lib/python3.11/site-packages"
+RUN mkdir -p /cache/huggingface
 ARG PRELOAD_FINBERT=1
 RUN if [ "$PRELOAD_FINBERT" = "1" ]; then \
       python -c "\
