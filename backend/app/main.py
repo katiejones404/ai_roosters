@@ -269,33 +269,71 @@ async def _price_ingest_loop() -> None:
 
 async def _news_ingest_loop() -> None:
     """
-    Ingest recent stock news articles on a recurring schedule.
+    Ingest recent stock news articles from all configured sources on a recurring schedule.
 
     Notes
     -----
-    Runs continuously regardless of time of day.
-    Interval is controlled by NEWS_INGEST_INTERVAL_SECONDS (default 86400, i.e. 24 hours).
+    Runs all four sources (Marketaux, NewsAPI, AlphaVantage, Guardian) in sequence.
+    Sources with missing API keys are skipped without failing the others.
+    Interval is controlled by NEWS_INGEST_INTERVAL_SECONDS (default 28800, i.e. 8 hours / 3x per day).
     """
     try:
-        interval_seconds = int(os.getenv("NEWS_INGEST_INTERVAL_SECONDS", "86400"))
+        interval_seconds = int(os.getenv("NEWS_INGEST_INTERVAL_SECONDS", "28800"))
     except ValueError:
-        interval_seconds = 86400
+        interval_seconds = 28800
     interval_seconds = max(interval_seconds, 3600)
 
     await asyncio.sleep(180)  # Allow startup to complete before first run
     while True:
-        if not os.getenv("MARKETAUX_API_TOKEN", "").strip():
-            logger.warning(
-                "News ingest loop skipped: MARKETAUX_API_TOKEN is not configured."
-            )
-            await asyncio.sleep(interval_seconds)
-            continue
-        try:
-            from app.services.ingesting_pipelines.daily_news_ingest import run_daily_news_ingest_from_env
-            run_daily_news_ingest_from_env()
-            logger.info("News ingest loop: ingestion complete.")
-        except Exception as e:
-            logger.error(f"News ingest loop error: {e}", exc_info=True)
+        any_ran = False
+
+        if os.getenv("MARKETAUX_API_TOKEN", "").strip():
+            try:
+                from app.services.ingesting_pipelines.daily_news_ingest import run_daily_news_ingest_from_env
+                run_daily_news_ingest_from_env()
+                logger.info("News ingest loop: Marketaux complete.")
+                any_ran = True
+            except Exception as e:
+                logger.error(f"News ingest loop (Marketaux) error: {e}", exc_info=True)
+        else:
+            logger.warning("News ingest loop: MARKETAUX_API_TOKEN not set, skipping.")
+
+        if os.getenv("NEWSAPI_API_KEY", "").strip():
+            try:
+                from app.services.ingesting_pipelines.newsapi_ingest import run_newsapi_ingest_from_env
+                run_newsapi_ingest_from_env()
+                logger.info("News ingest loop: NewsAPI complete.")
+                any_ran = True
+            except Exception as e:
+                logger.error(f"News ingest loop (NewsAPI) error: {e}", exc_info=True)
+        else:
+            logger.debug("News ingest loop: NEWSAPI_API_KEY not set, skipping.")
+
+        if os.getenv("ALPHAVANTAGE_API_KEY", "").strip():
+            try:
+                from app.services.ingesting_pipelines.alphavantage_ingest import run_alphavantage_ingest_from_env
+                run_alphavantage_ingest_from_env()
+                logger.info("News ingest loop: AlphaVantage complete.")
+                any_ran = True
+            except Exception as e:
+                logger.error(f"News ingest loop (AlphaVantage) error: {e}", exc_info=True)
+        else:
+            logger.debug("News ingest loop: ALPHAVANTAGE_API_KEY not set, skipping.")
+
+        if os.getenv("GUARDIAN_API_KEY", "").strip():
+            try:
+                from app.services.ingesting_pipelines.guardian_ingest import run_guardian_ingest_from_env
+                run_guardian_ingest_from_env()
+                logger.info("News ingest loop: Guardian complete.")
+                any_ran = True
+            except Exception as e:
+                logger.error(f"News ingest loop (Guardian) error: {e}", exc_info=True)
+        else:
+            logger.debug("News ingest loop: GUARDIAN_API_KEY not set, skipping.")
+
+        if not any_ran:
+            logger.warning("News ingest loop: no sources ran (all API keys missing).")
+
         await asyncio.sleep(interval_seconds)
 
 
