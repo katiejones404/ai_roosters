@@ -176,6 +176,12 @@ az containerapp job create `
 
 This uses `app.jobs.run_news_ingest_once`, which runs Marketaux + NewsAPI + AlphaVantage + Guardian in sequence and skips sources whose API keys are missing.
 
+Current deployment script creates the job with:
+
+```bash
+python app/jobs/run_news_ingest_once.py
+```
+
 ### Sentiment job (every 6 hours, pipeline image)
 
 ```powershell
@@ -196,6 +202,18 @@ az containerapp job create `
   --secrets database-url="$DATABASE_URL" openai-key="$OPENAI_API_KEY" `
   --env-vars DATABASE_URL=secretref:database-url OPENAI_API_KEY=secretref:openai-key
 ```
+
+Current deployment script creates `stocksense-sentiment-summary` with:
+
+```bash
+python app/jobs/run_sentiment_summary_once.py
+```
+
+This wrapper runs, in order:
+1. `app.services.sentiment.article_processing`
+2. `app.services.sentiment.stock_processing` (returns pipeline)
+3. `app.services.sentiment.aggregator`
+4. `app.services.sentiment.gpt_summary`
 
 ## Manual Azure Operations
 
