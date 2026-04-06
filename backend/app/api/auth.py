@@ -433,7 +433,7 @@ def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
     if not user:
         return  # Silent no-op to prevent enumeration
 
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
     reset_token = create_access_token(
         data={"sub": user.email, "type": "password_reset"},
         expires_delta=timedelta(minutes=15),

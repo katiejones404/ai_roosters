@@ -157,6 +157,25 @@ class TestForgotPassword:
         res = client.post(FORGOT_PW_URL, json={"email": VALID_USER["email"]})
         assert res.status_code == 204
 
+    def test_forgot_password_sends_reset_password_link(self, client, monkeypatch):
+        """Reset emails use the frontend reset-password route without double slashes."""
+        captured = {}
+
+        def fake_send_password_reset_email(to_email, reset_link):
+            captured["to_email"] = to_email
+            captured["reset_link"] = reset_link
+
+        monkeypatch.setattr(auth_module, "send_password_reset_email", fake_send_password_reset_email)
+        monkeypatch.setenv("FRONTEND_URL", "https://ai-roosters-webpage.vercel.app/")
+
+        res = client.post(FORGOT_PW_URL, json={"email": VALID_USER["email"]})
+
+        assert res.status_code == 204
+        assert captured["to_email"] == VALID_USER["email"]
+        assert captured["reset_link"].startswith(
+            "https://ai-roosters-webpage.vercel.app/reset-password?token="
+        )
+
     def test_forgot_password_unknown_email(self, client):
         """Forgot password with unknown email still returns 204."""
         res = client.post(FORGOT_PW_URL, json={"email": "ghost@nowhere.com"})
