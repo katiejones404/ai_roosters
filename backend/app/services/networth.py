@@ -238,7 +238,7 @@ def update_asset(db: Session, user_id: UUID, asset_id: str, item: NetworthAssetU
         fields.append("balance = :bal"); params["bal"] = item.balance
     if not fields:
         return None
-    fields.append("updated_at = now()")
+    fields.append("updated_at = CURRENT_TIMESTAMP")
     result = db.execute(
         text(f"UPDATE networth_assets SET {', '.join(fields)} WHERE id = :asset_id AND user_id = :uid"),
         params,
@@ -311,7 +311,7 @@ def update_liability(db: Session, user_id: UUID, liability_id: str, item: Networ
         fields.append("balance = :bal"); params["bal"] = item.balance
     if not fields:
         return None
-    fields.append("updated_at = now()")
+    fields.append("updated_at = CURRENT_TIMESTAMP")
     result = db.execute(
         text(f"UPDATE networth_liabilities SET {', '.join(fields)} WHERE id = :lid AND user_id = :uid"),
         params,
