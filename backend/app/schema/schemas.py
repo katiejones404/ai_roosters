@@ -1,3 +1,8 @@
+"""
+Notes - Pydantic schemas for authentication, portfolio management, sentiment data,
+and net worth tracking used throughout the StockSense backend.
+"""
+
 from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime, date
 from typing import Optional, Literal, Union

@@ -1,3 +1,12 @@
+"""
+Notes - FastAPI routes for stock sentiment data and GPT‑generated news summaries.
+Provides:
+  • Latest sentiment indicators (30d/120d/360d)
+  • News explanation windows (7d/30d)
+  • Combined stock overview endpoint
+  • Delete utilities for sentiment and news records
+"""
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text

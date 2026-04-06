@@ -1,3 +1,8 @@
+"""
+Notes - Net worth calculation utilities and CRUD operations.
+Handles portfolio value, assets, liabilities, snapshots, and summary generation.
+"""
+
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional

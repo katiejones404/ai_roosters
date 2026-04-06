@@ -1,3 +1,9 @@
+"""
+Notes - Utility script for inspecting the 'articles' table.
+Connects to the database, counts non‑null values per column,
+and prints a quick completeness report for debugging/data quality checks.
+"""
+
 import os
 from sqlalchemy import create_engine, text
 

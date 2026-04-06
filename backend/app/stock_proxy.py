@@ -1,3 +1,8 @@
+"""
+Notes - Proxy endpoint for fetching historical stock price data from Yahoo Finance.
+Forwards ticker, date range, and interval to Yahoo’s chart API and returns the raw JSON.
+"""
+
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 
