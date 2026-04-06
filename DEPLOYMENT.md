@@ -43,6 +43,8 @@ File: `.github/workflows/build-pipeline-image.yml`
 
 If your tenant blocks service principal creation, skip GitHub-to-Azure auth (`AZURE_CREDENTIALS`) and deploy manually:
 
+USC is the tenant for our Azure accounts and blocks automatic deployment.
+
 ```bash
 cd azuredeployment
 source .deploy.env
