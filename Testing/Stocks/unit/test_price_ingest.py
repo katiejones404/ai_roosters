@@ -98,7 +98,7 @@ def test_fetch_stock_data_empty_returns_empty_df(monkeypatch):
 def test_store_prices_batches_and_conflict_mode(monkeypatch):
     ing, fake_engine, _table = _make_ingestor_without_real_db(monkeypatch)
 
-    n = 250  
+    n = 1100  # 3 batches at batch_size=500: 500 + 500 + 100
     df = pd.DataFrame({
         "ticker": ["AAPL"] * n,
         "date": pd.to_datetime(pd.date_range("2025-01-01", periods=n)).date,
