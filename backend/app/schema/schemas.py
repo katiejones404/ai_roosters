@@ -54,18 +54,12 @@ class StreakResponse(BaseModel):
 
 
 class NotificationPreferencesResponse(BaseModel):
-    emailNotifications: bool
     marketAlerts: bool
-    portfolioUpdates: bool
-    weeklyReport: bool
     pushNotifications: bool
 
 
 class NotificationPreferencesUpdate(BaseModel):
-    emailNotifications: Optional[bool] = None
     marketAlerts: Optional[bool] = None
-    portfolioUpdates: Optional[bool] = None
-    weeklyReport: Optional[bool] = None
     pushNotifications: Optional[bool] = None
 
 

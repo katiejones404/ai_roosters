@@ -43,13 +43,11 @@ from app.services.alert_scheduler import run_alert_checks  # noqa: E402
 
 def _make_user(
     email: str = "user@example.com",
-    email_enabled: bool = True,
     market_alerts_enabled: bool = True,
 ) -> MagicMock:
     """Return a mock User with notification preferences."""
     user = MagicMock()
     user.email = email
-    user.notify_email_enabled = email_enabled
     user.notify_market_alerts_enabled = market_alerts_enabled
     return user
 
@@ -176,8 +174,8 @@ class TestAlertDeactivation:
 
 class TestEmailDispatch:
     def test_email_sent_when_all_notifications_enabled(self):
-        """Email is sent when alert.email_notify and both user preferences are True."""
-        user = _make_user(email="test@example.com", email_enabled=True, market_alerts_enabled=True)
+        """Email is sent when alert.email_notify and market-alert preference is True."""
+        user = _make_user(email="test@example.com", market_alerts_enabled=True)
         alert = _make_alert(ticker="NVDA", target_price=500.0, direction="above",
                             email_notify=True, user=user)
         price_rows = [("NVDA", 600.0)]
@@ -198,7 +196,7 @@ class TestEmailDispatch:
 
     def test_email_not_sent_when_alert_email_notify_false(self):
         """Email is suppressed when alert.email_notify is False, even if user settings allow."""
-        user = _make_user(email_enabled=True, market_alerts_enabled=True)
+        user = _make_user(market_alerts_enabled=True)
         alert = _make_alert(ticker="AAPL", target_price=200.0, direction="above",
                             email_notify=False, user=user)
         price_rows = [("AAPL", 210.0)]
@@ -212,25 +210,9 @@ class TestEmailDispatch:
         mock_email.assert_not_called()
         assert alert.is_active is False  # still deactivated
 
-    def test_email_not_sent_when_user_email_disabled(self):
-        """Email is suppressed when the user has turned off email notifications globally."""
-        user = _make_user(email_enabled=False, market_alerts_enabled=True)
-        alert = _make_alert(ticker="MSFT", target_price=300.0, direction="above",
-                            email_notify=True, user=user)
-        price_rows = [("MSFT", 320.0)]
-        mock_db, mock_engine, mock_sm = _setup_mocks([alert], price_rows)
-
-        with patch("app.services.alert_scheduler.create_engine", return_value=mock_engine), \
-             patch("app.services.alert_scheduler.sessionmaker", mock_sm), \
-             patch("app.services.alert_scheduler.send_price_alert_email") as mock_email:
-            run_alert_checks()
-
-        mock_email.assert_not_called()
-        assert alert.is_active is False
-
     def test_email_not_sent_when_market_alerts_disabled(self):
         """Email is suppressed when the user has turned off market alert emails."""
-        user = _make_user(email_enabled=True, market_alerts_enabled=False)
+        user = _make_user(market_alerts_enabled=False)
         alert = _make_alert(ticker="AMD", target_price=100.0, direction="below",
                             email_notify=True, user=user)
         price_rows = [("AMD", 90.0)]
@@ -249,7 +231,7 @@ class TestEmailDispatch:
         If send_price_alert_email raises an exception, the alert is still deactivated
         and db.commit() is still called so the run does not lose other processed alerts.
         """
-        user = _make_user(email_enabled=True, market_alerts_enabled=True)
+        user = _make_user(market_alerts_enabled=True)
         alert = _make_alert(ticker="COIN", target_price=50.0, direction="above",
                             email_notify=True, user=user)
         price_rows = [("COIN", 60.0)]
@@ -300,7 +282,7 @@ class TestSkipConditions:
 
     def test_multiple_alerts_processed_independently(self):
         """Each alert is evaluated independently; one skip does not block others."""
-        user = _make_user(email="multi@example.com", email_enabled=True, market_alerts_enabled=True)
+        user = _make_user(email="multi@example.com", market_alerts_enabled=True)
 
         alert_hit = _make_alert(ticker="AAPL", target_price=200.0, direction="above",
                                 email_notify=True, user=user)
@@ -335,7 +317,7 @@ class TestSkipConditions:
 ])
 def test_direction_boundary_triggers(direction, current, target, should_trigger):
     """Alert trigger respects exact boundary: >= for above, <= for below."""
-    user = _make_user(email_enabled=True, market_alerts_enabled=True)
+    user = _make_user(market_alerts_enabled=True)
     alert = _make_alert(ticker="TEST", target_price=target, direction=direction,
                         email_notify=True, user=user)
     price_rows = [("TEST", current)]

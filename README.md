@@ -6,14 +6,63 @@ Live frontend: https://ai-roosters-webpage.vercel.app/
 
 Deployment and operations guide: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
-## What The App Does
+## Feature Overview
+- News/Stock coverage note:
+  - Due to API limits and capstone budget constraints, recent articles are gathered from four free APIs and we current look at 40 stocks.
+  - Because of source rate-limiting, article counts per stock are also intentionally limited.
+  - Sentiments may be impacted due to this limitation
 
-- Auth and profiles: signup, login, JWT sessions, profile editing, profile picture upload.
-- Portfolio tracking: holdings, gain/loss, return metrics, comparisons, CSV/PDF export.
-- Net worth tracking: assets/liabilities, history charts, CSV/PDF export.
-- Stocks dashboard: live prices, return metrics, sentiment context.
-- Alerts: price-above/price-below triggers with optional email notifications.
-- News and sentiment: article ingest + FinBERT scoring + aggregated snapshots + GPT explanations.
+- Secure authentication and account recovery:
+  - Signup/login with JWT-based sessions.
+  - Forgot-password and reset-password flow.
+  - Profile management (name, username, phone, profile picture).
+  - Daily login streak tracking.
+
+- Personalized home experience:
+  - At-a-glance portfolio summary.
+  - Active alert preview.
+  - Investor personality quiz.
+  - "What If I Invested?" calculator for historical scenario analysis.
+  - Rotating finance facts and streak widget.
+
+- Interactive stocks dashboard:
+  - Live ticker cards for supported stocks.
+  - Watchlist starring with quick filtering. (Click the start to activate)
+  - Positive/negative performance filters and sorting.
+  - One-click add-to-portfolio actions.
+  - Article sentiment summary context.
+
+- Stock detail page:
+  - Interactive price history chart with multiple time windows.
+  - Return metrics across 1D/30D/120D/360D horizons.
+  - Sentiment indicators and AI-generated news summary context.
+  - Direct add-to-portfolio workflow from the stock page.
+
+- Portfolio management and analytics:
+  - Add, edit, remove, buy, and sell positions.
+  - Unrealized and realized gain/loss tracking.
+  - Transaction history and realized summary reporting.
+  - Multi-stock side-by-side comparison with charting.
+  - CSV and PDF export.
+  - Portfolio import modal for faster onboarding.
+
+- Alerts and monitoring:
+  - Price-above and price-below alert creation.
+  - Active and triggered alert history views.
+  - Email delivery controlled by per-alert settings and the user-level `Market Alerts` preference.
+
+- Net worth tracking:
+  - Combined financial view across portfolio, assets, and liabilities.
+  - Category-based allocation visualization.
+  - Historical net worth snapshots and trend charts.
+  - CSV and PDF export.
+
+- News, sentiment, and AI pipelines:
+  - Multi-source article ingestion, sentiment scoring, and aggregation pipelines.
+  - FinBERT-based sentiment processing and stock-level rollups.
+  - GPT-powered summary generation for stock news context.
+  - Operationally scheduled via Azure Container Apps Jobs.
+
 
 ## Data Policy (Current)
 
@@ -136,8 +185,8 @@ ai_roosters/
 
 ## Team
 
-- Connor Thiele
 - Katie Jones
+- Connor Thiele
 - Sofia Bacha
 - Kevin Do
 - Andrew Lim

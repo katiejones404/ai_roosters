@@ -50,9 +50,6 @@ def run_alert_checks() -> None:
             if not triggered:
                 continue
 
-            user_email_enabled = bool(
-                True if alert.user.notify_email_enabled is None else alert.user.notify_email_enabled
-            )
             user_market_alerts_enabled = bool(
                 True
                 if alert.user.notify_market_alerts_enabled is None
@@ -61,7 +58,6 @@ def run_alert_checks() -> None:
 
             if should_send_alert_email(
                 alert.email_notify,
-                user_email_enabled,
                 user_market_alerts_enabled,
             ):
                 try:

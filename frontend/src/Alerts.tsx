@@ -48,7 +48,7 @@ export default function Alerts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [emailEnabled, setEmailEnabled] = useState(false);
+  const [marketAlertsEnabled, setMarketAlertsEnabled] = useState(false);
   const [ticker, setTicker] = useState(WEBSITE_TICKERS[0]);
   const [targetPrice, setTargetPrice] = useState("");
   const [direction, setDirection] = useState<"above" | "below">("above");
@@ -71,8 +71,8 @@ export default function Alerts() {
   useEffect(() => {
     fetchAlerts();
     getNotificationPreferences()
-      .then((prefs) => setEmailEnabled(prefs.emailNotifications))
-      .catch(() => setEmailEnabled(false));
+      .then((prefs) => setMarketAlertsEnabled(prefs.marketAlerts))
+      .catch(() => setMarketAlertsEnabled(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -91,7 +91,7 @@ export default function Alerts() {
         ticker,
         target_price: price,
         direction,
-        email_notify: emailEnabled,
+        email_notify: marketAlertsEnabled,
       });
       setTargetPrice("");
       await fetchAlerts();
@@ -120,9 +120,9 @@ export default function Alerts() {
         <div className="alerts-header">
           <h1 className="alerts-title">Price Alerts</h1>
           <p className="alerts-subtitle">
-            {emailEnabled
+            {marketAlertsEnabled
               ? "Get notified when a stock hits your target price"
-              : "Get notified when a stock hits your target price. Turn on email notifications in settings to receive email alerts."}
+              : "Get notified when a stock hits your target price. Turn on Market Alerts in settings to receive email alerts."}
           </p>
         </div>
 

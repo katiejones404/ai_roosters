@@ -16,10 +16,9 @@ def is_alert_triggered(direction: str, current_price: float, target_price: float
 
 def should_send_alert_email(
     alert_email_notify: bool,
-    user_email_enabled: bool,
     user_market_alerts_enabled: bool,
 ) -> bool:
     """
-    Return True only when both alert-level and user-level settings allow email.
+    Return True only when both alert-level and market-alert user settings allow email.
     """
-    return bool(alert_email_notify and user_email_enabled and user_market_alerts_enabled)
+    return bool(alert_email_notify and user_market_alerts_enabled)

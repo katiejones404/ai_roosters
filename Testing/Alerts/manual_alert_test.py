@@ -75,8 +75,7 @@ def ensure_test_user(email: str, force_enable_notifications: bool = False) -> st
                     text(
                         """
                         UPDATE users
-                        SET notify_email_enabled = TRUE,
-                            notify_market_alerts_enabled = TRUE
+                        SET notify_market_alerts_enabled = TRUE
                         WHERE id = :user_id
                         """
                     ),
@@ -95,10 +94,7 @@ def ensure_test_user(email: str, force_enable_notifications: bool = False) -> st
                     username,
                     email,
                     password_hash,
-                    notify_email_enabled,
                     notify_market_alerts_enabled,
-                    notify_portfolio_updates_enabled,
-                    notify_weekly_report_enabled,
                     notify_push_enabled
                 )
                 VALUES (
@@ -107,9 +103,6 @@ def ensure_test_user(email: str, force_enable_notifications: bool = False) -> st
                     :email,
                     :password_hash,
                     TRUE,
-                    TRUE,
-                    TRUE,
-                    FALSE,
                     FALSE
                 )
                 """
@@ -374,7 +367,7 @@ def build_parser() -> argparse.ArgumentParser:
     setup.add_argument(
         "--force-enable-notifications",
         action="store_true",
-        help="Force-enable user email + market alert preferences for testing sends",
+        help="Force-enable user market alert preference for testing sends",
     )
     setup.set_defaults(func=cmd_setup)
 

@@ -111,17 +111,8 @@ def _serialize_streak(current_user: User) -> StreakResponse:
 
 def _serialize_notification_preferences(current_user: User) -> NotificationPreferencesResponse:
     return NotificationPreferencesResponse(
-        emailNotifications=bool(
-            True if current_user.notify_email_enabled is None else current_user.notify_email_enabled
-        ),
         marketAlerts=bool(
             True if current_user.notify_market_alerts_enabled is None else current_user.notify_market_alerts_enabled
-        ),
-        portfolioUpdates=bool(
-            True if current_user.notify_portfolio_updates_enabled is None else current_user.notify_portfolio_updates_enabled
-        ),
-        weeklyReport=bool(
-            False if current_user.notify_weekly_report_enabled is None else current_user.notify_weekly_report_enabled
         ),
         pushNotifications=bool(
             False if current_user.notify_push_enabled is None else current_user.notify_push_enabled
@@ -288,10 +279,7 @@ async def update_notification_preferences(
 ):
     """Update persisted notification preferences for the authenticated user."""
     if (
-        data.emailNotifications is None
-        and data.marketAlerts is None
-        and data.portfolioUpdates is None
-        and data.weeklyReport is None
+        data.marketAlerts is None
         and data.pushNotifications is None
     ):
         raise HTTPException(
@@ -299,14 +287,8 @@ async def update_notification_preferences(
             detail="At least one notification preference is required.",
         )
 
-    if data.emailNotifications is not None:
-        current_user.notify_email_enabled = data.emailNotifications
     if data.marketAlerts is not None:
         current_user.notify_market_alerts_enabled = data.marketAlerts
-    if data.portfolioUpdates is not None:
-        current_user.notify_portfolio_updates_enabled = data.portfolioUpdates
-    if data.weeklyReport is not None:
-        current_user.notify_weekly_report_enabled = data.weeklyReport
     if data.pushNotifications is not None:
         current_user.notify_push_enabled = data.pushNotifications
 

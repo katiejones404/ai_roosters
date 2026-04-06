@@ -76,11 +76,8 @@ const Settings: React.FC = () => {
   });
 
   const [notifications, setNotifications] = useState<NotificationSettings>({
-    emailNotifications: true,
     pushNotifications: true,
     marketAlerts: true,
-    portfolioUpdates: true,
-    weeklyReport: false,
   });
 
   const [showPasswordFields, setShowPasswordFields] = useState({
@@ -656,24 +653,8 @@ const Settings: React.FC = () => {
               <div className="notifications-list">
                 <div className="notification-item">
                   <div className="notification-info">
-                    <h4>Email Alerts</h4>
-                    <p>Master switch for all email delivery from StockSense</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      name="emailNotifications"
-                      checked={notifications.emailNotifications}
-                      onChange={handleNotificationChange}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-
-                <div className="notification-item">
-                  <div className="notification-info">
                     <h4>Market Alerts</h4>
-                    <p>Get notified when tracked stocks hit your target price</p>
+                    <p>Enable email delivery when tracked stocks hit your target price</p>
                   </div>
                   <label className="toggle-switch">
                     <input

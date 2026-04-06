@@ -127,10 +127,7 @@ export const changePassword = async (
 };
 
 export interface NotificationPreferences {
-  emailNotifications: boolean;
   marketAlerts: boolean;
-  portfolioUpdates: boolean;
-  weeklyReport: boolean;
   pushNotifications: boolean;
 }
 
