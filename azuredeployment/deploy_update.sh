@@ -27,9 +27,10 @@ require_var() {
   fi
 }
 
-for v in SUBSCRIPTION_ID RG API_APP GH_USER GH_PAT API_IMAGE PIPE_IMAGE; do
+for v in SUBSCRIPTION_ID RG API_APP GH_USER GH_PAT API_IMAGE PIPE_IMAGE FRONTEND_ORIGINS; do
   require_var "$v"
 done
+FRONTEND_URL="${FRONTEND_URL:-$FRONTEND_ORIGINS}"
 
 echo "Using deployment env file: $ENV_FILE"
 az account show >/dev/null 2>&1 || az login >/dev/null
@@ -40,6 +41,14 @@ az containerapp update \
   --name "$API_APP" \
   --resource-group "$RG" \
   --image "$API_IMAGE" >/dev/null
+
+echo "Refreshing API frontend URL settings..."
+az containerapp update \
+  --name "$API_APP" \
+  --resource-group "$RG" \
+  --set-env-vars \
+    FRONTEND_URL="$FRONTEND_URL" \
+    FRONTEND_ORIGINS="$FRONTEND_ORIGINS" >/dev/null
 
 update_job_image_if_exists() {
   local job_name="$1"

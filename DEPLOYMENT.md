@@ -294,6 +294,7 @@ Core:
 - `DATABASE_URL`
 - `SECRET_KEY`
 - `FRONTEND_ORIGINS`
+- `FRONTEND_URL`
 
 Startup controls:
 - `RUN_ARTICLE_INGEST`
