@@ -43,6 +43,178 @@ const emptyEntry = (): ImportEntry => ({
     status: "idle",
 });
 
+const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function toIsoDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
+function formatDisplay(iso: string): string {
+  if (!iso) return "Select a date";
+  const [y, m, d] = iso.split("-");
+  return `${m}/${d}/${y}`;
+}
+
+interface DatePickerProps {
+  value: string;
+  onChange: (isoDate: string) => void;
+  disabled?: boolean;
+  maxDate?: string;
+}
+
+const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, disabled = false, maxDate }) => {
+  const today = toIsoDate(new Date());
+  const max = maxDate ?? today;
+
+  const [open, setOpen] = useState(false);
+  const [calMonth, setCalMonth] = useState<Date>(() => {
+    const base = value ? new Date(value + "T00:00:00") : new Date();
+    return new Date(base.getFullYear(), base.getMonth(), 1);
+  });
+
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (value) {
+      const d = new Date(value + "T00:00:00");
+      setCalMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const viewYear = calMonth.getFullYear();
+  const viewMonth = calMonth.getMonth();
+  const maxDateObj = new Date(max + "T00:00:00");
+  const minYear = 1970;
+  const maxYear = maxDateObj.getFullYear();
+
+  const atMin = viewYear === minYear && viewMonth === 0;
+  const atMax = viewYear === maxDateObj.getFullYear() && viewMonth == maxDateObj.getMonth();
+
+  const shiftMonth = (delta: number) => {
+    setCalMonth((prev) => {
+      const next = new Date(prev.getFullYear(), prev.getMonth() + delta, 1);
+      if (next.getFullYear() < minYear) return prev;
+      if (toIsoDate(next) > max) return prev;
+      return next;
+    });
+  };
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDow = new Date(viewYear, viewMonth, 1).getDay();
+  const cells: Array<number | null> = [
+    ...Array(firstDow).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const yearOptions: number[] = [];
+  for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
+
+  const dayIso = (day: number) =>
+    `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+  return (
+    <div className="dp-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        className={`dp-trigger${open ? " dp-open" : ""}${!value ? " dp-empty" : ""}`}
+        onClick={() => !disabled && setOpen(o => !o)}
+        disabled={disabled}
+      >
+        <svg className="dp-icon" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="3" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.4"/>
+          <path d="M5 1v3M11 1v3M1 7h14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+        </svg>
+        <span className="dp-label">{formatDisplay(value)}</span>
+        <span className="dp-chevron">▾</span>
+      </button>
+
+      {open && (
+        <div className="dp-popover">
+          {/* Nav */}
+          <div className="dp-nav">
+            <button type="button" className="dp-nav-btn" onClick={() => shiftMonth(-1)} disabled={atMin}>‹</button>
+            <div className="dp-nav-selects">
+              <select
+                className="dp-select"
+                value={viewMonth}
+                onChange={e => setCalMonth(new Date(viewYear, Number(e.target.value), 1))}
+              >
+                {MONTH_NAMES.map((name, i) => <option key={name} value={i}>{name}</option>)}
+              </select>
+              <select
+                className="dp-select"
+                value={viewYear}
+                onChange={e => setCalMonth(new Date(Number(e.target.value), viewMonth, 1))}
+              >
+                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <button type="button" className="dp-nav-btn" onClick={() => shiftMonth(1)} disabled={atMax}>›</button>
+          </div>
+          {/* Weekday labels */}
+          <div className="dp-weekdays">
+            {WEEKDAYS.map(d => <div key={d} className="dp-weekday">{d}</div>)}
+          </div>
+          {/* Day grid */}
+          <div className="dp-days">
+            {cells.map((day, i) =>
+              day === null ? (
+                <div key={`b-${i}`} />
+              ) : (
+                <button
+                  key={dayIso(day)}
+                  type="button"
+                  className={[
+                    "dp-day",
+                    dayIso(day) === value   ? "dp-day-sel"   : "",
+                    dayIso(day) === today   ? "dp-day-today" : "",
+                    dayIso(day) >  max      ? "dp-day-dis"   : "",
+                  ].join(" ").trim()}
+                  disabled={dayIso(day) > max}
+                  onClick={() => { onChange(dayIso(day)); setOpen(false); }}
+                >
+                  {day}
+                </button>
+              )
+            )}
+          </div>
+          {/* Today shortcut */}
+          <div className="dp-popover-footer">
+            <button
+              type="button"
+              className="dp-today-btn"
+              onClick={() => { onChange(today); setOpen(false); }}
+            >
+              Today
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+
 interface TickerSearchProps {
   value: string;
   onChange: (ticker: string) => void;
@@ -96,7 +268,7 @@ const TickerSearch: React.FC<TickerSearchProps> = ({ value, onChange, allStocks,
   return (
     <div className="imp-ticker-wrap" ref={wrapRef}>
       <input
-        className="imp-input imp-input-ticker"
+        className="imp-input"
         placeholder="Search ticker..."
         value={query}
         onChange={handleChange}
@@ -133,6 +305,8 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({ onClose, onS
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [allStocks, setAllStocks] = useState<StockOption[]>([]);
 
+  const today = toIsoDate(new Date());
+
   useEffect(() => {
     axios.get<StockOption[]>(`${API_BASE}/api/stocks/latest`)
     .then((res) => setAllStocks(res.data.filter((s) => s.close !== null)))
@@ -167,7 +341,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({ onClose, onS
                   price_found: price,
                   price_loading: false,
                   needs_manual_price: false,
-                  avg_price: String(price),
+                  avg_price: price.toFixed(2),
                 }
               : e
           )
@@ -191,7 +365,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({ onClose, onS
                   price_found: price,
                   price_loading: false,
                   needs_manual_price: false,
-                  avg_price: String(price),
+                  avg_price: price.toFixed(2),
                 }
               : e
           )
@@ -314,7 +488,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({ onClose, onS
       <span>Ticker</span>
       <span>Shares Owned</span>
       <span>Purchase Date</span>
-      <span>Purchase Price / Share</span>
+      <span>Purchase Price</span>
       <span>Total Cost</span>
       <span></span>
     </div>
@@ -356,17 +530,14 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({ onClose, onS
             </div>
             {/* Purchase date */}
             <div className="imp-field">
-              <input
-                className="imp-input"
-                type="date"
-                max={new Date().toISOString().split("T")[0]} 
+              <DatePicker
                 value={entry.purchase_date}
-                onChange={(e) => {
-                  const date = e.target.value;
+                maxDate={today}
+                disabled={isSaved || submitting}
+                onChange={date => {
                   updateEntry(entry.id, "purchase_date", date);
                   if (entry.ticker) lookupPrice(entry.id, entry.ticker, date);
                 }}
-                disabled={isSaved || submitting}
               />
             </div>
             {/* Price */}
@@ -386,14 +557,14 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({ onClose, onS
                   />
                 </div>
               ) : entry.needs_manual_price ? (
-                // Pre-2020 or not found — manual entry
+                // No data found - manual entry
                 <div className="imp-input-prefix-wrap">
                   <span className="imp-prefix">$</span>
                   <input
                     className="imp-input imp-input-prefixed"
                     type="number"
                     placeholder="Price paid"
-                    min="0.0001"
+                    min="0.01"
                     step="any"
                     value={entry.avg_price}
                     onChange={(e) => updateEntry(entry.id, "avg_price", e.target.value)}
