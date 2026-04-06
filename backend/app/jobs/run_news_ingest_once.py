@@ -1,11 +1,7 @@
 import logging
 import os
+import traceback
 from typing import List
-
-from app.services.ingesting_pipelines.alphavantage_ingest import run_alphavantage_ingest_from_env
-from app.services.ingesting_pipelines.daily_news_ingest import run_daily_news_ingest_from_env
-from app.services.ingesting_pipelines.guardian_ingest import run_guardian_ingest_from_env
-from app.services.ingesting_pipelines.newsapi_ingest import run_newsapi_ingest_from_env
 
 
 logger = logging.getLogger("news_ingest_job")
@@ -22,6 +18,10 @@ def main() -> None:
 
     if _has_env("MARKETAUX_API_TOKEN"):
         try:
+            from app.services.ingesting_pipelines.daily_news_ingest import (
+                run_daily_news_ingest_from_env,
+            )
+
             run_daily_news_ingest_from_env()
             ran_sources.append("marketaux")
         except Exception as exc:
@@ -31,6 +31,10 @@ def main() -> None:
 
     if _has_env("NEWSAPI_API_KEY"):
         try:
+            from app.services.ingesting_pipelines.newsapi_ingest import (
+                run_newsapi_ingest_from_env,
+            )
+
             run_newsapi_ingest_from_env()
             ran_sources.append("newsapi")
         except Exception as exc:
@@ -40,6 +44,10 @@ def main() -> None:
 
     if _has_env("ALPHAVANTAGE_API_KEY"):
         try:
+            from app.services.ingesting_pipelines.alphavantage_ingest import (
+                run_alphavantage_ingest_from_env,
+            )
+
             run_alphavantage_ingest_from_env()
             ran_sources.append("alphavantage")
         except Exception as exc:
@@ -49,6 +57,10 @@ def main() -> None:
 
     if _has_env("GUARDIAN_API_KEY"):
         try:
+            from app.services.ingesting_pipelines.guardian_ingest import (
+                run_guardian_ingest_from_env,
+            )
+
             run_guardian_ingest_from_env()
             ran_sources.append("guardian")
         except Exception as exc:
@@ -63,4 +75,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+        print("run_news_ingest_complete=true", flush=True)
+    except BaseException as exc:
+        print(f"run_news_ingest_failed={exc!r}", flush=True)
+        traceback.print_exc()
+        raise
