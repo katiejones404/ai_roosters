@@ -43,7 +43,7 @@ from app.core.security import (
 from app.services.email_service import send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-DEFAULT_PROFILE_PICTURE = os.getenv("DEFAULT_PROFILE_PICTURE", "/public/default_pfp.jpg")
+DEFAULT_PROFILE_PICTURE = os.getenv("DEFAULT_PROFILE_PICTURE", "/default_pfp.jpg")
 
 # --- Token Blacklist (Feature #6) ---
 # In-memory set of invalidated tokens. Resets on server restart.

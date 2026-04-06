@@ -16,7 +16,7 @@ ME_URL = "/api/auth/me"
 CHANGE_PW_URL = "/api/auth/me/password"
 FORGOT_PW_URL = "/api/auth/forgot-password"
 NOTIFICATIONS_URL = "/api/auth/me/notifications"
-DEFAULT_PROFILE_PICTURE = "/public/default_pfp.jpg"
+DEFAULT_PROFILE_PICTURE = "/default_pfp.jpg"
 
 VALID_USER = {
     "email": "auth_test@example.com",

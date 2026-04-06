@@ -35,7 +35,7 @@ interface SecurityFormData {
 }
 
 type NotificationSettings = NotificationPreferences;
-const DEFAULT_PROFILE_PICTURE = "/public/default_pfp.jpg";
+const DEFAULT_PROFILE_PICTURE = "/default_pfp.jpg";
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
@@ -165,11 +165,31 @@ const Settings: React.FC = () => {
     setErrorMessage("");
     setSuccessMessage("");
     try {
-      await updateProfile({
+      const updatedUser = await updateProfile({
         name: accountForm.name || undefined,
         username: accountForm.username || undefined,
         phone: accountForm.phone || undefined,
       });
+
+      setAccountForm((prev) => ({
+        ...prev,
+        name: updatedUser?.name ?? prev.name,
+        username: updatedUser?.username ?? prev.username,
+        phone: updatedUser?.phone ?? prev.phone,
+      }));
+
+      window.dispatchEvent(
+        new CustomEvent("userProfileUpdated", {
+          detail: {
+            name: updatedUser?.name ?? accountForm.name,
+            username: updatedUser?.username ?? accountForm.username,
+            email: updatedUser?.email ?? accountForm.email,
+            phone: updatedUser?.phone ?? accountForm.phone,
+            profile_picture: updatedUser?.profile_picture ?? profileImage,
+          },
+        })
+      );
+
       setSuccessMessage("Profile updated successfully!");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err: any) {

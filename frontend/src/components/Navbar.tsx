@@ -11,11 +11,13 @@ import { TICKER_NAMES } from "../utils/stockNames";
 import "./Navbar.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
-const DEFAULT_PROFILE_PICTURE = "/public/default_pfp.jpg";
+const DEFAULT_PROFILE_PICTURE = "/default_pfp.jpg";
 
 interface CurrentUser {
+  name?: string;
   email?: string;
   username?: string;
+  phone?: string;
   profile_picture?: string;
 }
 
@@ -105,8 +107,18 @@ const Navbar = () => {
       const { picture } = (e as CustomEvent<{ picture: string }>).detail;
       setUser((prev: CurrentUser | null) => prev ? { ...prev, profile_picture: picture } : prev);
     };
+
+    const handleUserProfileUpdate = (e: Event) => {
+      const detail = (e as CustomEvent<Partial<CurrentUser>>).detail;
+      setUser((prev: CurrentUser | null) => (prev ? { ...prev, ...detail } : prev));
+    };
+
     window.addEventListener('profilePictureUpdated', handlePictureUpdate);
-    return () => window.removeEventListener('profilePictureUpdated', handlePictureUpdate);
+    window.addEventListener("userProfileUpdated", handleUserProfileUpdate);
+    return () => {
+      window.removeEventListener('profilePictureUpdated', handlePictureUpdate);
+      window.removeEventListener("userProfileUpdated", handleUserProfileUpdate);
+    };
   }, []);
 
   // Close all menus when clicking outside
