@@ -303,6 +303,12 @@ const StockDetail: React.FC = () => {
 
         <div style={{ marginBottom: 28, background: palette.panelAlt, border: `1px solid ${palette.border}`, borderRadius: 16, padding: 24 }}>
           <h2 style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700 }}>Sentiment and AI News Summary</h2>
+          <p style={{ margin: "0 0 14px", color: palette.muted, fontSize: 13, lineHeight: 1.45 }}>
+            Due to API rate limits and the scope of this capstone project, recent
+            articles are sourced from four free news APIs. As a result, the number
+            of articles available per stock is intentionally limited. This may impact
+            the sentiment listed for each stock.
+          </p>
 
           {sentimentLoading && <div style={{ color: palette.muted }}>Loading sentiment and AI news summary...</div>}
           {!sentimentLoading && sentimentError && <div style={{ color: "#ef4444" }}>{sentimentError}</div>}

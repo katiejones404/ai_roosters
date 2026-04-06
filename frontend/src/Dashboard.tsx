@@ -127,7 +127,7 @@ const StockMiniCard: React.FC<{
               background: "none",
               border: "none",
               cursor: "pointer",
-              fontSize: "22px",
+              fontSize: "30px",
               lineHeight: "1",
               padding: "0 2px",
             }}

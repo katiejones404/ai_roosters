@@ -189,10 +189,7 @@ class TestNotificationPreferences:
         assert res.status_code == 200
         data = res.json()
         assert data.keys() == {
-            "emailNotifications",
             "marketAlerts",
-            "portfolioUpdates",
-            "weeklyReport",
             "pushNotifications",
         }
 
@@ -203,10 +200,7 @@ class TestNotificationPreferences:
         This mirrors how the settings UI sends updates.
         """
         updates = [
-            {"emailNotifications": False},
             {"marketAlerts": False},
-            {"portfolioUpdates": False},
-            {"weeklyReport": True},
             {"pushNotifications": True},
         ]
 

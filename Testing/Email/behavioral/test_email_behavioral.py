@@ -194,7 +194,7 @@ class TestForgotPasswordEmail:
 
 class TestNotificationPreferencesEmailGate:
     """
-    Verify that a user's email notification preferences are correctly returned
+    Verify that a user's market-alert notification preference is correctly returned
     and persisted, so the alert scheduler can honour them when deciding whether
     to send a price-alert email.
     """
@@ -211,50 +211,43 @@ class TestNotificationPreferencesEmailGate:
                           json={"email": creds["email"], "password": creds["password"]})
         return res.json()["access_token"]
 
-    def test_email_notifications_default_to_true(self, client):
-        """A newly registered user has email notifications enabled by default."""
-        token = self._login(client)
-        res = client.get("/api/auth/me/notifications",
-                         headers={"Authorization": f"Bearer {token}"})
-        assert res.status_code == 200
-        assert res.json()["emailNotifications"] is True
-
     def test_market_alerts_default_to_true(self, client):
         """A newly registered user has market alerts enabled by default."""
         token = self._login(client)
         res = client.get("/api/auth/me/notifications",
                          headers={"Authorization": f"Bearer {token}"})
+        assert res.status_code == 200
         assert res.json()["marketAlerts"] is True
 
-    def test_disabling_email_notifications_persists(self, client):
-        """Turning off email notifications is reflected on the next GET."""
+    def test_disabling_market_alerts_persists(self, client):
+        """Turning off market alerts is reflected on the next GET."""
         token = self._login(client)
         headers = {"Authorization": f"Bearer {token}"}
 
         patch_res = client.patch("/api/auth/me/notifications",
                                  headers=headers,
-                                 json={"emailNotifications": False})
+                                 json={"marketAlerts": False})
         assert patch_res.status_code == 200
-        assert patch_res.json()["emailNotifications"] is False
+        assert patch_res.json()["marketAlerts"] is False
 
         get_res = client.get("/api/auth/me/notifications", headers=headers)
-        assert get_res.json()["emailNotifications"] is False
+        assert get_res.json()["marketAlerts"] is False
 
-    def test_re_enabling_email_notifications_persists(self, client):
-        """Turning email notifications back on is reflected on the next GET."""
+    def test_re_enabling_market_alerts_persists(self, client):
+        """Turning market alerts back on is reflected on the next GET."""
         token = self._login(client)
         headers = {"Authorization": f"Bearer {token}"}
 
         client.patch("/api/auth/me/notifications", headers=headers,
-                     json={"emailNotifications": False})
+                     json={"marketAlerts": False})
         client.patch("/api/auth/me/notifications", headers=headers,
-                     json={"emailNotifications": True})
+                     json={"marketAlerts": True})
 
         res = client.get("/api/auth/me/notifications", headers=headers)
-        assert res.json()["emailNotifications"] is True
+        assert res.json()["marketAlerts"] is True
 
     def test_preferences_require_auth(self, client):
         """Notification preferences endpoints require authentication."""
         assert client.get("/api/auth/me/notifications").status_code == 401
         assert client.patch("/api/auth/me/notifications",
-                            json={"emailNotifications": False}).status_code == 401
+                            json={"marketAlerts": False}).status_code == 401

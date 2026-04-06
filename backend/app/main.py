@@ -120,22 +120,22 @@ def ingest_stock_prices_on_startup():
                 "ALTER TABLE price_alerts ADD COLUMN IF NOT EXISTS email_notify BOOLEAN NOT NULL DEFAULT TRUE"
             ))
             _conn.execute(sa_text(
-                "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_email_enabled BOOLEAN NOT NULL DEFAULT TRUE"
-            ))
-            _conn.execute(sa_text(
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_market_alerts_enabled BOOLEAN NOT NULL DEFAULT TRUE"
-            ))
-            _conn.execute(sa_text(
-                "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_portfolio_updates_enabled BOOLEAN NOT NULL DEFAULT TRUE"
-            ))
-            _conn.execute(sa_text(
-                "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_weekly_report_enabled BOOLEAN NOT NULL DEFAULT FALSE"
             ))
             _conn.execute(sa_text(
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_push_enabled BOOLEAN NOT NULL DEFAULT FALSE"
             ))
+            _conn.execute(sa_text(
+                "ALTER TABLE users DROP COLUMN IF EXISTS notify_email_enabled"
+            ))
+            _conn.execute(sa_text(
+                "ALTER TABLE users DROP COLUMN IF EXISTS notify_portfolio_updates_enabled"
+            ))
+            _conn.execute(sa_text(
+                "ALTER TABLE users DROP COLUMN IF EXISTS notify_weekly_report_enabled"
+            ))
         _mig_engine.dispose()
-        logger.info("Migration: notification columns ensured.")
+        logger.info("Migration: notification columns ensured and legacy notification prefs removed.")
     except Exception as e:
         logger.warning(f"Notification migrations skipped: {e}")
 

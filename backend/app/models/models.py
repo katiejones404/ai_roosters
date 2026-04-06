@@ -29,10 +29,7 @@ class User(Base):
     streak_last_visit = Column(Date, nullable=True)
     streak_visit_days = Column(Text, nullable=True)  # JSON string list of YYYY-MM-DD dates
     streak_total_visits = Column(Integer, nullable=True)
-    notify_email_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
     notify_market_alerts_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
-    notify_portfolio_updates_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
-    notify_weekly_report_enabled = Column(Boolean, nullable=False, default=False, server_default="false")
     notify_push_enabled = Column(Boolean, nullable=False, default=False, server_default="false")
 
     portfolio_items = relationship("Portfolio", back_populates="user", cascade="all, delete-orphan")

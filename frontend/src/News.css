@@ -38,6 +38,14 @@
   margin: 0;
 }
 
+.news-disclaimer {
+  margin: 0.65rem 0 0;
+  max-width: 760px;
+  color: rgba(226, 232, 240, 0.88);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
 .news-ticker-filter {
   background: #000000df;
   border: 2.0px solid #10b981c5;

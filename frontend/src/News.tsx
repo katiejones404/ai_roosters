@@ -91,6 +91,11 @@ export default function News() {
         <div>
           <h1 className="news-title">Market News</h1>
           <p className="news-subtitle">Latest articles from tracked stocks</p>
+          <p className="news-disclaimer">
+            Due to API rate limits and the scope of this capstone project, recent
+            articles are sourced from four free news APIs. As a result, the number
+            of articles available per stock is intentionally limited.
+          </p>
         </div>
         <select
           className="news-ticker-filter"

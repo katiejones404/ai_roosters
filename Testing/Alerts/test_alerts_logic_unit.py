@@ -20,21 +20,18 @@ def test_is_alert_triggered(direction, current, target, expected):
 
 
 @pytest.mark.parametrize(
-    "alert_email_notify,user_email_enabled,user_market_alerts_enabled,expected",
+    "alert_email_notify,user_market_alerts_enabled,expected",
     [
-        (True, True, True, True),
-        (False, True, True, False),
-        (True, False, True, False),
-        (True, True, False, False),
-        (False, False, False, False),
+        (True, True, True),
+        (False, True, False),
+        (True, False, False),
+        (False, False, False),
     ],
 )
 def test_should_send_alert_email(
-    alert_email_notify, user_email_enabled, user_market_alerts_enabled, expected
+    alert_email_notify, user_market_alerts_enabled, expected
 ):
     assert (
-        should_send_alert_email(
-            alert_email_notify, user_email_enabled, user_market_alerts_enabled
-        )
+        should_send_alert_email(alert_email_notify, user_market_alerts_enabled)
         is expected
     )
