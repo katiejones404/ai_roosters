@@ -9,6 +9,7 @@ on:
       - "backend/Pipeline.Dockerfile"
       - "backend/requirements-pipeline.txt"
       - "backend/requirements-api.txt"
+      - "backend/app/jobs/**"
       - "backend/app/services/sentiment/**"
       - "backend/app/services/ingesting_pipelines/**"
       - ".github/workflows/build-pipeline-image.yml"
