@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import logging
@@ -21,16 +20,19 @@ if not logger.handlers:
     logger.addHandler(_handler)
 logger.setLevel(logging.INFO)
 
+# Default env fallbacks so the script can run with minimal setup.
 DEFAULT_TOTAL_TO_PROCESS = 5000
 DEFAULT_FETCH_BATCH = 500
 DEFAULT_FINBERT_BATCH = 8
 DEFAULT_DB_BATCH = 250
 DEFAULT_TABLES = "articles,stock_news_articles"
 
+# Main Hugging Face model used for article sentiment.
 _FINBERT_MODEL_ID = "ProsusAI/finbert"
 
 
 def build_db_url() -> str:
+    # Prefer DATABASE_URL, otherwise build it from the usual PG vars.
     db_url = os.getenv("DATABASE_URL")
     if db_url:
         return db_url
@@ -44,6 +46,7 @@ def build_db_url() -> str:
 
 
 def reflect_table(engine, table_name: str) -> Tuple[Table, List[str]]:
+    # Pull the table schema from Postgres at runtime.
     metadata = MetaData()
     metadata.reflect(engine, only=[table_name])
     if table_name not in metadata.tables:
@@ -53,6 +56,7 @@ def reflect_table(engine, table_name: str) -> Tuple[Table, List[str]]:
 
 
 def ensure_sentiment_columns(engine, table_name: str) -> Tuple[Table, List[str]]:
+    # Add sentiment columns if they are missing, then re-read the table.
     desired = {
         "sentiment": "TEXT",
         "sentiment_score": "DOUBLE PRECISION",
@@ -72,6 +76,7 @@ def resolve_table_window(
     start_date: Optional[str],
     end_date: Optional[str],
 ) -> Tuple[str, str]:
+    # If dates are not passed in, use the table's min/max published_at range.
     if start_date and end_date:
         return start_date, end_date
 
@@ -103,6 +108,7 @@ def resolve_table_window(
 
 
 def select_device() -> int:
+    # Use CPU if forced, otherwise try CUDA if it is actually usable.
     force_cpu = os.getenv("FINBERT_FORCE_CPU", "").strip().lower() in {"1", "true", "yes"}
     if force_cpu:
         return -1
@@ -125,6 +131,7 @@ def select_device() -> int:
 
 
 def _is_cuda_related_error(exc: BaseException) -> bool:
+    # Small helper so GPU failures can fall back cleanly.
     msg = (str(exc) or "").lower()
     return any(
         k in msg
@@ -141,11 +148,13 @@ def _is_cuda_related_error(exc: BaseException) -> bool:
 
 
 def _clear_finbert_pipeline_cache() -> None:
+    # Reset the cached model so it can be rebuilt on CPU if needed.
     if hasattr(get_finbert_pipeline, "finbert"):
         delattr(get_finbert_pipeline, "finbert")
 
 
 def get_finbert_pipeline(*, force_cpu: bool = False):
+    # Lazily load and cache the FinBERT pipeline.
     if not hasattr(get_finbert_pipeline, "finbert"):
         requested_device_id = -1 if force_cpu else select_device()
 
@@ -188,6 +197,7 @@ def get_finbert_pipeline(*, force_cpu: bool = False):
     return get_finbert_pipeline.finbert
 
 
+# Lightweight request object for DB fetch settings.
 class FetchFromDBArtifact(BaseModel):
     table_name: str
     limit: int
@@ -196,6 +206,7 @@ class FetchFromDBArtifact(BaseModel):
     only_missing_sentiment: bool = True
 
 
+# Raw article batch pulled from the database.
 class IngestArtifact(BaseModel):
     table_name: str
     published_at: List[str]
@@ -206,6 +217,7 @@ class IngestArtifact(BaseModel):
     ticker: List[str]
 
 
+# Same batch plus FinBERT outputs.
 class SentimentArtifact(IngestArtifact):
     sentiment: List[str]
     sentiment_score: List[float]
@@ -215,6 +227,7 @@ class SentimentArtifact(IngestArtifact):
 
 
 def _compose_text_for_finbert(title: str, description: str) -> str:
+    # Title first, then description, which usually gives better context.
     title = (title or "").strip()
     description = (description or "").strip()
     if title and description:
@@ -223,6 +236,7 @@ def _compose_text_for_finbert(title: str, description: str) -> str:
 
 
 def _scores_dict(all_scores: List[Dict[str, float]]) -> Dict[str, float]:
+    # Normalize model output into a predictable score map.
     d = {e["label"].lower(): float(e["score"]) for e in all_scores}
     for k in ("positive", "neutral", "negative"):
         d.setdefault(k, 0.0)
@@ -230,6 +244,7 @@ def _scores_dict(all_scores: List[Dict[str, float]]) -> Dict[str, float]:
 
 
 def fetch_articles_from_db(engine, table: Table, cols: set, artifact: FetchFromDBArtifact) -> IngestArtifact:
+    # Build the DB query for the next batch to score.
     where_clauses = []
 
     if artifact.only_missing_sentiment and "sentiment" in cols:
@@ -239,7 +254,7 @@ def fetch_articles_from_db(engine, table: Table, cols: set, artifact: FetchFromD
     end_dt = pd.to_datetime(artifact.end_date, utc=True, errors="raise")
 
     where_clauses.append(table.c.published_at >= start_dt.to_pydatetime())
-    # inclusive end date at 23:59:59
+    # Inclusive end date at 23:59:59.
     end_dt = end_dt + pd.Timedelta(days=1) - pd.Timedelta(microseconds=1)
     where_clauses.append(table.c.published_at <= end_dt.to_pydatetime())
 
@@ -302,6 +317,7 @@ def fetch_articles_from_db(engine, table: Table, cols: set, artifact: FetchFromD
         description = ""
         source = ""
 
+        # Walk through optional columns in the same order they were selected.
         if "ticker" in cols:
             ticker = r[idx] if idx < len(r) else ""
             idx += 1
@@ -341,6 +357,7 @@ def fetch_articles_from_db(engine, table: Table, cols: set, artifact: FetchFromD
 
 
 def finbert_score(artifact: IngestArtifact) -> SentimentArtifact:
+    # Score one batch of articles with FinBERT.
     if not artifact.url:
         return SentimentArtifact(
             table_name=artifact.table_name,
@@ -359,6 +376,7 @@ def finbert_score(artifact: IngestArtifact) -> SentimentArtifact:
 
     inputs = [_compose_text_for_finbert(t, d) for t, d in zip(artifact.title, artifact.description)]
 
+    # If the article text is empty, default it to neutral instead of crashing.
     if not any(x.strip() for x in inputs):
         n = len(inputs)
         return SentimentArtifact(
@@ -410,6 +428,7 @@ def finbert_score(artifact: IngestArtifact) -> SentimentArtifact:
         neu = score_map["neutral"]
 
         sentiments.append(label)
+        # Positive minus negative keeps the score easy to read later.
         scores.append(pos - neg)
         prob_pos.append(pos)
         prob_neg.append(neg)
@@ -432,6 +451,7 @@ def finbert_score(artifact: IngestArtifact) -> SentimentArtifact:
 
 
 def write_sentiment_to_db(engine, table: Table, cols: set, artifact: SentimentArtifact) -> int:
+    # Upsert scored sentiment results back into the same table.
     n = len(artifact.url)
     if n == 0:
         return 0
@@ -480,6 +500,7 @@ def write_sentiment_to_db(engine, table: Table, cols: set, artifact: SentimentAr
     db_batch = int(os.getenv("FINBERT_DB_BATCH_SIZE", str(DEFAULT_DB_BATCH)))
     written = 0
 
+    # stock_news_articles uses ticker + url as the unique pair.
     conflict_keys = ["url"]
     if table.name == "stock_news_articles" and "ticker" in cols:
         conflict_keys = ["ticker", "url"]
@@ -512,6 +533,7 @@ def write_sentiment_to_db(engine, table: Table, cols: set, artifact: SentimentAr
 
 
 def _parse_table_list(raw: str) -> List[str]:
+    # Read a comma-separated table list from env.
     out: List[str] = []
     for item in raw.split(","):
         name = item.strip()
@@ -529,6 +551,7 @@ def run_finbert_pipeline_for_table(
     fetch_batch: int,
     only_missing: bool,
 ) -> Dict[str, Any]:
+    # Run the whole fetch -> score -> write loop for one table.
     table, col_list = ensure_sentiment_columns(engine, table_name)
     cols = set(col_list)
 
@@ -607,6 +630,7 @@ def run_finbert_pipeline_for_table(
 
 
 def run_finbert_pipeline_from_env() -> Dict[str, Any]:
+    # Entry point that reads all settings from env vars.
     db_url = build_db_url()
     engine = create_engine(db_url)
 

@@ -12,8 +12,10 @@ from datasets import load_dataset
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.dialects.postgresql import insert
 
+# Let this script reach the project modules when run directly.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Basic logger so runs are easier to follow.
 logger = logging.getLogger("article_ingestor")
 if not logger.handlers:
     handler = logging.StreamHandler()
@@ -21,6 +23,7 @@ if not logger.handlers:
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
+# These are the default HF subsets we pull from in filtered mode.
 DEFAULT_HF_FILTERED_SUBSETS = [
     "yahoo_finance_felixdrinkall",
     "reddit_finance_sp500",
@@ -32,6 +35,7 @@ DEFAULT_HF_FILTERED_SUBSETS = [
 
 
 def build_db_url() -> str:
+    # Prefer one full DB URL, otherwise build it from pieces.
     db_url = os.getenv("DATABASE_URL")
     if db_url:
         return db_url
@@ -45,11 +49,13 @@ def build_db_url() -> str:
 
 
 def get_hf_token_optional() -> Optional[str]:
+    # Token is optional, so return None if nothing is set.
     token = (os.getenv("HUGGINGFACE_HUB_TOKEN") or os.getenv("HF_TOKEN") or "").strip()
     return token or None
 
 
 def parse_extras_any(extra_fields: Any) -> dict:
+    # Normalize extra_fields into a dict no matter how it comes in.
     if not extra_fields:
         return {}
     if isinstance(extra_fields, dict):
@@ -67,6 +73,7 @@ def parse_extras_any(extra_fields: Any) -> dict:
 
 
 def extract_title_and_desc(text: str, max_desc_chars: int = 280) -> Tuple[str, str]:
+    # First block becomes the title, next block becomes a short description.
     if not text:
         return "", ""
     parts = text.split("\n\n", 1)
@@ -77,10 +84,12 @@ def extract_title_and_desc(text: str, max_desc_chars: int = 280) -> Tuple[str, s
 
 
 def pick_url(extras: Dict[str, Any]) -> Optional[str]:
+    # Different sources use different URL keys, so we try a few.
     return extras.get("url") or extras.get("web_url") or extras.get("link") or extras.get("permalink")
 
 
 def pick_source(extras: Dict[str, Any]) -> Optional[str]:
+    # Same idea here for source/publisher naming.
     return (
         extras.get("source")
         or extras.get("publisher")
@@ -91,11 +100,13 @@ def pick_source(extras: Dict[str, Any]) -> Optional[str]:
     )
 
 
+# These cover the main date field names we see across sources.
 DATE_KEYS = ["date", "published_at", "publishedAt", "published", "datetime", "time", "timestamp"]
 EXTRA_DATE_KEYS = ["date", "published_at", "publishedAt", "published", "published_time", "pub_date", "created_at"]
 
 
 def pick_raw_date(row: Dict[str, Any]) -> Any:
+    # Check top-level fields first, then fall back to extra_fields.
     for k in DATE_KEYS:
         v = row.get(k)
         if v:
@@ -111,11 +122,13 @@ def pick_raw_date(row: Dict[str, Any]) -> Any:
 
 
 def safe_date_prefix(raw_date: Any) -> str:
+    # Keep just YYYY-MM-DD so year/date checks stay simple.
     s = str(raw_date or "").strip()
     return s[:10] if len(s) >= 10 else ""
 
 
 def fast_parse_datetime_utc(raw_date: Any) -> Optional[datetime]:
+    # Parse a few common date formats and normalize to UTC.
     if raw_date is None:
         return None
 
@@ -161,6 +174,7 @@ def fast_parse_datetime_utc(raw_date: Any) -> Optional[datetime]:
 
 
 def _resolve_years() -> List[int]:
+    # Use explicit years if provided, otherwise build a year range.
     raw = (os.getenv("NEWS_INGEST_YEARS") or "").strip()
     if raw:
         out = []
@@ -181,10 +195,12 @@ def _resolve_years() -> List[int]:
 
 
 def _resolve_end_date() -> str:
+    # Default to today if no end date is set.
     return (os.getenv("NEWS_INGEST_END_DATE") or date.today().isoformat()).strip()
 
 
 def _resolve_hf_subset_names() -> List[str]:
+    # Allow custom subsets, otherwise use the defaults above.
     raw = (os.getenv("NEWS_INGEST_HF_SUBSETS") or "").strip()
     if raw:
         names = [p.strip() for p in raw.split(",") if p.strip()]
@@ -194,6 +210,7 @@ def _resolve_hf_subset_names() -> List[str]:
 
 
 class ArticleIngestor:
+    # Main ingestor that loads HF data and writes clean rows into Postgres.
     def __init__(self, db_url: Optional[str] = None):
         if db_url is None:
             db_url = build_db_url()
@@ -217,6 +234,7 @@ class ArticleIngestor:
             raise RuntimeError(f"'articles' table missing required columns: {missing}")
 
     def load_dataset_any(self, streaming: bool, name: Optional[str] = None):
+        # Load either one subset or the full dataset.
         token = get_hf_token_optional()
         if name:
             data_files = f"hf://datasets/Brianferrell787/financial-news-multisource/data/{name}/*.parquet"
@@ -235,6 +253,7 @@ class ArticleIngestor:
         )
 
     def _store_articles(self, records: List[Dict[str, Any]]) -> None:
+        # Only keep columns that actually exist in the table.
         if not records:
             return
 
@@ -263,6 +282,7 @@ class ArticleIngestor:
         min_rows_for_share_check: int = 2_000_000,
         name: Optional[str] = None,
     ) -> None:
+        # One pass through the dataset while filling per-year quotas.
         if not end_date:
             end_date = date.today().isoformat()
 
@@ -278,6 +298,7 @@ class ArticleIngestor:
         target_year_seen = 0
 
         def all_done() -> bool:
+            # Stop once every requested year hit its target.
             return all(accepted_per_year[y] >= per_year for y in years_set)
 
         logger.info(
@@ -299,6 +320,7 @@ class ArticleIngestor:
         buffer_urls = set()
 
         def flush():
+            # Write the current batch, then reset the in-memory buffer.
             nonlocal buffer, buffer_urls
             if buffer:
                 self._store_articles(buffer)
@@ -306,6 +328,7 @@ class ArticleIngestor:
                 buffer_urls.clear()
 
         def log_progress():
+            # Small progress snapshot so long runs are not a black box.
             preview = " ".join([f"{y}:{accepted_per_year[y]}/{per_year}" for y in sorted(years_set)])
             top_years = ", ".join([f"{y}:{c}" for y, c in year_seen.most_common(5)])
             share = (target_year_seen / scanned) if scanned else 0.0
@@ -315,6 +338,7 @@ class ArticleIngestor:
                 f"target_year_share={share:.6f} per_year={preview} top_years={top_years}"
             )
 
+        # Walk the dataset row by row and keep only what we need.
         for row in ds:
             scanned += 1
 
@@ -355,6 +379,7 @@ class ArticleIngestor:
             if y in years_set:
                 target_year_seen += 1
 
+            # If streaming order is useless, fall back to non-streaming.
             if streaming and scanned >= fallback_to_non_streaming_after and in_window == 0:
                 logger.warning(
                     f"[INGEST-ALL] scanned={scanned:,} but still in_window=0 for years={sorted(years_set)}. "
@@ -376,6 +401,7 @@ class ArticleIngestor:
                     name=name,
                 )
 
+            # Another safety check in case the stream is barely hitting target years.
             if streaming and scanned >= min_rows_for_share_check:
                 share = target_year_seen / scanned
                 if share < fallback_if_target_year_share_below and in_window < 50:
@@ -399,6 +425,7 @@ class ArticleIngestor:
                         name=name,
                     )
 
+            # Skip years outside the requested window.
             if y not in years_set:
                 continue
             if y == end_year and date_prefix > end_day:
@@ -412,6 +439,7 @@ class ArticleIngestor:
                     break
                 continue
 
+            # Pull the important fields we want to store.
             extras = parse_extras_any(row.get("extra_fields"))
             url = pick_url(extras)
             if not url:
@@ -429,6 +457,7 @@ class ArticleIngestor:
             title, desc = extract_title_and_desc(row.get("text", "") or "", max_desc_chars=max_desc_chars)
             source = pick_source(extras)
 
+            # Keep the insert payload small and consistent.
             record = {
                 "url": url,
                 "title": title or None,
@@ -471,6 +500,7 @@ class ArticleIngestor:
         progress_every: int = 200_000,
         streaming: bool = False,
     ) -> None:
+        # Run the same ingest flow, just subset by subset.
         subset_names = [s.strip() for s in subset_names if s and s.strip()]
         subset_names = list(dict.fromkeys(subset_names))
         if not subset_names:
@@ -496,6 +526,7 @@ class ArticleIngestor:
 
 
 def run_hf_news_ingest_from_env(db_url: Optional[str] = None) -> None:
+    # Entry point driven by env vars so it is easy to run in Docker.
     ing = ArticleIngestor(db_url)
     years = _resolve_years()
     end_date = _resolve_end_date()
@@ -539,4 +570,5 @@ def run_hf_news_ingest_from_env(db_url: Optional[str] = None) -> None:
 
 
 if __name__ == "__main__":
+    # Run from the shell.
     run_hf_news_ingest_from_env()

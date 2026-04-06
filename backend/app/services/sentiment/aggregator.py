@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import logging
@@ -11,6 +10,7 @@ import psycopg2
 import numpy as np
 from xgboost import XGBRegressor
 
+# Basic logger setup for the pipeline
 logger = logging.getLogger("snapshot_pipeline")
 logger.setLevel(logging.INFO)
 if not logger.handlers:
@@ -18,6 +18,7 @@ if not logger.handlers:
     _handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
     logger.addHandler(_handler)
 
+# Keep this list aligned with the app's tracked tickers
 TARGET_TICKERS = [
     "KSS", "ALK", "NVS", "AXP", "FCX",
     "CSX", "DAL", "NTAP", "MRK", "COP",
@@ -28,6 +29,7 @@ TARGET_TICKERS = [
     "NKE", "AAL", "BAC", "F", "INTC", "XOM", "T",
     "SOFI", "PLUG", "MARA", "SNAP", "COIN", "AMC", "RIVN", "CCL", "ENPH",
 ]
+# Oldest date this pipeline will allow
 PIPELINE_MIN_DATE = date(2020, 1, 1)
 
 try:
@@ -44,6 +46,7 @@ except ImportError:
             return self.__dict__.copy()
 
 
+# Small base artifact with a helper for JSON-like output
 class Artifact(BaseModel):
     def to_json(self) -> Dict[str, Any]:
         if hasattr(self, "model_dump"):
@@ -53,6 +56,7 @@ class Artifact(BaseModel):
         return self.__dict__.copy()
 
 
+# Simple pipeline stage wrapper with input and output validation
 class Stage:
     def __init__(
         self,
@@ -80,6 +84,7 @@ class Stage:
         return artifact_valid.to_json()
 
 
+# Runs each stage in order and passes data along
 class Pipeline:
     def __init__(self, name: str, stages: List[Stage]):
         self.name = name
@@ -93,6 +98,7 @@ class Pipeline:
         return data
 
 
+# Input request for the snapshot pipeline
 class SnapshotRequestArtifact(Artifact):
     ticker: Optional[str] = None
     tickers: Optional[List[str]] = None
@@ -100,6 +106,7 @@ class SnapshotRequestArtifact(Artifact):
     end_date: Optional[str] = None
 
 
+# Raw stock rows loaded from the database
 class StockRowsArtifact(Artifact):
     ticker: List[str]
     date: List[str]
@@ -110,6 +117,7 @@ class StockRowsArtifact(Artifact):
     return_360d: List[Optional[float]]
 
 
+# Combined stock and sentiment snapshot data
 class SentimentAggregateArtifact(Artifact):
     ticker: List[str]
     snapshot_date: List[str]
@@ -143,10 +151,12 @@ class SentimentAggregateArtifact(Artifact):
     pred_return_360d: Optional[List[Optional[float]]] = None
 
 
+# Final DB write result
 class DBArtifact(Artifact):
     num_snapshots: int
 
 
+# Builds the database connection string
 def _get_dsn() -> str:
     return os.getenv(
         "DATABASE_URL",
@@ -154,15 +164,18 @@ def _get_dsn() -> str:
     )
 
 
+# Quick ISO date parser
 def _parse_date(s: str) -> date:
     return datetime.fromisoformat(s).date()
 
 
+# Reads common true or false style env values
 def _truthy_env(name: str, default: str = "0") -> bool:
     val = os.getenv(name, default).strip().lower()
     return val in {"1", "true", "t", "yes", "y", "on"}
 
 
+# Checks if xgboost supports CUDA on this setup
 def _xgb_has_cuda_build() -> bool:
     try:
         import xgboost as xgb
@@ -182,6 +195,7 @@ def _xgb_has_cuda_build() -> bool:
         return False
 
 
+# Keeps model features finite and safe
 def _safe_num(x: Optional[float]) -> float:
     if x is None:
         return 0.0
@@ -191,6 +205,7 @@ def _safe_num(x: Optional[float]) -> float:
     return v
 
 
+# Makes sure the start date is valid and not too early
 def _normalize_pipeline_start_date(raw_start: Optional[str]) -> str:
     candidate = (raw_start or "").strip() or PIPELINE_MIN_DATE.isoformat()
     try:
@@ -203,6 +218,7 @@ def _normalize_pipeline_start_date(raw_start: Optional[str]) -> str:
     return parsed.isoformat()
 
 
+# Chooses tickers from the request, env, or defaults
 def _pick_tickers(req: SnapshotRequestArtifact) -> List[str]:
     if req.ticker:
         return [req.ticker]
@@ -214,6 +230,7 @@ def _pick_tickers(req: SnapshotRequestArtifact) -> List[str]:
     return TARGET_TICKERS.copy()
 
 
+# Loads stock rows and return columns from the DB
 def load_stock_rows(req: SnapshotRequestArtifact) -> StockRowsArtifact:
     logger.info("[LoadStocks] Fetching stock rows from database")
 
@@ -276,6 +293,7 @@ def load_stock_rows(req: SnapshotRequestArtifact) -> StockRowsArtifact:
     )
 
 
+# Stage 1: load stock price rows
 LoadStocksStage = Stage(
     name="LoadStocks",
     input_schema=SnapshotRequestArtifact,
@@ -284,6 +302,7 @@ LoadStocksStage = Stage(
 )
 
 
+# Daily aggregates from the broad articles table
 def _fetch_broad_daily(cur, min_date_val: date, max_date_val: date) -> Dict[date, Dict[str, Any]]:
     cur.execute(
         """
@@ -335,6 +354,7 @@ def _fetch_broad_daily(cur, min_date_val: date, max_date_val: date) -> Dict[date
     return out
 
 
+# Daily aggregates from ticker-specific stock news
 def _fetch_stock_news_daily(cur, min_date_val: date, max_date_val: date, tickers: List[str]) -> Dict[tuple, Dict[str, Any]]:
     cur.execute(
         """
@@ -404,6 +424,7 @@ def _fetch_stock_news_daily(cur, min_date_val: date, max_date_val: date, tickers
     return out
 
 
+# Blends two averages using article counts
 def _weighted_mean(a: Optional[float], an: int, b: Optional[float], bn: int) -> Optional[float]:
     an_eff = an if a is not None else 0
     bn_eff = bn if b is not None else 0
@@ -414,16 +435,19 @@ def _weighted_mean(a: Optional[float], an: int, b: Optional[float], bn: int) -> 
     return total / denom
 
 
+# Keeps the larger non-null value
 def _combine_max(a: Optional[float], b: Optional[float]) -> Optional[float]:
     vals = [v for v in (a, b) if v is not None]
     return max(vals) if vals else None
 
 
+# Keeps the smaller non-null value
 def _combine_min(a: Optional[float], b: Optional[float]) -> Optional[float]:
     vals = [v for v in (a, b) if v is not None]
     return min(vals) if vals else None
 
 
+# Merges stock rows with daily sentiment data
 def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact:
     logger.info("[AggregateSentiment] Aggregating broad articles + ticker-specific stock_news_articles")
 
@@ -561,6 +585,7 @@ def aggregate_sentiment(stocks: StockRowsArtifact) -> SentimentAggregateArtifact
     )
 
 
+# Stage 2: combine stock data with sentiment aggregates
 AggregateStage = Stage(
     name="AggregateSentiment",
     input_schema=StockRowsArtifact,
@@ -569,6 +594,7 @@ AggregateStage = Stage(
 )
 
 
+# Trains XGBoost models for each return horizon
 def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArtifact:
     logger.info("[XGBoost] Building dataset from sentiment snapshots")
 
@@ -635,6 +661,7 @@ def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArt
     cuda_build = _xgb_has_cuda_build()
     prefer_gpu = (not force_cpu) and cuda_build
 
+    # Builds one model with shared settings
     def make_model(device: str) -> XGBRegressor:
         return XGBRegressor(
             n_estimators=200,
@@ -650,6 +677,7 @@ def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArt
 
     n_full = n
 
+    # Trains and predicts one horizon at a time
     def _train_and_predict_per_horizon(y: np.ndarray, horizon_name: str) -> List[Optional[float]]:
         finite_mask = np.isfinite(y)
         num_used = int(finite_mask.sum())
@@ -705,6 +733,7 @@ def run_xgboost_models(agg: SentimentAggregateArtifact) -> SentimentAggregateArt
     return agg
 
 
+# Stage 3: generate predicted returns
 XGBoostStage = Stage(
     name="XGBoostReturnModels",
     input_schema=SentimentAggregateArtifact,
@@ -713,6 +742,7 @@ XGBoostStage = Stage(
 )
 
 
+# Makes sure prediction columns exist before writing
 def _ensure_snapshot_columns(cur) -> None:
     cur.execute("""
         ALTER TABLE sentiment_snapshots
@@ -751,6 +781,7 @@ _SQL_SKIP = f"ON CONFLICT (ticker, snapshot_date) DO NOTHING"
 _SQL_UPSERT = f"ON CONFLICT (ticker, snapshot_date) DO {_UPDATE_CLAUSE}"
 
 
+# Writes the final snapshot rows to sentiment_snapshots
 def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
     skip_existing = _truthy_env("AGG_SKIP_EXISTING", "0")
 
@@ -824,7 +855,7 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
             pred_return_1d, pred_return_30d, pred_return_120d, pred_return_360d
         ) = row
 
-        # Determine conflict strategy for this row
+        # Pick whether this row should be skipped or updated
         if skip_existing:
             if skip_before_date is not None:
                 row_date = _parse_date(snapshot_date) if isinstance(snapshot_date, str) else snapshot_date
@@ -930,6 +961,7 @@ def write_snapshots_to_db(agg: SentimentAggregateArtifact) -> DBArtifact:
     return DBArtifact(num_snapshots=num_written)
 
 
+# Stage 4: save snapshot rows back to the database
 WriteSnapshotsStage = Stage(
     name="WriteSnapshots",
     input_schema=SentimentAggregateArtifact,
@@ -938,6 +970,7 @@ WriteSnapshotsStage = Stage(
 )
 
 
+# Full pipeline order
 sentiment_snapshot_pipeline = Pipeline(
     "SentimentSnapshotAggregator",
     [
@@ -949,6 +982,7 @@ sentiment_snapshot_pipeline = Pipeline(
 )
 
 
+# Entry point that reads settings from env vars
 def run_sentiment_snapshot_pipeline_from_env() -> Dict[str, Any]:
     tickers_env = (os.getenv("AGG_TICKERS") or "").strip()
     req = {
@@ -964,5 +998,6 @@ def run_sentiment_snapshot_pipeline_from_env() -> Dict[str, Any]:
     return result
 
 
+# Run from the command line
 if __name__ == "__main__":
     run_sentiment_snapshot_pipeline_from_env()
