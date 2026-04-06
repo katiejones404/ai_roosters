@@ -10,9 +10,10 @@ import requests
 from sqlalchemy import MetaData, Table, create_engine, func, select
 from sqlalchemy.dialects.postgresql import insert
 
-# Optional: project root on path
+# Small path helper for local project imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Basic logger so runs are easy to track
 logger = logging.getLogger("stock_news_summary")
 if not logger.handlers:
     handler = logging.StreamHandler()
@@ -20,7 +21,7 @@ if not logger.handlers:
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-# Keep this aligned with the stocks shown on the website
+# Main ticker list used for summaries
 TARGET_TICKERS = [
     "KSS", "ALK", "NVS", "AXP", "FCX",
     "CSX", "DAL", "NTAP", "MRK", "COP",
@@ -37,6 +38,7 @@ TARGET_TICKERS = [
 # DB helpers
 # ---------------------------
 
+# Builds the DB connection string from env vars
 def build_db_url() -> str:
     db_url = os.getenv("DATABASE_URL")
     if db_url:
@@ -54,6 +56,7 @@ def build_db_url() -> str:
 # LLM helpers
 # ---------------------------
 
+# Picks the chat API base URL
 def get_llm_base_url() -> str:
     return (
         os.getenv("NEWS_SUMMARY_BASE_URL")
@@ -62,6 +65,7 @@ def get_llm_base_url() -> str:
     ).rstrip("/")
 
 
+# Pulls the API key if one exists
 def get_llm_api_key() -> Optional[str]:
     key = (
         os.getenv("NEWS_SUMMARY_API_KEY")
@@ -71,14 +75,17 @@ def get_llm_api_key() -> Optional[str]:
     return key or None
 
 
+# Model name stays configurable from env
 def get_llm_model() -> str:
     return (os.getenv("NEWS_SUMMARY_MODEL") or "gpt-4.1-mini").strip()
 
 
+# Timeout for the API call
 def get_llm_timeout() -> int:
     return int(os.getenv("NEWS_SUMMARY_TIMEOUT", "120"))
 
 
+# Keeps summaries a bit more controlled
 def get_llm_temperature() -> float:
     return float(os.getenv("NEWS_SUMMARY_TEMPERATURE", "0.2"))
 
@@ -87,10 +94,12 @@ def get_llm_temperature() -> float:
 # Utility helpers
 # ---------------------------
 
+# Current UTC time helper
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# Safely normalizes datetimes into UTC
 def parse_datetime_utc(raw: Any) -> Optional[datetime]:
     if raw is None:
         return None
@@ -117,6 +126,7 @@ def parse_datetime_utc(raw: Any) -> Optional[datetime]:
         return None
 
 
+# Trims text and returns None if empty
 def clean_text(value: Any) -> Optional[str]:
     if value is None:
         return None
@@ -124,6 +134,7 @@ def clean_text(value: Any) -> Optional[str]:
     return s or None
 
 
+# Removes duplicates without changing order
 def dedupe_keep_order(values: List[str]) -> List[str]:
     seen = set()
     out: List[str] = []
@@ -134,6 +145,7 @@ def dedupe_keep_order(values: List[str]) -> List[str]:
     return out
 
 
+# Makes the final summary one clean paragraph
 def normalize_summary_text(text: str) -> str:
     text = (text or "").strip()
     if not text:
@@ -145,6 +157,7 @@ def normalize_summary_text(text: str) -> str:
     return text
 
 
+# Formats each article into a clean prompt block
 def format_article_for_prompt(idx: int, article: Dict[str, Any]) -> str:
     published_at = article.get("published_at")
     if isinstance(published_at, datetime):
@@ -194,6 +207,7 @@ class StockNewsSummaryGenerator:
       - sentiment_snapshots
     """
 
+    # Sets up DB + model config once
     def __init__(self, db_url: Optional[str] = None):
         if db_url is None:
             db_url = build_db_url()
@@ -208,6 +222,7 @@ class StockNewsSummaryGenerator:
         self.engine = create_engine(db_url)
         self.metadata = MetaData()
 
+        # Only reflect the two tables this flow needs
         logger.info("Reflecting required tables...")
         self.metadata.reflect(self.engine, only=["stock_news_articles", "stock_news_summaries"])
 
@@ -243,6 +258,7 @@ class StockNewsSummaryGenerator:
     # Ticker resolution
     # ---------------------------
 
+    # Uses env tickers first, then falls back to defaults
     def resolve_target_tickers(self) -> List[str]:
         env_symbols = (os.getenv("NEWS_SUMMARY_TICKERS") or "").strip()
         if env_symbols:
@@ -254,6 +270,7 @@ class StockNewsSummaryGenerator:
         logger.info(f"Using hardcoded website ticker universe with {len(TARGET_TICKERS)} ticker(s).")
         return TARGET_TICKERS.copy()
 
+    # Resolves summary windows like 7 and 30 days
     def resolve_windows(self) -> List[int]:
         raw = (os.getenv("NEWS_SUMMARY_WINDOWS") or "7,30").strip()
         windows: List[int] = []
@@ -275,6 +292,7 @@ class StockNewsSummaryGenerator:
     # Article loading
     # ---------------------------
 
+    # Gets count + latest date for recent articles
     def load_recent_article_stats(
         self,
         ticker: str,
@@ -302,6 +320,7 @@ class StockNewsSummaryGenerator:
             "latest_article_at": parse_datetime_utc(row.latest_article_at),
         }
 
+    # Pulls recent articles that will be sent to the model
     def load_recent_articles_for_prompt(
         self,
         ticker: str,
@@ -345,6 +364,7 @@ class StockNewsSummaryGenerator:
     # Prompting + model call
     # ---------------------------
 
+    # Builds the system + user prompts for the summary
     def build_prompts(
         self,
         ticker: str,
@@ -380,6 +400,7 @@ class StockNewsSummaryGenerator:
             {"role": "user", "content": user_prompt},
         ]
 
+    # Makes the actual chat completion request
     def call_chat_model(self, messages: List[Dict[str, str]]) -> str:
         url = f"{self.base_url}/chat/completions"
         headers = {"Content-Type": "application/json"}
@@ -422,6 +443,7 @@ class StockNewsSummaryGenerator:
     # DB write
     # ---------------------------
 
+    # Inserts or updates one summary row
     def upsert_summary(
         self,
         ticker: str,
@@ -461,6 +483,7 @@ class StockNewsSummaryGenerator:
     # Main summary flow
     # ---------------------------
 
+    # Runs one ticker/window summary
     def summarize_one(
         self,
         ticker: str,
@@ -474,6 +497,7 @@ class StockNewsSummaryGenerator:
         article_count = int(stats["article_count"])
         latest_article_at = stats["latest_article_at"]
 
+        # Writes a fallback message if there is no coverage
         if article_count == 0:
             summary_text = "No recent stock-specific articles were found for this window."
             written = self.upsert_summary(
@@ -516,6 +540,7 @@ class StockNewsSummaryGenerator:
             f"articles={article_count} prompt_articles={len(articles)} upserted={written}"
         )
 
+    # Main loop across all tickers and windows
     def run(
         self,
         tickers: Optional[List[str]] = None,
@@ -569,6 +594,7 @@ class StockNewsSummaryGenerator:
 if __name__ == "__main__":
     gen = StockNewsSummaryGenerator()
 
+    # Lets you cap prompt size from env
     max_articles_per_summary = int(os.getenv("NEWS_SUMMARY_ARTICLE_LIMIT", "8"))
 
     gen.run(
