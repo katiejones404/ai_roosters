@@ -52,6 +52,8 @@ What this does:
   - `stocksense-prices`
   - `stocksense-news-ingest`
   - `stocksense-sentiment-summary`
+- If an error happens, try updating your container apps extension:
+  - `az extension add --name containerapp --upgrade`
 
 ## 3) Every time you update code
 
@@ -83,9 +85,7 @@ Current scheduled jobs and what they do:
 - `stocksense-prices`: price ingestion every 15 minutes.
 - `stocksense-news-ingest`: news ingestion twice daily.
 - `stocksense-sentiment-summary`: sentiment + summary processing after ingest windows.
-- `stocksense-alerts`: alert checks every 5 minutes (if created).
-
-If you still have `stocksense-sentiment`, that is a legacy extra sentiment job and may duplicate work from `stocksense-sentiment-summary`.
+- `stocksense-alerts`: alert checks every 5 minutes
 
 ## 4) If workflows are unavailable, build/push manually
 

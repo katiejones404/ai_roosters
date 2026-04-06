@@ -48,10 +48,7 @@ if az containerapp show --name "$API_APP" --resource-group "$RG" >/dev/null 2>&1
   az containerapp update \
     --name "$API_APP" \
     --resource-group "$RG" \
-    --image "$API_IMAGE" \
-    --registry-server ghcr.io \
-    --registry-username "$GH_USER" \
-    --registry-password "$GH_PAT" >/dev/null
+    --image "$API_IMAGE" >/dev/null
 else
   az containerapp create \
     --name "$API_APP" \
@@ -67,6 +64,14 @@ else
     --memory 2.0Gi \
     --min-replicas 1 >/dev/null
 fi
+
+# Keep registry credentials in a separate call for broader az CLI compatibility.
+az containerapp registry set \
+  --name "$API_APP" \
+  --resource-group "$RG" \
+  --server ghcr.io \
+  --username "$GH_USER" \
+  --password "$GH_PAT" >/dev/null
 
 echo "[4/7] Setting API environment variables..."
 az containerapp update \
@@ -103,7 +108,8 @@ az containerapp job create \
   --replica-completion-count 1 \
   --replica-retry-limit 1 \
   --replica-timeout 900 \
-  --command "sh,-c,python -m app.jobs.run_alert_checks_once" \
+  --command "python" \
+  --args "app/jobs/run_alert_checks_once.py" \
   --secrets \
     "database-url=$DATABASE_URL" \
     "smtp-user=$SMTP_USER" \
@@ -133,7 +139,8 @@ az containerapp job create \
   --replica-completion-count 1 \
   --replica-retry-limit 1 \
   --replica-timeout 1800 \
-  --command "sh,-c,python -m app.services.ingesting_pipelines.prices_ingest" \
+  --command "python" \
+  --args "app/services/ingesting_pipelines/prices_ingest.py" \
   --secrets "database-url=$DATABASE_URL" \
   --env-vars \
     DATABASE_URL=secretref:database-url \
@@ -155,7 +162,8 @@ az containerapp job create \
   --replica-completion-count 1 \
   --replica-retry-limit 1 \
   --replica-timeout 3600 \
-  --command "sh,-c,python -m app.services.ingesting_pipelines.daily_news_ingest && python -m app.services.ingesting_pipelines.newsapi_ingest && python -m app.services.ingesting_pipelines.alphavantage_ingest && python -m app.services.ingesting_pipelines.guardian_ingest" \
+  --command "python" \
+  --args "app/jobs/run_news_ingest_once.py" \
   --secrets \
     "database-url=$DATABASE_URL" \
     "marketaux-api-token=$MARKETAUX_API_TOKEN" \
@@ -197,7 +205,8 @@ az containerapp job create \
   --replica-completion-count 1 \
   --replica-retry-limit 1 \
   --replica-timeout 7200 \
-  --command "sh,-c,python -m app.services.sentiment.article_processing && python -m app.services.sentiment.stock_processing && python -m app.services.sentiment.aggregator && python -m app.services.sentiment.gpt_summary" \
+  --command "python" \
+  --args "app/jobs/run_sentiment_summary_once.py" \
   --secrets \
     "database-url=$DATABASE_URL" \
     "openai-api-key=$OPENAI_API_KEY" \

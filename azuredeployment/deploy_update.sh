@@ -57,7 +57,6 @@ echo "Updating job images..."
 update_job_image_if_exists "stocksense-alerts" "$API_IMAGE"
 update_job_image_if_exists "stocksense-prices" "$API_IMAGE"
 update_job_image_if_exists "stocksense-news-ingest" "$API_IMAGE"
-update_job_image_if_exists "stocksense-sentiment" "$PIPE_IMAGE"
 update_job_image_if_exists "stocksense-sentiment-summary" "$PIPE_IMAGE"
 
 echo "Deployment update complete."
