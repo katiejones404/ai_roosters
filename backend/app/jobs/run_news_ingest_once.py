@@ -1,10 +1,19 @@
 import logging
 import os
+import sys
 import traceback
 from typing import List
 
 
 logger = logging.getLogger("news_ingest_job")
+
+
+def _bootstrap_import_path() -> None:
+    # When this file is executed as `python app/jobs/run_news_ingest_once.py`,
+    # ensure repo root (/app in container) is on sys.path so `import app...` works.
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
 
 
 def _has_env(name: str) -> bool:
@@ -13,10 +22,13 @@ def _has_env(name: str) -> bool:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
+    _bootstrap_import_path()
 
     ran_sources: List[str] = []
+    attempted_sources = 0
 
     if _has_env("MARKETAUX_API_TOKEN"):
+        attempted_sources += 1
         try:
             from app.services.ingesting_pipelines.daily_news_ingest import (
                 run_daily_news_ingest_from_env,
@@ -30,6 +42,7 @@ def main() -> None:
         logger.warning("Skipping Marketaux ingest: MARKETAUX_API_TOKEN is not set.")
 
     if _has_env("NEWSAPI_API_KEY"):
+        attempted_sources += 1
         try:
             from app.services.ingesting_pipelines.newsapi_ingest import (
                 run_newsapi_ingest_from_env,
@@ -43,6 +56,7 @@ def main() -> None:
         logger.warning("Skipping NewsAPI ingest: NEWSAPI_API_KEY is not set.")
 
     if _has_env("ALPHAVANTAGE_API_KEY"):
+        attempted_sources += 1
         try:
             from app.services.ingesting_pipelines.alphavantage_ingest import (
                 run_alphavantage_ingest_from_env,
@@ -56,6 +70,7 @@ def main() -> None:
         logger.warning("Skipping AlphaVantage ingest: ALPHAVANTAGE_API_KEY is not set.")
 
     if _has_env("GUARDIAN_API_KEY"):
+        attempted_sources += 1
         try:
             from app.services.ingesting_pipelines.guardian_ingest import (
                 run_guardian_ingest_from_env,
@@ -70,6 +85,10 @@ def main() -> None:
 
     if not ran_sources:
         logger.warning("No news ingestors ran. Set at least one news API key.")
+        if attempted_sources > 0:
+            raise RuntimeError(
+                "No news ingestors completed successfully; check module import/runtime errors."
+            )
     else:
         logger.info("News ingest job completed. Sources run: %s", ", ".join(ran_sources))
 

@@ -116,6 +116,7 @@ az containerapp job create \
     "smtp-pass=$SMTP_PASS" \
     "alert-from=$ALERT_FROM_EMAIL" \
   --env-vars \
+    PYTHONPATH=/app \
     DATABASE_URL=secretref:database-url \
     SMTP_USER=secretref:smtp-user \
     SMTP_PASS=secretref:smtp-pass \
@@ -143,6 +144,7 @@ az containerapp job create \
   --args "app/services/ingesting_pipelines/prices_ingest.py" \
   --secrets "database-url=$DATABASE_URL" \
   --env-vars \
+    PYTHONPATH=/app \
     DATABASE_URL=secretref:database-url \
     PRICE_PERIOD=5d \
     PRICE_UPDATE_EXISTING=1 >/dev/null
@@ -171,6 +173,7 @@ az containerapp job create \
     "alphavantage-api-key=$ALPHAVANTAGE_API_KEY" \
     "guardian-api-key=$GUARDIAN_API_KEY" \
   --env-vars \
+    PYTHONPATH=/app \
     DATABASE_URL=secretref:database-url \
     MARKETAUX_API_TOKEN=secretref:marketaux-api-token \
     NEWSAPI_API_KEY=secretref:newsapi-api-key \
@@ -211,6 +214,7 @@ az containerapp job create \
     "database-url=$DATABASE_URL" \
     "openai-api-key=$OPENAI_API_KEY" \
   --env-vars \
+    PYTHONPATH=/app \
     DATABASE_URL=secretref:database-url \
     OPENAI_API_KEY=secretref:openai-api-key \
     FINBERT_TABLES=stock_news_articles \

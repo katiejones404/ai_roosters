@@ -9,7 +9,11 @@ logger = logging.getLogger("sentiment_summary_job")
 
 def _run_step(module_name: str) -> None:
     logger.info("Running step: %s", module_name)
-    subprocess.run([sys.executable, "-m", module_name], check=True)
+    env = os.environ.copy()
+    app_root = "/app"
+    existing = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = f"{app_root}:{existing}" if existing else app_root
+    subprocess.run([sys.executable, "-m", module_name], check=True, env=env)
 
 
 def main() -> None:
