@@ -1,3 +1,9 @@
+"""
+Notes - Database initialization script.
+Loads the SQL schema file and executes all CREATE statements using DATABASE_URL.
+Used for setting up tables during local or containerized development.
+"""
+
 import os
 from pathlib import Path
 

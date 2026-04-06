@@ -1,3 +1,10 @@
+"""
+Notes - Email utilities for StockSense.
+Handles price alert emails and password reset messages using SMTP settings.
+"""
+
+
+
 import os
 import smtplib
 import ssl

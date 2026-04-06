@@ -1,3 +1,8 @@
+"""
+Notes - Background job for processing active price alerts.
+Checks latest stock prices, triggers alerts, and sends emails when conditions are met.
+"""
+
 import logging
 import os
 from datetime import datetime, timezone
