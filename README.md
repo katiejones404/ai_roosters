@@ -1,4 +1,8 @@
-# StockSense
+# Senior Capstone Project - Release 1
+
+This is the public version of the repository for my senior capstone project. 
+
+## StockSense
 
 StockSense is an AI-powered stock sentiment and portfolio platform. It combines market news sentiment with stock price data so users can track portfolios, monitor alerts, and understand how sentiment relates to returns.
 
