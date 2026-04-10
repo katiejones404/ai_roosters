@@ -722,7 +722,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
                         onChange={(e) =>
                           updateEntry(entry.id, "avg_price", e.target.value)
                         }
-                        disabled={isSaved || submitting}
+                        disabled={isSaved}
                       />
                     </div>
                   ) : entry.needs_manual_price ? (
