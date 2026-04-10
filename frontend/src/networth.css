@@ -87,10 +87,14 @@
 .nw-stat-value {
   font-size: 1.4rem;
   font-weight: 700;
+  word-break: break-all;
+  overflow-wrap: break-word;
   color: #f1f5f9;
 }
 .nw-stat-large {
   font-size: 1.9rem;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 .nw-stat-value.positive {
   color: #10b981;
@@ -423,7 +427,7 @@
 .nw-empty-hint {
   font-size: 0.8rem;
   color: #bbc5d1;
-  font-weight:400;
+  font-weight: 400;
   padding: 0.75rem;
   text-align: center;
 }
@@ -456,7 +460,7 @@
   display: flex;
   align-items: baseline;
   gap: 1.1rem;
-  margin-left: .5rem;
+  margin-left: 0.5rem;
   margin-bottom: 1.5rem;
 }
 
