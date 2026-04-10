@@ -563,7 +563,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
 
     const results = await Promise.all(
       entries.map(async (e) => {
-        const resolvedPrice = e.price_found ?? parseFloat(e.avg_price);
+        const resolvedPrice = parseFloat(e.avg_price) || e.price_found || 0;
         try {
           await axios.post(
             `${API_BASE}/api/portfolio`,
@@ -649,7 +649,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
           {entries.map((entry) => {
             const qty = parseFloat(entry.quantity);
             const resolvedPrice =
-              entry.price_found ?? parseFloat(entry.avg_price);
+              parseFloat(entry.avg_price) || entry.price_found || 0;
             const total =
               !isNaN(qty) && qty > 0 && resolvedPrice > 0
                 ? qty * resolvedPrice

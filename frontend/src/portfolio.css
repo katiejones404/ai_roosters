@@ -92,10 +92,12 @@
 }
 
 .stat-valueP {
-  font-size: 1.75rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: #e2e8f0;
   line-height: 1.2;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .stat-value.positive {
