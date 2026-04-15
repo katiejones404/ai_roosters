@@ -13,6 +13,18 @@ import "./Navbar.css";
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 const DEFAULT_PROFILE_PICTURE = "/default_pfp.jpg";
 
+const normalizeProfilePicture = (profilePicture?: string): string => {
+  const value = (profilePicture || "").trim();
+  if (!value) return DEFAULT_PROFILE_PICTURE;
+
+  const lowered = value.toLowerCase();
+  if (lowered.endsWith("default_pfp.jgp") || lowered.endsWith("default_pfp.jpeg")) {
+    return DEFAULT_PROFILE_PICTURE;
+  }
+
+  return value;
+};
+
 interface CurrentUser {
   name?: string;
   email?: string;
@@ -196,9 +208,7 @@ const Navbar = () => {
 
   const isActive = (path: string) =>
     location.pathname === path ? "nav-link active" : "nav-link";
-  const avatarSrc =
-    user?.profile_picture ||
-    DEFAULT_PROFILE_PICTURE;
+  const avatarSrc = normalizeProfilePicture(user?.profile_picture);
 
   return (
     <nav className="navbar">
@@ -311,7 +321,15 @@ const Navbar = () => {
               className="user-menu-trigger"
               onClick={() => setDropdownOpen((prev) => !prev)}
             >
-              <img src={avatarSrc} alt="avatar" className="user-avatar" />
+              <img
+                src={avatarSrc}
+                alt="avatar"
+                className="user-avatar"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = DEFAULT_PROFILE_PICTURE;
+                }}
+              />
               <span className="username">{user.username || user.email}</span>
               <span className="dropdown-caret">{dropdownOpen ? "▲" : "▼"}</span>
             </button>
