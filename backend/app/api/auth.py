@@ -43,7 +43,23 @@ from app.core.security import (
 from app.services.email_service import send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-DEFAULT_PROFILE_PICTURE = os.getenv("DEFAULT_PROFILE_PICTURE", "/default_pfp.jpg")
+_DEFAULT_PROFILE_PICTURE_FALLBACK = "/default_pfp.jpg"
+
+
+def _resolve_default_profile_picture() -> str:
+    configured = (os.getenv("DEFAULT_PROFILE_PICTURE") or "").strip()
+    if not configured:
+        return _DEFAULT_PROFILE_PICTURE_FALLBACK
+
+    lowered = configured.lower()
+    # Guard against common typo/misconfiguration values from env.
+    if lowered.endswith("default_pfp.jgp") or lowered.endswith("default_pfp.jpeg"):
+        return _DEFAULT_PROFILE_PICTURE_FALLBACK
+
+    return configured
+
+
+DEFAULT_PROFILE_PICTURE = _resolve_default_profile_picture()
 
 # --- Token Blacklist (Feature #6) ---
 # In-memory set of invalidated tokens. Resets on server restart.
@@ -129,7 +145,12 @@ def _needs_default_profile_picture(profile_picture: str | None) -> bool:
     """
     if not profile_picture or not profile_picture.strip():
         return True
-    return "api.dicebear.com" in profile_picture
+    lowered = profile_picture.strip().lower()
+    if "dicebear.com" in lowered:
+        return True
+    if lowered.endswith("default_pfp.jgp") or lowered.endswith("default_pfp.jpeg"):
+        return True
+    return False
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -176,7 +197,8 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
     new_user = User(
         username=user_data.username,
         email=user_data.email.lower(),
-        password_hash=hashed_password
+        password_hash=hashed_password,
+        profile_picture=DEFAULT_PROFILE_PICTURE,
     )
 
     db.add(new_user)
@@ -337,7 +359,8 @@ async def update_profile_picture(
     db: Session = Depends(get_db)
 ):
     """Update the authenticated user's profile picture"""
-    current_user.profile_picture = data.profile_picture
+    profile_picture = (data.profile_picture or "").strip()
+    current_user.profile_picture = profile_picture or DEFAULT_PROFILE_PICTURE
     db.commit()
     db.refresh(current_user)
     return current_user
