@@ -27,6 +27,9 @@ import Alerts from "./Alerts";
 import HomePage from "./HomePage";
 import LandingPage from "./LandingPage";
 
+import TermsOfService from "./TermsOfService";
+import PrivacyPolicy from "./PrivacyPolicy";
+
 import "./App.css";
 import "./index.css";
 
@@ -41,12 +44,17 @@ function App() {
 function AppContent() {
   const location = useLocation();
 
-  const hideNavbar =
-    location.pathname === "/login" ||
-    location.pathname === "/signup" ||
-    location.pathname === "/" ||
-    location.pathname === "/forgot-password" ||
-    location.pathname === "/reset-password";
+  const hiddenRoutes = [
+    "/",
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/privacy",
+    "/terms",
+  ];
+
+  const hideNavbar = hiddenRoutes.includes(location.pathname);
 
   return (
     <>
@@ -58,6 +66,8 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<HomePage />} />

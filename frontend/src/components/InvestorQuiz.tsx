@@ -152,60 +152,27 @@ function AllocBar({
   );
 }
 
-// Only serialize safe values — never the profile object itself (icons are functions and can't be JSON serialized)
-const loadSaved = (): {
-  started: boolean;
-  answers: Record<number, number>;
-  submitted: boolean;
-  profileLabel: string | null;
-} => {
-  try {
-    const saved = localStorage.getItem("investorQuizState");
-    if (!saved)
-      return {
-        started: false,
-        answers: {},
-        submitted: false,
-        profileLabel: null,
-      };
-    return JSON.parse(saved);
-  } catch {
-    return {
-      started: false,
-      answers: {},
-      submitted: false,
-      profileLabel: null,
-    };
-  }
+const DEFAULT_STATE = {
+  started: false,
+  answers: {} as Record<number, number>,
+  submitted: false,
+  profileLabel: null as string | null,
 };
 
 export default function InvestorQuiz() {
-  const saved = loadSaved();
-
-  const [started, setStarted] = useState<boolean>(() => saved.started ?? false);
+  const [started, setStarted] = useState<boolean>(DEFAULT_STATE.started);
   const [answers, setAnswers] = useState<Record<number, number>>(
-    () => saved.answers ?? {},
+    DEFAULT_STATE.answers,
   );
-  const [submitted, setSubmitted] = useState<boolean>(
-    () => saved.submitted ?? false,
-  );
-  // Look up the profile by label so the icon function is always live from QUIZ_PROFILES
+  const [submitted, setSubmitted] = useState<boolean>(DEFAULT_STATE.submitted);
   const [profile, setProfile] = useState<(typeof QUIZ_PROFILES)[0] | null>(
-    () => QUIZ_PROFILES.find((p) => p.label === saved.profileLabel) ?? null,
+    null,
   );
 
-  // Save only serializable values — store label instead of full profile object
+  // Always start fresh for each new visit/user session.
   useEffect(() => {
-    localStorage.setItem(
-      "investorQuizState",
-      JSON.stringify({
-        started,
-        answers,
-        submitted,
-        profileLabel: profile?.label ?? null,
-      }),
-    );
-  }, [started, answers, submitted, profile]);
+    localStorage.removeItem("investorQuizState");
+  }, []);
 
   const answer = (questionId: number, score: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: score }));

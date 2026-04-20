@@ -46,17 +46,36 @@ const CreateAccount: React.FC = () => {
   const validatePassword = (password: string): boolean =>
     password.length >= 8 && /[0-9!@#$%^&*(),.?":{}|<>]/.test(password);
 
-  const validateDateOfBirth = (date: string): boolean => {
+  // Checks that the date string is a real calendar date (e.g. rejects 09/81/2005)
+  const isValidDate = (date: string): boolean => {
     const dateRegex =
       /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(19|20)\d{2}$/;
-
     if (!dateRegex.test(date)) return false;
 
     const [month, day, year] = date.split("/").map(Number);
+    const parsed = new Date(year, month - 1, day);
+
+    // If JS rolls the date over (e.g. Feb 30 → Mar 2), it's not a real date
+    return (
+      parsed.getFullYear() === year &&
+      parsed.getMonth() === month - 1 &&
+      parsed.getDate() === day
+    );
+  };
+
+  // Checks that the user is at least 18 — only call this after isValidDate passes
+  const isOldEnough = (date: string): boolean => {
+    const [month, day, year] = date.split("/").map(Number);
     const birthDate = new Date(year, month - 1, day);
     const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age -= 1;
+    }
     return age >= 18;
   };
 
@@ -107,10 +126,14 @@ const CreateAccount: React.FC = () => {
     else if (formData.password !== formData.retypePassword)
       newErrors.retypePassword = "Passwords do not match";
 
-    if (!formData.dateOfBirth)
+    if (!formData.dateOfBirth) {
       newErrors.dateOfBirth = "Date of birth is required";
-    else if (!validateDateOfBirth(formData.dateOfBirth))
-      newErrors.dateOfBirth = "You must be at least 18 years old";
+    } else if (!isValidDate(formData.dateOfBirth)) {
+      // Bug #202 fix: show a meaningful message for impossible dates like 09/81/2005
+      newErrors.dateOfBirth = "Please enter a valid date (MM/DD/YYYY)";
+    } else if (!isOldEnough(formData.dateOfBirth)) {
+      newErrors.dateOfBirth = "You must be at least 18 years old to register";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -124,7 +147,6 @@ const CreateAccount: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Pass confirm_password so the backend can validate it too (#5)
       await register(
         formData.email,
         formData.username,
@@ -134,8 +156,9 @@ const CreateAccount: React.FC = () => {
 
       navigate("/login");
     } catch (error: any) {
-      // Handle pydantic 422 validation errors (e.g. passwords don't match)
       const responseData = error.response?.data;
+
+      // Handle pydantic 422 validation errors (e.g. passwords don't match)
       if (error.response?.status === 422 && responseData?.detail) {
         const firstError = Array.isArray(responseData.detail)
           ? responseData.detail[0]?.msg
@@ -144,17 +167,38 @@ const CreateAccount: React.FC = () => {
         return;
       }
 
-      // Handle regular HTTP errors
+      // Bug #197 fix: surface the actual backend error message instead of a generic fallback
       const detail =
-        responseData?.detail || "Registration failed. Please try again.";
-      if (detail.toLowerCase().includes("email")) {
+        responseData?.detail ||
+        responseData?.message ||
+        (error.message && error.message !== "Network Error"
+          ? error.message
+          : null) ||
+        "Something went wrong. Please try again.";
+
+      if (
+        typeof detail === "string" &&
+        detail.toLowerCase().includes("email")
+      ) {
         setErrors({ email: detail });
-      } else if (detail.toLowerCase().includes("username")) {
+      } else if (
+        typeof detail === "string" &&
+        detail.toLowerCase().includes("username")
+      ) {
         setErrors({ username: detail });
-      } else if (detail.toLowerCase().includes("password")) {
+      } else if (
+        typeof detail === "string" &&
+        detail.toLowerCase().includes("password")
+      ) {
         setErrors({ password: detail });
       } else {
-        setErrors({ email: detail });
+        // Show the real error under the email field as a general registration error
+        setErrors({
+          email:
+            typeof detail === "string"
+              ? detail
+              : "Registration failed. Please check your details and try again.",
+        });
       }
     } finally {
       setIsSubmitting(false);
