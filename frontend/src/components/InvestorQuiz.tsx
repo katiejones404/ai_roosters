@@ -3,8 +3,15 @@
  * Interactive quiz component that determines the user's investor personality type
  * based on their answers to a series of risk and strategy questions.
  */
-import { useState } from "react";
-import { FaArrowRight, FaBalanceScale, FaBullseye, FaChartLine, FaRocket, FaShieldAlt } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import {
+  FaArrowRight,
+  FaBalanceScale,
+  FaCrosshairs,
+  FaChartLine,
+  FaRocket,
+  FaShieldAlt,
+} from "react-icons/fa";
 import type { IconType } from "react-icons";
 import "../networth.css";
 
@@ -122,23 +129,83 @@ const QUIZ_PROFILES: Array<{
   },
 ];
 
-function AllocBar({ label, pct, color }: { label: string; pct: number; color: string }) {
+function AllocBar({
+  label,
+  pct,
+  color,
+}: {
+  label: string;
+  pct: number;
+  color: string;
+}) {
   return (
     <div className="quiz-alloc-row">
       <div className="quiz-alloc-label">{label}</div>
       <div className="quiz-alloc-track">
-        <div className="quiz-alloc-fill" style={{ width: `${pct}%`, background: color }} />
+        <div
+          className="quiz-alloc-fill"
+          style={{ width: `${pct}%`, background: color }}
+        />
       </div>
       <div className="quiz-alloc-pct">{pct}%</div>
     </div>
   );
 }
 
+// Only serialize safe values — never the profile object itself (icons are functions and can't be JSON serialized)
+const loadSaved = (): {
+  started: boolean;
+  answers: Record<number, number>;
+  submitted: boolean;
+  profileLabel: string | null;
+} => {
+  try {
+    const saved = localStorage.getItem("investorQuizState");
+    if (!saved)
+      return {
+        started: false,
+        answers: {},
+        submitted: false,
+        profileLabel: null,
+      };
+    return JSON.parse(saved);
+  } catch {
+    return {
+      started: false,
+      answers: {},
+      submitted: false,
+      profileLabel: null,
+    };
+  }
+};
+
 export default function InvestorQuiz() {
-  const [started, setStarted] = useState(false);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [submitted, setSubmitted] = useState(false);
-  const [profile, setProfile] = useState<(typeof QUIZ_PROFILES)[0] | null>(null);
+  const saved = loadSaved();
+
+  const [started, setStarted] = useState<boolean>(() => saved.started ?? false);
+  const [answers, setAnswers] = useState<Record<number, number>>(
+    () => saved.answers ?? {},
+  );
+  const [submitted, setSubmitted] = useState<boolean>(
+    () => saved.submitted ?? false,
+  );
+  // Look up the profile by label so the icon function is always live from QUIZ_PROFILES
+  const [profile, setProfile] = useState<(typeof QUIZ_PROFILES)[0] | null>(
+    () => QUIZ_PROFILES.find((p) => p.label === saved.profileLabel) ?? null,
+  );
+
+  // Save only serializable values — store label instead of full profile object
+  useEffect(() => {
+    localStorage.setItem(
+      "investorQuizState",
+      JSON.stringify({
+        started,
+        answers,
+        submitted,
+        profileLabel: profile?.label ?? null,
+      }),
+    );
+  }, [started, answers, submitted, profile]);
 
   const answer = (questionId: number, score: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: score }));
@@ -156,6 +223,7 @@ export default function InvestorQuiz() {
     setSubmitted(false);
     setProfile(null);
     setStarted(false);
+    localStorage.removeItem("investorQuizState");
   };
 
   const answered = Object.keys(answers).length;
@@ -166,7 +234,7 @@ export default function InvestorQuiz() {
       <div className="quiz-section">
         <div className="quiz-start-screen">
           <div className="quiz-start-emoji" aria-hidden="true">
-            <FaBullseye />
+            <FaCrosshairs />
           </div>
           <h2 className="quiz-start-title">Investor Personality Quiz</h2>
           <p className="quiz-start-desc">
@@ -184,7 +252,9 @@ export default function InvestorQuiz() {
     <div className="quiz-section">
       <div className="quiz-section-header">
         <h2 className="nw-section-title">Investor Personality Quiz</h2>
-        <p className="quiz-section-sub">Find out what kind of investor you are</p>
+        <p className="quiz-section-sub">
+          Find out what kind of investor you are
+        </p>
       </div>
 
       {submitted && profile ? (
@@ -203,9 +273,21 @@ export default function InvestorQuiz() {
             <p className="quiz-result-desc">{profile.description}</p>
             <div className="quiz-alloc-title">Suggested Allocation</div>
             <div className="quiz-alloc-bars">
-              <AllocBar label="Stocks" pct={profile.allocation.stocks} color="#6366f1" />
-              <AllocBar label="Bonds" pct={profile.allocation.bonds} color="#10b981" />
-              <AllocBar label="Cash" pct={profile.allocation.cash} color="#64748b" />
+              <AllocBar
+                label="Stocks"
+                pct={profile.allocation.stocks}
+                color="#6366f1"
+              />
+              <AllocBar
+                label="Bonds"
+                pct={profile.allocation.bonds}
+                color="#10b981"
+              />
+              <AllocBar
+                label="Cash"
+                pct={profile.allocation.cash}
+                color="#64748b"
+              />
             </div>
           </div>
           <button className="quiz-retake-btn" onClick={reset}>
@@ -215,7 +297,10 @@ export default function InvestorQuiz() {
       ) : (
         <div className="quiz-inner">
           <div className="quiz-progress-bar-track">
-            <div className="quiz-progress-bar-fill" style={{ width: `${progress}%` }} />
+            <div
+              className="quiz-progress-bar-fill"
+              style={{ width: `${progress}%` }}
+            />
           </div>
           <div className="quiz-progress-label">
             {answered} of {QUIZ_QUESTIONS.length} answered
@@ -231,7 +316,9 @@ export default function InvestorQuiz() {
                   {q.options.map((opt) => (
                     <button
                       key={opt.score}
-                      className={`quiz-option-btn ${answers[q.id] === opt.score ? "selected" : ""}`}
+                      className={`quiz-option-btn ${
+                        answers[q.id] === opt.score ? "selected" : ""
+                      }`}
                       onClick={() => answer(q.id, opt.score)}
                     >
                       {opt.text}
@@ -250,7 +337,9 @@ export default function InvestorQuiz() {
             {answered < QUIZ_QUESTIONS.length
               ? `Answer all questions (${QUIZ_QUESTIONS.length - answered} left)`
               : "See My Profile"}
-            {answered >= QUIZ_QUESTIONS.length && <FaArrowRight style={{ marginLeft: "0.35rem" }} />}
+            {answered >= QUIZ_QUESTIONS.length && (
+              <FaArrowRight style={{ marginLeft: "0.35rem" }} />
+            )}
           </button>
         </div>
       )}
