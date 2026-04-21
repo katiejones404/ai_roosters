@@ -24,6 +24,8 @@ interface ImportEntry {
   needs_manual_price: boolean;
   status: "idle" | "saving" | "saved" | "error";
   error?: string;
+  minDate: string | null;
+  minDateLoading: boolean;
 }
 
 interface ImportPortfolioMoalProps {
@@ -43,6 +45,8 @@ const emptyEntry = (): ImportEntry => ({
   price_loading: false,
   needs_manual_price: false,
   status: "idle",
+  minDate: null,
+  minDateLoading: false,
 });
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -79,6 +83,9 @@ interface DatePickerProps {
   onChange: (isoDate: string) => void;
   disabled?: boolean;
   maxDate?: string;
+  minDate?: string;
+  minDateHint?: string;
+  minDateLoading?: boolean;
 }
 
 const DatePicker: React.FC<DatePickerProps> = ({
@@ -86,6 +93,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
   onChange,
   disabled = false,
   maxDate,
+  minDate,
+  minDateHint,
+  minDateLoading = false,
 }) => {
   const today = toIsoDate(new Date());
   const max = maxDate ?? today;
@@ -125,17 +135,24 @@ const DatePicker: React.FC<DatePickerProps> = ({
   const viewYear = calMonth.getFullYear();
   const viewMonth = calMonth.getMonth();
   const maxDateObj = new Date(max + "T00:00:00");
-  const minYear = 1970;
+  const minDateObj = minDate ? new Date(minDate + "T00:00:00") : null;
+
+  const minNavYear = minDateObj ? minDateObj.getFullYear() : 1970;
+  const minNavMonth = minDateObj ? minDateObj.getMonth() : 0;
   const maxYear = maxDateObj.getFullYear();
 
-  const atMin = viewYear === minYear && viewMonth === 0;
-  const atMax =
-    viewYear === maxDateObj.getFullYear() && viewMonth == maxDateObj.getMonth();
+  const atMin = viewYear === minNavYear && viewMonth === minNavMonth;
+  const atMax = viewYear === maxDateObj.getFullYear() && viewMonth == maxDateObj.getMonth();
 
   const shiftMonth = (delta: number) => {
     setCalMonth((prev) => {
       const next = new Date(prev.getFullYear(), prev.getMonth() + delta, 1);
-      if (next.getFullYear() < minYear) return prev;
+      if (minDateObj) {
+        const minMonthStart = new Date(minNavYear, minNavMonth, 1);
+        if (next < minMonthStart) return prev;
+      } else if (next.getFullYear() < 1970) {
+        return prev;
+      }
       if (toIsoDate(next) > max) return prev;
       return next;
     });
@@ -150,18 +167,25 @@ const DatePicker: React.FC<DatePickerProps> = ({
   while (cells.length % 7 !== 0) cells.push(null);
 
   const yearOptions: number[] = [];
-  for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
+  for (let y = maxYear; y >= minNavYear; y--) yearOptions.push(y);
 
   const dayIso = (day: number) =>
     `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+  const isDayDisabled = (iso: string) => {
+    if (iso > max) return true;
+    if (minDate && iso < minDate) return true;
+    return false;
+  };
 
   return (
     <div className="dp-wrap" ref={wrapRef}>
       <button
         type="button"
         className={`dp-trigger${open ? " dp-open" : ""}${!value ? " dp-empty" : ""}`}
-        onClick={() => !disabled && setOpen((o) => !o)}
-        disabled={disabled}
+        onClick={() => !disabled && !minDateLoading && setOpen((o) => !o)}
+        disabled={disabled || minDateLoading}
+        title={minDateLoading ? "Loading earliest available date..." : undefined}
       >
         <svg className="dp-icon" viewBox="0 0 16 16" fill="none">
           <rect
@@ -180,9 +204,15 @@ const DatePicker: React.FC<DatePickerProps> = ({
             strokeLinecap="round"
           />
         </svg>
-        <span className="dp-label">{formatDisplay(value)}</span>
+        <span className="dp-label">{minDateLoading ? "Loading..." : formatDisplay(value)}</span>
         <span className="dp-chevron">▾</span>
       </button>
+
+      {(minDateLoading || minDateHint) && (
+        <div style={{ fontSize: "0.7rem", color:"#64748b", marginTop: "0.2rem" }}>
+          {minDateLoading ? "Fetching earliest available date..." : minDateHint}
+        </div>
+      )}
 
       {open && (
         <div className="dp-popover">
@@ -254,11 +284,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     "dp-day",
                     dayIso(day) === value ? "dp-day-sel" : "",
                     dayIso(day) === today ? "dp-day-today" : "",
-                    dayIso(day) > max ? "dp-day-dis" : "",
+                    isDayDisabled(dayIso(day)) ? "dp-day-dis" : "",
                   ]
                     .join(" ")
                     .trim()}
-                  disabled={dayIso(day) > max}
+                  disabled={isDayDisabled(dayIso(day))}
                   onClick={() => {
                     onChange(dayIso(day));
                     setOpen(false);
@@ -499,6 +529,39 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
     }
   };
 
+  const fetchTickerMinDate = async (entryId: string, ticker: string) => {
+    if (!ticker) return;
+    setEntries((prev) => 
+      prev.map((e) => e.id === entryId ? { ...e, minDate: null, minDateLoading: true } : e)
+    );
+    try {
+      const period2 = Math.floor(Date.now() / 1000);
+      const url = `${API_BASE}/api/stock-history?ticker=${encodeURIComponent(ticker)}&period1=0&period2=${period2}&interval=1mo`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      const chart = data?.chart?.result?.[0];
+      const firstTradeDate = chart?.meta?.firstTradeDate as number | undefined;
+      const firstTimestamp = Array.isArray(chart?.timestamp) ? (chart.timestamp[0] as number | undefined) : undefined;
+      const firstSeconds = firstTradeDate ?? firstTimestamp;
+      let minDate: string | null = null;
+      if (typeof firstSeconds === "number" && Number.isFinite(firstSeconds)) {
+        const d = new Date(firstSeconds * 1000);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        minDate = `${y}-${m}-${day}`;
+      }
+      setEntries((prev) => 
+        prev.map((e) => e.id === entryId ? { ...e, minDate, minDateLoading: false } : e)
+      );
+    } catch {
+      setEntries((prev) => 
+        prev.map((e) => e.id === entryId ? { ...e, minDate: null, minDateLoading: false } : e)
+      );
+    }
+  };
+
   const updateEntry = (id: string, field: keyof ImportEntry, value: string) => {
     setEntries((prev) =>
       prev.map((e) =>
@@ -526,6 +589,10 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
     const qty = parseFloat(e.quantity);
     if (isNaN(qty) || qty <= 0) return "Quantity must be a positive number";
     if (!e.purchase_date) return "Purchase date is required";
+    if (e.minDate && e.purchase_date < e.minDate) {
+      const [y, m, d] = e.minDate.split("-")
+      return `${e.ticker} was not publicly traded before ${m}/${d}/${y}`;
+    }
     if (e.needs_manual_price) {
       const price = parseFloat(e.avg_price);
       if (isNaN(price) || price <= 0)
@@ -655,6 +722,8 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
                 ? qty * resolvedPrice
                 : null;
             const isSaved = entry.status === "saved";
+            const minDateHint = entry.minDate ? (() => { const [y, m, d] = entry.minDate!.split("-"); return `Earliest: ${m}/${d}/${y}`;})() 
+              : undefined;
 
             return (
               <div
@@ -667,6 +736,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
                     value={entry.ticker}
                     onChange={(val) => {
                       updateEntry(entry.id, "ticker", val);
+                      fetchTickerMinDate(entry.id, val);
                       if (entry.purchase_date)
                         lookupPrice(entry.id, val, entry.purchase_date);
                     }}
@@ -694,6 +764,9 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
                   <DatePicker
                     value={entry.purchase_date}
                     maxDate={today}
+                    minDate={entry.minDate ?? undefined}
+                    minDateHint={minDateHint}
+                    minDateLoading={entry.minDateLoading}
                     disabled={isSaved || submitting}
                     onChange={(date) => {
                       updateEntry(entry.id, "purchase_date", date);
