@@ -35,6 +35,8 @@ interface AlertNotification {
   target_price: number;
   direction: string;
   is_active: boolean;
+  triggered_price?: number | null;
+  triggered_at?: string | null;
 }
 
 const BellIcon = () => (
@@ -80,7 +82,7 @@ const Navbar = () => {
         setUser(currentUser);
 
         const tickerRes = await axios.get(`${API_BASE}/api/stocks`);
-        setAllTickers(tickerRes.data.map((s: any) => s.ticker));
+        setAllTickers(tickerRes.data.map((s: { ticker: string }) => s.ticker));
 
         const alertRes = await axios.get<AlertNotification[]>(`${API_BASE}/api/alerts`);
         const triggered = alertRes.data.filter((a) => !a.is_active);
@@ -89,6 +91,8 @@ const Navbar = () => {
         if (triggered.length > 0) {
           const seen: string[] = JSON.parse(localStorage.getItem("seenAlertIds") || "[]");
           setHasUnread(triggered.some((a) => !seen.includes(a.id)));
+        } else {
+          setHasUnread(false);
         }
       } catch {
         setAllTickers(Object.keys(TICKER_NAMES));
@@ -100,9 +104,15 @@ const Navbar = () => {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false);
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setShowSuggestions(false);
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
+        setBellOpen(false);
+      }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -137,6 +147,23 @@ const Navbar = () => {
   const handleSuggestionClick = (ticker: string) => {
     setSearchQuery("");
     setShowSuggestions(false);
+    navigate(`/stock/${encodeURIComponent(ticker)}`);
+  };
+
+  const handleBellClick = () => {
+    const opening = !bellOpen;
+    setBellOpen(opening);
+
+    if (opening && hasUnread) {
+      const ids = notifications.map((a) => a.id);
+      localStorage.setItem("seenAlertIds", JSON.stringify(ids));
+      setHasUnread(false);
+    }
+  };
+
+  const handleNotificationClick = (ticker: string) => {
+    setBellOpen(false);
+    setHasUnread(false);
     navigate(`/stock/${encodeURIComponent(ticker)}`);
   };
 
@@ -203,7 +230,7 @@ const Navbar = () => {
             <div className="bell-wrapper" ref={bellRef}>
               <button
                 className="bell-btn"
-                onClick={() => setBellOpen(!bellOpen)}
+                onClick={handleBellClick}
                 aria-label="Notifications"
                 type="button"
               >
@@ -219,10 +246,27 @@ const Navbar = () => {
                       <div className="bell-empty">No notifications</div>
                     ) : (
                       notifications.map((a) => (
-                        <div key={a.id} className="bell-item">
+                        <div
+                          key={a.id}
+                          className="bell-item"
+                          onClick={() => handleNotificationClick(a.ticker)}
+                          role="button"
+                          tabIndex={0}
+                          title={`View ${a.ticker}`}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              handleNotificationClick(a.ticker);
+                            }
+                          }}
+                        >
                           <span className="bell-item-ticker">{a.ticker}</span>
                           <span className="bell-item-text">
-                            {a.direction} ${a.target_price}
+                            {a.direction === "above" ? " rose above " : " fell below "}
+                            ${a.target_price.toFixed(2)}
+                            {a.triggered_price != null
+                              ? ` at $${a.triggered_price.toFixed(2)}`
+                              : ""}
                           </span>
                         </div>
                       ))

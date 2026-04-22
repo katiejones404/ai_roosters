@@ -253,6 +253,10 @@
   overflow: hidden;
 }
 
+.bell-dropdown {
+  min-width: 280px;
+}
+
 .bell-dropdown-header {
   padding: 12px 16px;
   font-weight: 700;
@@ -271,6 +275,8 @@
   justify-content: space-between;
   gap: 12px;
   color: #ffffff;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .bell-item:hover {
