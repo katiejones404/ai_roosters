@@ -53,7 +53,7 @@ const ProtectedRoute: React.FC = () => {
   }
 
   if (authState === "unauthorized") {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   return <Outlet />;

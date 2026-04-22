@@ -1,8 +1,3 @@
-/*
- * Navbar.tsx
- * Top navigation bar component with links to all main pages, a notification
- * bell for triggered price alerts, and access to the user profile and settings.
- */
 import { useEffect, useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -16,20 +11,16 @@ const DEFAULT_PROFILE_PICTURE = "/default_pfp.jpg";
 const normalizeProfilePicture = (profilePicture?: string): string => {
   const value = (profilePicture || "").trim();
   if (!value) return DEFAULT_PROFILE_PICTURE;
-
   const lowered = value.toLowerCase();
   if (lowered.endsWith("default_pfp.jgp") || lowered.endsWith("default_pfp.jpeg")) {
     return DEFAULT_PROFILE_PICTURE;
   }
-
   return value;
 };
 
 interface CurrentUser {
-  name?: string;
-  email?: string;
   username?: string;
-  phone?: string;
+  email?: string;
   profile_picture?: string;
 }
 
@@ -44,15 +35,12 @@ interface AlertNotification {
   target_price: number;
   direction: string;
   is_active: boolean;
-  triggered_at?: string | null;
-  triggered_price?: number | null;
 }
 
-// Separate component so SVG has its own JSX context
 const BellIcon = () => (
   <svg
-    width="18"
-    height="18"
+    width="20"
+    height="20"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -68,8 +56,10 @@ const BellIcon = () => (
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<StockSuggestion[]>([]);
   const [allTickers, setAllTickers] = useState<string[]>([]);
@@ -83,89 +73,45 @@ const Navbar = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
 
-  // Fetch user + all available tickers + triggered alerts on mount
   useEffect(() => {
-    async function fetchUser() {
+    async function fetchData() {
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
-      } catch {
-        setUser(null);
-      }
-    }
 
-    async function fetchTickers() {
-      try {
-        const res = await axios.get<{ ticker: string }[]>(`${API_BASE}/api/stocks`);
-        setAllTickers(res.data.map((s) => s.ticker));
+        const tickerRes = await axios.get(`${API_BASE}/api/stocks`);
+        setAllTickers(tickerRes.data.map((s: any) => s.ticker));
+
+        const alertRes = await axios.get<AlertNotification[]>(`${API_BASE}/api/alerts`);
+        const triggered = alertRes.data.filter((a) => !a.is_active);
+        setNotifications(triggered);
+
+        if (triggered.length > 0) {
+          const seen: string[] = JSON.parse(localStorage.getItem("seenAlertIds") || "[]");
+          setHasUnread(triggered.some((a) => !seen.includes(a.id)));
+        }
       } catch {
         setAllTickers(Object.keys(TICKER_NAMES));
       }
     }
 
-    async function fetchAlerts() {
-      try {
-        const res = await axios.get<AlertNotification[]>(`${API_BASE}/api/alerts`);
-        const triggered = res.data.filter((a) => !a.is_active);
-        setNotifications(triggered);
-        if (triggered.length > 0) {
-          const seen: string[] = JSON.parse(localStorage.getItem("seenAlertIds") || "[]");
-          setHasUnread(triggered.some((a) => !seen.includes(a.id)));
-        } else {
-          setHasUnread(false);
-        }
-      } catch {
-        // silently ignore
-      }
-    }
-
-    fetchUser();
-    fetchTickers();
-    fetchAlerts();
+    fetchData();
   }, []);
 
-  // Sync profile picture when updated from Settings
-  useEffect(() => {
-    const handlePictureUpdate = (e: Event) => {
-      const { picture } = (e as CustomEvent<{ picture: string }>).detail;
-      setUser((prev: CurrentUser | null) => (prev ? { ...prev, profile_picture: picture } : prev));
-    };
-
-    const handleUserProfileUpdate = (e: Event) => {
-      const detail = (e as CustomEvent<Partial<CurrentUser>>).detail;
-      setUser((prev: CurrentUser | null) => (prev ? { ...prev, ...detail } : prev));
-    };
-
-    window.addEventListener("profilePictureUpdated", handlePictureUpdate);
-    window.addEventListener("userProfileUpdated", handleUserProfileUpdate);
-
-    return () => {
-      window.removeEventListener("profilePictureUpdated", handlePictureUpdate);
-      window.removeEventListener("userProfileUpdated", handleUserProfileUpdate);
-    };
-  }, []);
-
-  // Close all menus when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
-      }
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
-        setBellOpen(false);
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false);
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setShowSuggestions(false);
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
     }
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Filter suggestions live as user types
   useEffect(() => {
     const q = searchQuery.trim();
+
     if (!q) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -177,11 +123,12 @@ const Navbar = () => {
 
     const matched = allTickers
       .filter(
-        (ticker) =>
-          ticker.toUpperCase().includes(upper) ||
-          (TICKER_NAMES[ticker] || "").toLowerCase().includes(lower)
+        (t) =>
+          t.toUpperCase().includes(upper) ||
+          (TICKER_NAMES[t] || "").toLowerCase().includes(lower)
       )
-      .map((ticker) => ({ ticker, name: TICKER_NAMES[ticker] || ticker }));
+      .slice(0, 8)
+      .map((t) => ({ ticker: t, name: TICKER_NAMES[t] || t }));
 
     setSuggestions(matched);
     setShowSuggestions(true);
@@ -193,206 +140,149 @@ const Navbar = () => {
     navigate(`/stock/${encodeURIComponent(ticker)}`);
   };
 
-  const handleBellClick = () => {
-    const opening = !bellOpen;
-    setBellOpen(opening);
-
-    if (opening && hasUnread) {
-      const ids = notifications.map((a) => a.id);
-      localStorage.setItem("seenAlertIds", JSON.stringify(ids));
-      setHasUnread(false);
-    }
-  };
-
-  const handleNotificationClick = (ticker: string) => {
-    setBellOpen(false);
-    navigate(`/stock/${encodeURIComponent(ticker)}`);
-  };
-
-  const handleDeleteNotification = async (id: string) => {
-    try {
-      await axios.delete(`${API_BASE}/api/alerts/${id}`);
-      setNotifications((prev) => prev.filter((a) => a.id !== id));
-
-      const seen: string[] = JSON.parse(localStorage.getItem("seenAlertIds") || "[]");
-      localStorage.setItem("seenAlertIds", JSON.stringify(seen.filter((s) => s !== id)));
-    } catch {
-      // ignore
-    }
-  };
-
   const handleLogout = async () => {
     setDropdownOpen(false);
     await logout();
-    navigate("/");
+    navigate("/login", { replace: true });
   };
 
   const isActive = (path: string) =>
     location.pathname === path ? "nav-link active" : "nav-link";
 
-  const avatarSrc = normalizeProfilePicture(user?.profile_picture);
+  const displayName = user?.username || user?.email || "Account";
 
   return (
     <nav className="navbar">
-      {/* Left: Logo */}
-      <div className="navbar-left">
-        <Link to="/" className="navbar-brand">
-          Stock<span className="brand-highlight">Sense</span>
-        </Link>
-      </div>
+      <div className="navbar-container">
+        <div className="navbar-left-group">
+          <div className="navbar-brand" aria-label="StockSense">
+            Stock<span className="brand-highlight">Sense</span>
+          </div>
 
-      {/* Center: Nav links + Search */}
-      <div className="navbar-center">
-        <div className="navbar-links">
-          <Link className={isActive("/home")} to="/home">
-            Home
-          </Link>
-          <Link className={isActive("/dashboard")} to="/dashboard">
-            Dashboard
-          </Link>
-          <Link className={isActive("/portfolio")} to="/portfolio">
-            Portfolio
-          </Link>
-          <Link className={isActive("/networth")} to="/networth">
-            Net Worth
-          </Link>
-          <Link className={isActive("/news")} to="/news">
-            News
-          </Link>
-          <Link className={isActive("/alerts")} to="/alerts">
-            Alerts
-          </Link>
+          <div className="navbar-links">
+            <Link className={isActive("/home")} to="/home">Home</Link>
+            <Link className={isActive("/dashboard")} to="/dashboard">Dashboard</Link>
+            <Link className={isActive("/portfolio")} to="/portfolio">Portfolio</Link>
+            <Link className={isActive("/networth")} to="/networth">Net Worth</Link>
+            <Link className={isActive("/news")} to="/news">News</Link>
+            <Link className={isActive("/alerts")} to="/alerts">Alerts</Link>
+          </div>
         </div>
 
-        <div className="nav-search-wrapper" ref={searchRef}>
-          <input
-            className="nav-search-input"
-            type="text"
-            placeholder="Search stocks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => searchQuery && setShowSuggestions(true)}
-          />
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="search-suggestions">
-              {suggestions.map((s) => (
-                <div
-                  key={s.ticker}
-                  className="suggestion-item"
-                  onMouseDown={() => handleSuggestionClick(s.ticker)}
-                >
-                  <span className="suggestion-ticker">{s.ticker}</span>
-                  <span className="suggestion-name">{s.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {showSuggestions && searchQuery && suggestions.length === 0 && (
-            <div className="search-suggestions">
-              <div className="suggestion-empty">No matching stocks</div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Right: Bell + User avatar + dropdown */}
-      <div className="navbar-right">
-        {user && (
-          <div className="bell-wrapper" ref={bellRef}>
-            <button className="bell-btn" onClick={handleBellClick} title="Notifications">
-              <BellIcon />
-              {hasUnread && <span className="bell-dot" />}
-            </button>
-
-            {bellOpen && (
-              <div className="bell-dropdown">
-                <div className="bell-dropdown-header">Notifications</div>
-                {notifications.length === 0 ? (
-                  <div className="bell-empty">No notifications yet. Check back later!</div>
+        <div className="navbar-right-group">
+          <div className="nav-search-wrapper" ref={searchRef}>
+            <input
+              className="nav-search-input"
+              type="text"
+              placeholder="Search stocks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => searchQuery && setShowSuggestions(true)}
+            />
+            {showSuggestions && (
+              <div className="search-suggestions">
+                {suggestions.length > 0 ? (
+                  suggestions.map((s) => (
+                    <div
+                      key={s.ticker}
+                      className="suggestion-item"
+                      onMouseDown={() => handleSuggestionClick(s.ticker)}
+                    >
+                      <span className="suggestion-ticker">{s.ticker}</span>
+                      <span className="suggestion-name">{s.name}</span>
+                    </div>
+                  ))
                 ) : (
-                  <div className="bell-list">
-                    {notifications.map((a) => (
-                      <div
-                        key={a.id}
-                        className="bell-item"
-                        onClick={() => handleNotificationClick(a.ticker)}
-                        title={`View ${a.ticker}`}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            handleNotificationClick(a.ticker);
-                          }
-                        }}
-                      >
-                        <div className="bell-item-content">
-                          <span className="bell-item-ticker">{a.ticker}</span>
-                          <span className="bell-item-text">
-                            {a.direction === "above" ? " rose above " : " fell below "}
-                            ${a.target_price.toFixed(2)}
-                            {a.triggered_price != null
-                              ? ` at $${a.triggered_price.toFixed(2)}`
-                              : ""}
-                          </span>
-                        </div>
-                        <button
-                          className="bell-item-delete"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteNotification(a.id);
-                          }}
-                          title="Dismiss"
-                        >
-                          &#x2715;
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  <div className="suggestion-empty">No matching stocks</div>
                 )}
               </div>
             )}
           </div>
-        )}
 
-        {user ? (
-          <div className="user-menu" ref={dropdownRef}>
-            <button
-              className="user-menu-trigger"
-              onClick={() => setDropdownOpen((prev) => !prev)}
-            >
-              <img
-                src={avatarSrc}
-                alt="avatar"
-                className="user-avatar"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = DEFAULT_PROFILE_PICTURE;
-                }}
-              />
-              <span className="username">{user.username || user.email}</span>
-              <span className="dropdown-caret">{dropdownOpen ? "▲" : "▼"}</span>
-            </button>
-            {dropdownOpen && (
-              <div className="user-dropdown">
-                <Link
-                  to="/settings"
-                  className="dropdown-item"
-                  onClick={() => setDropdownOpen(false)}
-                >
-                  ⚙️ Settings
-                </Link>
-                <button className="dropdown-item dropdown-logout" onClick={handleLogout}>
-                  🚪 Logout
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <Link className="nav-link" to="/login">
-            Login
-          </Link>
-        )}
+          {user && (
+            <div className="bell-wrapper" ref={bellRef}>
+              <button
+                className="bell-btn"
+                onClick={() => setBellOpen(!bellOpen)}
+                aria-label="Notifications"
+                type="button"
+              >
+                <BellIcon />
+                {hasUnread && <span className="bell-dot" />}
+              </button>
+
+              {bellOpen && (
+                <div className="bell-dropdown">
+                  <div className="bell-dropdown-header">Notifications</div>
+                  <div className="bell-list">
+                    {notifications.length === 0 ? (
+                      <div className="bell-empty">No notifications</div>
+                    ) : (
+                      notifications.map((a) => (
+                        <div key={a.id} className="bell-item">
+                          <span className="bell-item-ticker">{a.ticker}</span>
+                          <span className="bell-item-text">
+                            {a.direction} ${a.target_price}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {user ? (
+            <div className="user-menu" ref={dropdownRef}>
+              <button
+                className="user-menu-trigger"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                type="button"
+                aria-label="User menu"
+              >
+                <img
+                  src={normalizeProfilePicture(user.profile_picture)}
+                  alt="avatar"
+                  className="user-avatar"
+                  onError={(e) => {
+                    e.currentTarget.src = DEFAULT_PROFILE_PICTURE;
+                  }}
+                />
+                <span className="username" title={displayName}>
+                  {displayName}
+                </span>
+                <span className="dropdown-caret">{dropdownOpen ? "▲" : "▼"}</span>
+              </button>
+
+              {dropdownOpen && (
+                <div className="user-dropdown">
+                  <Link
+                    to="/settings"
+                    className="dropdown-item"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <span className="dropdown-icon">⚙️</span>
+                    <span className="dropdown-label">Settings</span>
+                  </Link>
+
+                  <button
+                    className="dropdown-item dropdown-logout"
+                    onClick={handleLogout}
+                    type="button"
+                  >
+                    <span className="dropdown-icon">🚪</span>
+                    <span className="dropdown-label">Logout</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link className="nav-link login-link" to="/login">
+              Login
+            </Link>
+          )}
+        </div>
       </div>
     </nav>
   );

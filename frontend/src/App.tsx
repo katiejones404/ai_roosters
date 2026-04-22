@@ -26,7 +26,6 @@ import News from "./News";
 import Alerts from "./Alerts";
 import HomePage from "./HomePage";
 import LandingPage from "./LandingPage";
-
 import TermsOfService from "./TermsOfService";
 import PrivacyPolicy from "./PrivacyPolicy";
 
