@@ -105,7 +105,6 @@ const Login: React.FC = () => {
           <div className="chart-container">
             <div className="chart-graphic">
               <svg viewBox="0 0 400 300" className="stock-chart">
-                {/* Grid lines */}
                 {[250, 200, 150, 100, 50].map((y, i) => (
                   <line
                     key={i}
@@ -118,7 +117,6 @@ const Login: React.FC = () => {
                   />
                 ))}
 
-                {/* Line chart */}
                 <path
                   d="M 0 250 L 50 240 L 100 220 L 150 200 L 200 170 L 250 140 L 300 100 L 350 70 L 400 50"
                   fill="none"
@@ -139,7 +137,6 @@ const Login: React.FC = () => {
                   </linearGradient>
                 </defs>
 
-                {/* Bars */}
                 {[200, 180, 160, 130, 100, 70, 50].map((y, i) => (
                   <rect
                     key={i}

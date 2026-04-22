@@ -46,7 +46,6 @@ const CreateAccount: React.FC = () => {
   const validatePassword = (password: string): boolean =>
     password.length >= 8 && /[0-9!@#$%^&*(),.?":{}|<>]/.test(password);
 
-  // Checks that the date string is a real calendar date (e.g. rejects 09/81/2005)
   const isValidDate = (date: string): boolean => {
     const dateRegex =
       /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(19|20)\d{2}$/;
@@ -55,7 +54,6 @@ const CreateAccount: React.FC = () => {
     const [month, day, year] = date.split("/").map(Number);
     const parsed = new Date(year, month - 1, day);
 
-    // If JS rolls the date over (e.g. Feb 30 → Mar 2), it's not a real date
     return (
       parsed.getFullYear() === year &&
       parsed.getMonth() === month - 1 &&
@@ -63,19 +61,20 @@ const CreateAccount: React.FC = () => {
     );
   };
 
-  // Checks that the user is at least 18 — only call this after isValidDate passes
   const isOldEnough = (date: string): boolean => {
     const [month, day, year] = date.split("/").map(Number);
     const birthDate = new Date(year, month - 1, day);
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
+
     if (
       monthDiff < 0 ||
       (monthDiff === 0 && today.getDate() < birthDate.getDate())
     ) {
       age -= 1;
     }
+
     return age >= 18;
   };
 
@@ -129,7 +128,6 @@ const CreateAccount: React.FC = () => {
     if (!formData.dateOfBirth) {
       newErrors.dateOfBirth = "Date of birth is required";
     } else if (!isValidDate(formData.dateOfBirth)) {
-      // Bug #202 fix: show a meaningful message for impossible dates like 09/81/2005
       newErrors.dateOfBirth = "Please enter a valid date (MM/DD/YYYY)";
     } else if (!isOldEnough(formData.dateOfBirth)) {
       newErrors.dateOfBirth = "You must be at least 18 years old to register";
@@ -151,14 +149,13 @@ const CreateAccount: React.FC = () => {
         formData.email,
         formData.username,
         formData.password,
-        formData.retypePassword,
+        formData.retypePassword
       );
 
-      navigate("/login");
+      navigate("/login", { replace: true });
     } catch (error: any) {
       const responseData = error.response?.data;
 
-      // Handle pydantic 422 validation errors (e.g. passwords don't match)
       if (error.response?.status === 422 && responseData?.detail) {
         const firstError = Array.isArray(responseData.detail)
           ? responseData.detail[0]?.msg
@@ -167,7 +164,6 @@ const CreateAccount: React.FC = () => {
         return;
       }
 
-      // Bug #197 fix: surface the actual backend error message instead of a generic fallback
       const detail =
         responseData?.detail ||
         responseData?.message ||
@@ -192,7 +188,6 @@ const CreateAccount: React.FC = () => {
       ) {
         setErrors({ password: detail });
       } else {
-        // Show the real error under the email field as a general registration error
         setErrors({
           email:
             typeof detail === "string"
@@ -220,7 +215,6 @@ const CreateAccount: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="account-form" noValidate>
-          {/* EMAIL */}
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <div className="input-wrapper">
@@ -240,7 +234,6 @@ const CreateAccount: React.FC = () => {
             )}
           </div>
 
-          {/* USERNAME */}
           <div className="form-group">
             <label htmlFor="username">Username</label>
             <div className="input-wrapper">
@@ -260,7 +253,6 @@ const CreateAccount: React.FC = () => {
             )}
           </div>
 
-          {/* PASSWORD */}
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <div className="input-wrapper">
@@ -286,7 +278,6 @@ const CreateAccount: React.FC = () => {
             )}
           </div>
 
-          {/* RETYPE PASSWORD */}
           <div className="form-group">
             <label htmlFor="retypePassword">Retype Password</label>
             <div className="input-wrapper">
@@ -312,7 +303,6 @@ const CreateAccount: React.FC = () => {
             )}
           </div>
 
-          {/* DATE OF BIRTH */}
           <div className="form-group">
             <label htmlFor="dateOfBirth">Date of Birth</label>
             <div className="input-wrapper">
