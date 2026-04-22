@@ -117,6 +117,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#94a3b8",
 };
 
+const MAX_BALANCE = 999_999_999_999;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -325,6 +327,11 @@ const NetWorth = () => {
     }
     if (isNaN(balance) || balance < 0) {
       setFormError("Enter a valid balance.");
+      return;
+    }
+
+    if (balance > MAX_BALANCE) {
+      setFormError("Balance cannot exceed $999,999,999,999.");
       return;
     }
     setSubmitting(true);
@@ -830,11 +837,19 @@ const NetWorth = () => {
                 className="modal-input"
                 type="number"
                 min="0"
+                max="999999999999"
                 step="0.01"
                 placeholder="e.g. 5000"
                 value={formBalance}
                 onChange={(e) => {
-                  setFormBalance(e.target.value);
+                  const value = e.target.value;
+
+                  if (value && parseFloat(value) > MAX_BALANCE) {
+                    setFormError("Max allowed is $999,999,999,999.");
+                    return;
+                  }
+
+                  setFormBalance(value);
                   setFormError(null);
                 }}
                 onKeyDown={(e) => e.key === "Enter" && handleModalSubmit()}

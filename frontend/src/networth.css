@@ -729,3 +729,32 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
 }
+/* Net Worth modal input overrides */
+.nw-modal .modal-input,
+.nw-modal .nw-select {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.nw-modal .modal-input::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
+.nw-modal .modal-input:focus,
+.nw-modal .nw-select:focus {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  border-color: rgba(99, 102, 241, 0.6);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.nw-modal .modal-input:-webkit-autofill,
+.nw-modal .modal-input:-webkit-autofill:hover,
+.nw-modal .modal-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #e2e8f0;
+  -webkit-box-shadow: 0 0 0 1000px rgba(30, 41, 59, 1) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
