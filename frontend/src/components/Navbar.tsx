@@ -81,8 +81,8 @@ const Navbar = () => {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
 
-        const tickerRes = await axios.get(`${API_BASE}/api/stocks`);
-        setAllTickers(tickerRes.data.map((s: { ticker: string }) => s.ticker));
+        const tickerRes = await axios.get<{ ticker: string }[]>(`${API_BASE}/api/stocks`);
+        setAllTickers(tickerRes.data.map((s) => s.ticker));
 
         const alertRes = await axios.get<AlertNotification[]>(`${API_BASE}/api/alerts`);
         const triggered = alertRes.data.filter((a) => !a.is_active);
@@ -104,15 +104,9 @@ const Navbar = () => {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
-      }
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
-        setBellOpen(false);
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false);
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setShowSuggestions(false);
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
     }
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -190,6 +184,7 @@ const Navbar = () => {
             <Link className={isActive("/home")} to="/home">Home</Link>
             <Link className={isActive("/dashboard")} to="/dashboard">Dashboard</Link>
             <Link className={isActive("/portfolio")} to="/portfolio">Portfolio</Link>
+            <Link className={isActive("/compare")} to="/compare">Compare</Link>
             <Link className={isActive("/networth")} to="/networth">Net Worth</Link>
             <Link className={isActive("/news")} to="/news">News</Link>
             <Link className={isActive("/alerts")} to="/alerts">Alerts</Link>
@@ -264,9 +259,7 @@ const Navbar = () => {
                           <span className="bell-item-text">
                             {a.direction === "above" ? " rose above " : " fell below "}
                             ${a.target_price.toFixed(2)}
-                            {a.triggered_price != null
-                              ? ` at $${a.triggered_price.toFixed(2)}`
-                              : ""}
+                            {a.triggered_price != null ? ` at $${a.triggered_price.toFixed(2)}` : ""}
                           </span>
                         </div>
                       ))
