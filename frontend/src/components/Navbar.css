@@ -244,6 +244,12 @@
   gap: 10px;
   padding: 11px 14px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.bell-item:hover {
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .bell-item:last-child {
@@ -259,7 +265,7 @@
   font-weight: 700;
   font-size: 0.875rem;
   color: #f8fafc;
-  margin-right: 4px;
+  margin-right: 0;
 }
 
 .bell-item-text {

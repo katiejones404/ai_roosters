@@ -31,6 +31,7 @@ interface Alert {
   is_active: boolean;
   email_notify: boolean;
   triggered_at: string | null;
+  triggered_price: number | null;
   created_at: string | null;
 }
 
@@ -270,6 +271,7 @@ export default function Alerts() {
                       <th>Ticker</th>
                       <th>Condition</th>
                       <th>Target Price</th>
+                      <th>Triggered Price</th>
                       <th>Triggered</th>
                       <th></th>
                     </tr>
@@ -285,6 +287,9 @@ export default function Alerts() {
                         </td>
                         <td className="alert-price">
                           ${a.target_price.toFixed(2)}
+                        </td>
+                        <td className="alert-price">
+                          {a.triggered_price !== null ? `$${a.triggered_price.toFixed(2)}` : "-"}
                         </td>
                         <td className="alert-date">
                           {formatDate(a.triggered_at)}

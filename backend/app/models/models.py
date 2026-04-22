@@ -89,6 +89,7 @@ class PriceAlert(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     email_notify = Column(Boolean, default=True, nullable=False)
     triggered_at = Column(DateTime(timezone=True), nullable=True)
+    triggered_price = Column(Numeric, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")

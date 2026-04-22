@@ -3,8 +3,6 @@ Notes - Email utilities for StockSense.
 Handles price alert emails and password reset messages using SMTP settings.
 """
 
-
-
 import os
 import smtplib
 import ssl
@@ -31,19 +29,20 @@ def send_price_alert_email(
     deployedURL = "https://ai-roosters-webpage.vercel.app/"
     textEntry = "Log in to StockSense"
     direction_word = "risen above" if direction == "above" else "fallen below"
+    action_word = "rose above" if direction == "above" else "fell below"
     subject = f"StockSense Alert: {ticker} has {direction_word} ${target_price:.2f}"
     text_body = (
         f"Your price alert for {ticker} has been triggered.\n\n"
-        f"Condition: {ticker} {direction} ${target_price:.2f}\n"
-        f"Current price: ${current_price:.2f}\n\n"
+        f"{ticker} {action_word} your target of ${target_price:.2f}.\n"
+        f"Price when checked: ${current_price:.2f}\n\n"
         f"{textEntry}: {deployedURL}\n"
         f"to review your portfolio."
     )
 
     html_body = (
         f"Your price alert for {ticker} has been triggered.<br><br>"
-        f"Condition: {ticker} {direction} ${target_price:.2f}<br>"
-        f"Current price: ${current_price:.2f}<br><br>"
+        f"{ticker} {action_word} your target of ${target_price:.2f}.<br>"
+        f"Price when checked: ${current_price:.2f}<br><br>"
         f'<a href="{deployedURL}">{textEntry}</a> to review your portfolio.'
     )
 

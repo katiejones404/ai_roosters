@@ -31,6 +31,7 @@ class AlertOut(BaseModel):
     is_active: bool
     email_notify: bool
     triggered_at: Optional[str]
+    triggered_price: Optional[float]
     created_at: Optional[str]
 
     class Config:
@@ -65,6 +66,7 @@ def list_alerts(
             is_active=a.is_active,
             email_notify=a.email_notify,
             triggered_at=a.triggered_at.isoformat() if a.triggered_at else None,
+            triggered_price=float(a.triggered_price) if a.triggered_price is not None else None,
             created_at=a.created_at.isoformat() if a.created_at else None,
         )
         for a in alerts
@@ -119,6 +121,7 @@ def create_alert(
         is_active=alert.is_active,
         email_notify=alert.email_notify,
         triggered_at=None,
+        triggered_price=None,
         created_at=alert.created_at.isoformat() if alert.created_at else None,
     )
 

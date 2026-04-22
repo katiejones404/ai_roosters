@@ -44,13 +44,22 @@ interface AlertNotification {
   target_price: number;
   direction: string;
   is_active: boolean;
+  triggered_at?: string | null;
+  triggered_price?: number | null;
 }
 
 // Separate component so SVG has its own JSX context
 const BellIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2"
-    strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
@@ -102,6 +111,8 @@ const Navbar = () => {
         if (triggered.length > 0) {
           const seen: string[] = JSON.parse(localStorage.getItem("seenAlertIds") || "[]");
           setHasUnread(triggered.some((a) => !seen.includes(a.id)));
+        } else {
+          setHasUnread(false);
         }
       } catch {
         // silently ignore
@@ -117,7 +128,7 @@ const Navbar = () => {
   useEffect(() => {
     const handlePictureUpdate = (e: Event) => {
       const { picture } = (e as CustomEvent<{ picture: string }>).detail;
-      setUser((prev: CurrentUser | null) => prev ? { ...prev, profile_picture: picture } : prev);
+      setUser((prev: CurrentUser | null) => (prev ? { ...prev, profile_picture: picture } : prev));
     };
 
     const handleUserProfileUpdate = (e: Event) => {
@@ -125,10 +136,11 @@ const Navbar = () => {
       setUser((prev: CurrentUser | null) => (prev ? { ...prev, ...detail } : prev));
     };
 
-    window.addEventListener('profilePictureUpdated', handlePictureUpdate);
+    window.addEventListener("profilePictureUpdated", handlePictureUpdate);
     window.addEventListener("userProfileUpdated", handleUserProfileUpdate);
+
     return () => {
-      window.removeEventListener('profilePictureUpdated', handlePictureUpdate);
+      window.removeEventListener("profilePictureUpdated", handlePictureUpdate);
       window.removeEventListener("userProfileUpdated", handleUserProfileUpdate);
     };
   }, []);
@@ -146,6 +158,7 @@ const Navbar = () => {
         setBellOpen(false);
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -158,8 +171,10 @@ const Navbar = () => {
       setShowSuggestions(false);
       return;
     }
+
     const upper = q.toUpperCase();
     const lower = q.toLowerCase();
+
     const matched = allTickers
       .filter(
         (ticker) =>
@@ -167,6 +182,7 @@ const Navbar = () => {
           (TICKER_NAMES[ticker] || "").toLowerCase().includes(lower)
       )
       .map((ticker) => ({ ticker, name: TICKER_NAMES[ticker] || ticker }));
+
     setSuggestions(matched);
     setShowSuggestions(true);
   }, [searchQuery, allTickers]);
@@ -180,19 +196,24 @@ const Navbar = () => {
   const handleBellClick = () => {
     const opening = !bellOpen;
     setBellOpen(opening);
+
     if (opening && hasUnread) {
-      // Mark all current notifications as seen
       const ids = notifications.map((a) => a.id);
       localStorage.setItem("seenAlertIds", JSON.stringify(ids));
       setHasUnread(false);
     }
   };
 
+  const handleNotificationClick = (ticker: string) => {
+    setBellOpen(false);
+    navigate(`/stock/${encodeURIComponent(ticker)}`);
+  };
+
   const handleDeleteNotification = async (id: string) => {
     try {
       await axios.delete(`${API_BASE}/api/alerts/${id}`);
       setNotifications((prev) => prev.filter((a) => a.id !== id));
-      // Also remove from seen list so it doesn't linger
+
       const seen: string[] = JSON.parse(localStorage.getItem("seenAlertIds") || "[]");
       localStorage.setItem("seenAlertIds", JSON.stringify(seen.filter((s) => s !== id)));
     } catch {
@@ -203,11 +224,12 @@ const Navbar = () => {
   const handleLogout = async () => {
     setDropdownOpen(false);
     await logout();
-    navigate('/');
+    navigate("/");
   };
 
   const isActive = (path: string) =>
     location.pathname === path ? "nav-link active" : "nav-link";
+
   const avatarSrc = normalizeProfilePicture(user?.profile_picture);
 
   return (
@@ -234,11 +256,9 @@ const Navbar = () => {
           <Link className={isActive("/networth")} to="/networth">
             Net Worth
           </Link>
-
           <Link className={isActive("/news")} to="/news">
             News
           </Link>
-
           <Link className={isActive("/alerts")} to="/alerts">
             Alerts
           </Link>
@@ -292,16 +312,36 @@ const Navbar = () => {
                 ) : (
                   <div className="bell-list">
                     {notifications.map((a) => (
-                      <div key={a.id} className="bell-item">
+                      <div
+                        key={a.id}
+                        className="bell-item"
+                        onClick={() => handleNotificationClick(a.ticker)}
+                        title={`View ${a.ticker}`}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleNotificationClick(a.ticker);
+                          }
+                        }}
+                      >
                         <div className="bell-item-content">
                           <span className="bell-item-ticker">{a.ticker}</span>
                           <span className="bell-item-text">
-                            {a.direction === "above" ? "rose above" : "fell below"} ${a.target_price.toFixed(2)}
+                            {a.direction === "above" ? " rose above " : " fell below "}
+                            ${a.target_price.toFixed(2)}
+                            {a.triggered_price != null
+                              ? ` at $${a.triggered_price.toFixed(2)}`
+                              : ""}
                           </span>
                         </div>
                         <button
                           className="bell-item-delete"
-                          onClick={() => handleDeleteNotification(a.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteNotification(a.id);
+                          }}
                           title="Dismiss"
                         >
                           &#x2715;
