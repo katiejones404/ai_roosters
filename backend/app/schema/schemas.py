@@ -111,7 +111,7 @@ class PortfolioBaseItem(BaseModel):
 
 
 class PortfolioCreateItem(PortfolioBaseItem):
-    pass
+    purchase_date: Optional[str] = None
 
 
 class PortfolioUpdateItem(BaseModel):
