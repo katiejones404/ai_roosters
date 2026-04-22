@@ -49,6 +49,7 @@ export default function Alerts() {
   const [error, setError] = useState<string | null>(null);
 
   const [marketAlertsEnabled, setMarketAlertsEnabled] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [ticker, setTicker] = useState(WEBSITE_TICKERS[0]);
   const [targetPrice, setTargetPrice] = useState("");
   const [direction, setDirection] = useState<"above" | "below">("above");
@@ -71,8 +72,15 @@ export default function Alerts() {
   useEffect(() => {
     fetchAlerts();
     getNotificationPreferences()
-      .then((prefs) => setMarketAlertsEnabled(prefs.marketAlerts))
-      .catch(() => setMarketAlertsEnabled(false));
+      .then((prefs) => {
+        setMarketAlertsEnabled(prefs.marketAlerts);
+      })
+      .catch(() => {
+        setMarketAlertsEnabled(false);
+      })
+      .finally(() => {
+        setPrefsLoaded(true);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -82,6 +90,21 @@ export default function Alerts() {
     const price = parseFloat(targetPrice);
     if (!targetPrice || Number.isNaN(price) || price <= 0) {
       setFormError("Enter a valid positive target price.");
+      return;
+    }
+
+    // Prevent duplicate active alerts with the same ticker, direction, and target price
+    const isDuplicate = alerts.some(
+      (a) =>
+        a.is_active &&
+        a.ticker === ticker &&
+        a.direction === direction &&
+        a.target_price === price
+    );
+    if (isDuplicate) {
+      setFormError(
+        `An active alert already exists for ${ticker} ${direction === "above" ? "rising above" : "falling below"} $${price.toFixed(2)}.`
+      );
       return;
     }
 
@@ -114,16 +137,18 @@ export default function Alerts() {
   const active = alerts.filter((a) => a.is_active);
   const triggered = alerts.filter((a) => !a.is_active);
 
+  const subtitle = !prefsLoaded
+    ? "Get notified when a stock hits your target price"
+    : marketAlertsEnabled
+    ? "Get notified when a stock hits your target price"
+    : "Get notified when a stock hits your target price. Turn on Market Alerts in settings to receive email alerts.";
+
   return (
     <div className="app-container app-container-wide">
       <div className="home-card alerts-card">
         <div className="alerts-header">
           <h1 className="alerts-title">Price Alerts</h1>
-          <p className="alerts-subtitle">
-            {marketAlertsEnabled
-              ? "Get notified when a stock hits your target price"
-              : "Get notified when a stock hits your target price. Turn on Market Alerts in settings to receive email alerts."}
-          </p>
+          <p className="alerts-subtitle">{subtitle}</p>
         </div>
 
         <div className="alert-form-card">

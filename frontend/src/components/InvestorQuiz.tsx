@@ -3,7 +3,7 @@
  * Interactive quiz component that determines the user's investor personality type
  * based on their answers to a series of risk and strategy questions.
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   FaArrowRight,
   FaBalanceScale,
@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import type { IconType } from "react-icons";
 import "../networth.css";
+import { getCurrentUser } from "../utils/auth";
 
 const QUIZ_QUESTIONS = [
   {
@@ -129,6 +130,42 @@ const QUIZ_PROFILES: Array<{
   },
 ];
 
+interface QuizState {
+  started: boolean;
+  answers: Record<number, number>;
+  submitted: boolean;
+  profileLabel: string | null;
+}
+
+function getStorageKey(userId: string) {
+  return `investorQuizState_${userId}`;
+}
+
+function loadState(userId: string): QuizState | null {
+  try {
+    const raw = localStorage.getItem(getStorageKey(userId));
+    return raw ? (JSON.parse(raw) as QuizState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveState(userId: string, state: QuizState) {
+  try {
+    localStorage.setItem(getStorageKey(userId), JSON.stringify(state));
+  } catch {
+    // localStorage unavailable — silently skip
+  }
+}
+
+function clearState(userId: string) {
+  localStorage.removeItem(getStorageKey(userId));
+}
+
+function profileFromLabel(label: string | null) {
+  return label ? (QUIZ_PROFILES.find((p) => p.label === label) ?? null) : null;
+}
+
 function AllocBar({
   label,
   pct,
@@ -152,27 +189,51 @@ function AllocBar({
   );
 }
 
-const DEFAULT_STATE = {
-  started: false,
-  answers: {} as Record<number, number>,
-  submitted: false,
-  profileLabel: null as string | null,
-};
-
 export default function InvestorQuiz() {
-  const [started, setStarted] = useState<boolean>(DEFAULT_STATE.started);
-  const [answers, setAnswers] = useState<Record<number, number>>(
-    DEFAULT_STATE.answers,
-  );
-  const [submitted, setSubmitted] = useState<boolean>(DEFAULT_STATE.submitted);
-  const [profile, setProfile] = useState<(typeof QUIZ_PROFILES)[0] | null>(
-    null,
-  );
+  const [started, setStarted] = useState(false);
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [profile, setProfile] = useState<(typeof QUIZ_PROFILES)[0] | null>(null);
 
-  // Always start fresh for each new visit/user session.
+  // userId is null while we're still resolving the current user.
+  const [userId, setUserId] = useState<string | null>(null);
+  const initialized = useRef(false);
+
+  // Resolve the current user once on mount, then hydrate saved state.
   useEffect(() => {
-    localStorage.removeItem("investorQuizState");
+    getCurrentUser()
+      .then((user) => {
+        const id = user?.id ?? user?.username ?? "guest";
+        setUserId(id);
+
+        if (initialized.current) return;
+        initialized.current = true;
+
+        const saved = loadState(id);
+        if (saved) {
+          setStarted(saved.started);
+          setAnswers(saved.answers);
+          setSubmitted(saved.submitted);
+          setProfile(profileFromLabel(saved.profileLabel));
+        }
+      })
+      .catch(() => {
+        // Could not resolve user — treat as guest with no saved state.
+        setUserId("guest");
+        initialized.current = true;
+      });
   }, []);
+
+  // Persist state to localStorage whenever anything changes (after userId is ready).
+  useEffect(() => {
+    if (!userId || !initialized.current) return;
+    saveState(userId, {
+      started,
+      answers,
+      submitted,
+      profileLabel: profile?.label ?? null,
+    });
+  }, [userId, started, answers, submitted, profile]);
 
   const answer = (questionId: number, score: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: score }));
@@ -181,7 +242,8 @@ export default function InvestorQuiz() {
   const submit = () => {
     const total = Object.values(answers).reduce((a, b) => a + b, 0);
     const found = QUIZ_PROFILES.find((p) => total >= p.min && total <= p.max);
-    setProfile(found || QUIZ_PROFILES[2]);
+    const resolved = found ?? QUIZ_PROFILES[2];
+    setProfile(resolved);
     setSubmitted(true);
   };
 
@@ -190,7 +252,7 @@ export default function InvestorQuiz() {
     setSubmitted(false);
     setProfile(null);
     setStarted(false);
-    localStorage.removeItem("investorQuizState");
+    if (userId) clearState(userId);
   };
 
   const answered = Object.keys(answers).length;
