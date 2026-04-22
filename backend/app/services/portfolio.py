@@ -164,7 +164,7 @@ def add_or_update_position(
                 },
             )
 
-        _log_transaction(db, user_id, item.ticker, "buy", item.quantity, item.avg_price)
+        _log_transaction(db, user_id, item.ticker, "buy", item.quantity, item.avg_price, executed_at=getattr(item, 'purchase_date', None))
         db.commit()
         logger.info(f"Committed successfully for {item.ticker}")
 
@@ -177,17 +177,18 @@ def add_or_update_position(
         db.rollback()
         raise
     
-def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quantity: float, price: float, realized_gain: Optional[float] = None) -> None:
+def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quantity: float, price: float, realized_gain: Optional[float] = None, executed_at: Optional[str] = None) -> None:
     db.execute(text("""
-        INSERT INTO transactions (user_id, ticker, action, quantity, price, realized_gain)
-        VALUES (:uid, :ticker, :action, :qty, :price, :gain)
+        INSERT INTO transactions (user_id, ticker, action, quantity, price, realized_gain, executed_at)
+        VALUES (:uid, :ticker, :action, :qty, :price, :gain, COALESCE(CAST(:executed_at AS timestamptz), now()))
     """), {
         "uid": str(user_id),
         "ticker": ticker,
         "action": action,
         "qty": quantity,
         "price": price,
-        "gain": realized_gain
+        "gain": realized_gain,
+        "executed_at": executed_at,
         },
     )
 

@@ -638,6 +638,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
               ticker: e.ticker.trim(),
               quantity: parseFloat(e.quantity),
               avg_price: resolvedPrice,
+              purchase_date: e.purchase_date || null,
             },
             {
               headers: {
