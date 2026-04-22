@@ -16,8 +16,9 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
+from app.api.auth import get_current_user
 from app.db.main import get_db
-from app.models.models import StockNewsArticle
+from app.models.models import Portfolio, StockNewsArticle, User
 
 router = APIRouter()
 
@@ -51,7 +52,6 @@ def _normalize_sentiment_label(raw: Optional[str]) -> str:
         return "unknown"
     s = raw.strip().lower()
 
-    # normalize common variants
     if s in {"pos", "positive"}:
         return "positive"
     if s in {"neg", "negative"}:
@@ -133,21 +133,43 @@ def get_news_articles(
     ticker: Optional[str] = Query(default=None, description="Filter by ticker symbol"),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> List[NewsArticleOut]:
     """
     Returns recent articles from stock_news_articles, newest first.
-    Optionally filter by ticker.
+
+    News access is restricted to tickers currently held in the authenticated
+    user's portfolio. If a ticker filter is provided and the user does not hold
+    that ticker, an empty list is returned.
     """
-    query = db.query(StockNewsArticle)
+    held_tickers = [
+        row[0].upper()
+        for row in db.query(Portfolio.ticker)
+        .filter(Portfolio.user_id == current_user.id)
+        .distinct()
+        .all()
+        if row[0]
+    ]
+
+    if not held_tickers:
+        return []
+
+    query = db.query(StockNewsArticle).filter(StockNewsArticle.ticker.in_(held_tickers))
+
     if ticker:
-        query = query.filter(StockNewsArticle.ticker == ticker.upper())
+        normalized_ticker = ticker.upper()
+        if normalized_ticker not in held_tickers:
+            return []
+        query = query.filter(StockNewsArticle.ticker == normalized_ticker)
+
     rows = (
         query.order_by(StockNewsArticle.published_at.desc().nulls_last())
         .offset(offset)
         .limit(limit)
         .all()
     )
+
     return [
         NewsArticleOut(
             id=str(row.id),
