@@ -112,6 +112,27 @@ async def get_realized_summary(
     return portfolio.get_realized_summary(db, current_user.id)
 
 
+@router.delete("/transactions/{transaction_id}")
+async def delete_transaction(
+    transaction_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Delete a single transaction log entry and recompute the affected portfolio
+    position from remaining transactions.
+
+    Returns 404 if the transaction does not exist or belongs to a different user.
+    """
+    success = portfolio.delete_transaction(db, current_user.id, transaction_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Transaction not found",
+        )
+    return {"status": "ok"}
+
+
 @router.get("/{ticker}", response_model=PortfolioItem)
 async def get_portfolio_item(ticker: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """

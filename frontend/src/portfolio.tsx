@@ -117,6 +117,9 @@ const Portfolio = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [, setRealizedSummary] = useState<RealizedSummary[]>([]);
     const [showTransactions, setShowTransactions] = useState(false);
+    const [txToDelete, setTxToDelete] = useState<Transaction | null>(null);
+    const [deletingTx, setDeletingTx] = useState(false);
+    const [deleteTxError, setDeleteTxError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchPortfolioSummary();
@@ -176,6 +179,24 @@ const Portfolio = () => {
             }
         } finally {
             setLoading(false);
+        }
+    };
+
+    const confirmDeleteTransaction = async () => {
+        if (!txToDelete) return;
+        setDeletingTx(true);
+        setDeleteTxError(null);
+        try {
+            const token = getToken();
+            await axios.delete(`${API_BASE}/api/portfolio/transactions/${txToDelete.id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setTxToDelete(null);
+            await Promise.all([fetchPortfolioSummary(), fetchTransactions()]);
+        } catch {
+            setDeleteTxError('Failed to delete transaction. Please try again.');
+        } finally {
+            setDeletingTx(false);
         }
     };
 
@@ -678,6 +699,7 @@ const Portfolio = () => {
                                                 <th>Price</th>
                                                 <th>Total</th>
                                                 <th>Realized Gain</th>
+                                                <th></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -701,6 +723,18 @@ const Portfolio = () => {
                                                     }>
                                                         {tx.realized_gain === null ? '—' : formatCurrency(tx.realized_gain)}
                                                     </td>
+                                                    <td className="tx-delete-cell">
+                                                        <button
+                                                            className="tx-delete-btn"
+                                                            onClick={() => { setTxToDelete(tx); setDeleteTxError(null); }}
+                                                            title="Delete transaction"
+                                                            aria-label="Delete transaction"
+                                                        >
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                                <path d="M2 4h12M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            </svg>
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -711,6 +745,39 @@ const Portfolio = () => {
                     )}
                 </div>
             </div>
+
+            {txToDelete && (
+                <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) { setTxToDelete(null); setDeleteTxError(null); } }}>
+                    <div className="modal-container">
+                        <div className="modal-header">
+                            <h2>Delete Transaction</h2>
+                            <button className="modal-close-btn" onClick={() => { setTxToDelete(null); setDeleteTxError(null); }} aria-label="Close">x</button>
+                        </div>
+                        <div className="modal-body">
+                            <p className="tx-confirm-text">
+                                Are you sure you want to delete this transaction?
+                            </p>
+                            <div className="tx-confirm-details">
+                                <span style={{ color: txToDelete.action === 'buy' ? '#10b981' : '#f59e0b', fontWeight: 700, textTransform: 'uppercase' }}>{txToDelete.action}</span>
+                                {' '}{txToDelete.quantity} shares of <strong>{txToDelete.ticker}</strong> at {formatCurrency(txToDelete.price)}
+                                {' '}on {new Date(txToDelete.executed_at).toLocaleDateString()}
+                            </div>
+                            <p className="tx-confirm-warning">
+                                This will recalculate your portfolio position, cost basis, and gains for {txToDelete.ticker}. This action cannot be undone.
+                            </p>
+                            {deleteTxError && <p className="modal-error" style={{ marginTop: '0.5rem' }}>{deleteTxError}</p>}
+                        </div>
+                        <div className="modal-footer">
+                            <button className="modal-cancel-btn" onClick={() => { setTxToDelete(null); setDeleteTxError(null); }} disabled={deletingTx}>
+                                Cancel
+                            </button>
+                            <button className="tx-confirm-delete-btn" onClick={confirmDeleteTransaction} disabled={deletingTx}>
+                                {deletingTx ? 'Deleting...' : 'Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {addSharesTicker && (
                 <AddToPortfolioModal
