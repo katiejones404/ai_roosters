@@ -432,8 +432,8 @@ const NetWorth = () => {
         doc.text(`Total Assets: ${formatCurrency(s.total_assets)}`, 14, 64);
         doc.text(`Total Liabilities: ${formatCurrency(s.total_liabilities)}`, 14, 72);
         const assetRows = [
-            ['Stock Portfolio', 'Portfolio', `$${s.portfolio_value.toFixed(2)}`],
-            ...s.assets.map(a => [a.name, CATEGORY_LABELS[a.category] || a.category, `$${a.balance.toFixed(2)}`]),
+            ['Stock Portfolio', 'Portfolio', formatCurrency(s.portfolio_value)],
+            ...s.assets.map(a => [a.name, CATEGORY_LABELS[a.category] || a.category, formatCurrency(a.balance)]),
         ];
         autoTable(doc, {
             head: [['Asset', 'Category', 'Balance']],
@@ -446,7 +446,7 @@ const NetWorth = () => {
             const finalY = (doc as any).lastAutoTable.finalY + 10;
             autoTable(doc, {
                 head: [['Liability', 'Category', 'Balance']],
-                body: s.liabilities.map(l => [l.name, CATEGORY_LABELS[l.category] || l.category, `$${l.balance.toFixed(2)}`]),
+                body: s.liabilities.map(l => [l.name, CATEGORY_LABELS[l.category] || l.category, formatCurrency(l.balance)]),
                 startY: finalY,
                 styles: { fontSize: 9 },
                 headStyles: { fillColor: [239, 68, 68] },
