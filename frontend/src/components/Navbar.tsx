@@ -40,6 +40,7 @@ interface AlertNotification {
   target_price: number;
   direction: string;
   is_active: boolean;
+  triggered_price?: number | null;
 }
 
 const BellIcon = () => (
@@ -161,6 +162,21 @@ const Navbar = () => {
     navigate("/login", { replace: true });
   };
 
+  const markNotificationSeen = (id: string) => {
+    const seen: string[] = JSON.parse(localStorage.getItem("seenAlertIds") || "[]");
+    if (!seen.includes(id)) {
+      const updated = [...seen, id];
+      localStorage.setItem("seenAlertIds", JSON.stringify(updated));
+    }
+    setHasUnread(notifications.some((n) => n.id !== id && !seen.includes(n.id)));
+  };
+
+  const handleNotificationClick = (alert: AlertNotification) => {
+    markNotificationSeen(alert.id);
+    setBellOpen(false);
+    navigate(`/stock/${encodeURIComponent(alert.ticker)}`);
+  };
+
   const isActive = (path: string) =>
     location.pathname === path ? "nav-link active" : "nav-link";
 
@@ -249,12 +265,22 @@ const Navbar = () => {
                       <div className="bell-empty">No notifications</div>
                     ) : (
                       notifications.map((a) => (
-                        <div key={a.id} className="bell-item">
+                        <button
+                          key={a.id}
+                          type="button"
+                          className="bell-item"
+                          onClick={() => handleNotificationClick(a)}
+                          title={`Open ${a.ticker} stock page`}
+                        >
                           <span className="bell-item-ticker">{a.ticker}</span>
                           <span className="bell-item-text">
-                            {a.direction} ${a.target_price}
+                            Triggered at ${
+                              typeof a.triggered_price === "number"
+                                ? a.triggered_price.toFixed(2)
+                                : a.target_price.toFixed(2)
+                            }
                           </span>
-                        </div>
+                        </button>
                       ))
                     )}
                   </div>
