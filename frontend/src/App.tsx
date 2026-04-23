@@ -24,6 +24,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import StockDetail from "./StockDetail";
 import News from "./News";
 import Alerts from "./Alerts";
+import StockComparison from "./stock_comparison";
 import HomePage from "./HomePage";
 import LandingPage from "./LandingPage";
 import TermsOfService from "./TermsOfService";
@@ -77,6 +78,7 @@ function AppContent() {
           <Route path="/stock/:ticker" element={<StockDetail />} />
           <Route path="/news" element={<News />} />
           <Route path="/alerts" element={<Alerts />} />
+          <Route path="/stock-comparison" element={<StockComparison />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

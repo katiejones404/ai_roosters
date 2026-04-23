@@ -190,6 +190,9 @@ const Navbar = () => {
             <Link className={isActive("/news")} to="/news">
               News
             </Link>
+            <Link className={isActive("/stock-comparison")} to="/stock-comparison">
+              Compare
+            </Link>
             <Link className={isActive("/alerts")} to="/alerts">
               Alerts
             </Link>
