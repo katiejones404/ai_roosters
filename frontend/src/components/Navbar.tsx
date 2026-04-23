@@ -74,10 +74,12 @@ const Navbar = () => {
   const [bellOpen, setBellOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
   const [notifications, setNotifications] = useState<AlertNotification[]>([]);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
+  const mobileNavRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -119,6 +121,8 @@ const Navbar = () => {
         setShowSuggestions(false);
       if (bellRef.current && !bellRef.current.contains(e.target as Node))
         setBellOpen(false);
+      if (mobileNavRef.current && !mobileNavRef.current.contains(e.target as Node))
+        setMobileNavOpen(false);
     }
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -150,6 +154,10 @@ const Navbar = () => {
     setShowSuggestions(true);
   }, [searchQuery, allTickers]);
 
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
+
   const handleSuggestionClick = (ticker: string) => {
     setSearchQuery("");
     setShowSuggestions(false);
@@ -180,6 +188,28 @@ const Navbar = () => {
   const isActive = (path: string) =>
     location.pathname === path ? "nav-link active" : "nav-link";
 
+  const navItems = [
+    { to: "/home", label: "Home" },
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/portfolio", label: "Portfolio" },
+    { to: "/networth", label: "Net Worth" },
+    { to: "/news", label: "News" },
+    { to: "/stock-comparison", label: "Compare" },
+    { to: "/alerts", label: "Alerts" },
+  ];
+
+  const renderNavLinks = (extraClassName = "") =>
+    navItems.map((item) => (
+      <Link
+        key={item.to}
+        className={`${isActive(item.to)} ${extraClassName}`.trim()}
+        to={item.to}
+        onClick={() => setMobileNavOpen(false)}
+      >
+        {item.label}
+      </Link>
+    ));
+
   const displayName = user?.username || user?.email || "Account";
 
   return (
@@ -190,28 +220,26 @@ const Navbar = () => {
             Stock<span className="brand-highlight">Sense</span>
           </div>
 
+          <div className="navbar-mobile-nav" ref={mobileNavRef}>
+            <button
+              type="button"
+              className="navbar-mobile-toggle"
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileNavOpen}
+              onClick={() => setMobileNavOpen((prev) => !prev)}
+            >
+              {mobileNavOpen ? "✕" : "☰"}
+            </button>
+
+            {mobileNavOpen && (
+              <div className="navbar-mobile-menu">
+                {renderNavLinks("navbar-mobile-link")}
+              </div>
+            )}
+          </div>
+
           <div className="navbar-links">
-            <Link className={isActive("/home")} to="/home">
-              Home
-            </Link>
-            <Link className={isActive("/dashboard")} to="/dashboard">
-              Dashboard
-            </Link>
-            <Link className={isActive("/portfolio")} to="/portfolio">
-              Portfolio
-            </Link>
-            <Link className={isActive("/networth")} to="/networth">
-              Net Worth
-            </Link>
-            <Link className={isActive("/news")} to="/news">
-              News
-            </Link>
-            <Link className={isActive("/stock-comparison")} to="/stock-comparison">
-              Compare
-            </Link>
-            <Link className={isActive("/alerts")} to="/alerts">
-              Alerts
-            </Link>
+            {renderNavLinks()}
           </div>
         </div>
 
