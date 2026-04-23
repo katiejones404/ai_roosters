@@ -458,12 +458,12 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
 
     try {
       const res = await axios.get(
-        `${API_BASE}/api/stocks/${encodeURIComponent(ticker)}/prices`,
-        { params: { start_date: dateStr, end_date: dateStr } },
+        `${API_BASE}/api/stocks/${encodeURIComponent(ticker)}/historical-price`,
+        { params: { date: dateStr } },
       );
 
-      if (res.data.length > 0) {
-        const price = res.data[0].close;
+      if (res.data.close != null) {
+        const price = res.data.close as number;
         setEntries((prev) =>
           prev.map((e) =>
             e.id === entryId
@@ -480,31 +480,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
         return;
       }
 
-      // Take the first result — closest trading day on or after the date
-      const res2 = await axios.get(
-        `${API_BASE}/api/stocks/${encodeURIComponent(ticker)}/prices`,
-        { params: { start_date: dateStr } },
-      );
-
-      if (res2.data.length > 0) {
-        const price = res2.data[0].close;
-        setEntries((prev) =>
-          prev.map((e) =>
-            e.id === entryId
-              ? {
-                  ...e,
-                  price_found: price,
-                  price_loading: false,
-                  needs_manual_price: false,
-                  avg_price: price.toFixed(2),
-                }
-              : e,
-          ),
-        );
-        return;
-      }
-
-      //No data found for this ticker -> manual entry
+      // No data found for this ticker -> manual entry
       setEntries((prev) =>
         prev.map((e) =>
           e.id === entryId

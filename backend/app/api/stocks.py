@@ -489,6 +489,41 @@ def upsert_sentiment_snapshot(ticker: str, payload: SentimentSnapshotBase, db: S
     )
 
 
+@router.get("/{ticker}/historical-price")
+def get_historical_price(
+    ticker: str,
+    date: str = Query(..., description="YYYY-MM-DD date to look up"),
+):
+    """
+    Fetch the closing price for a ticker on or near a given date via yfinance.
+    Looks forward up to 5 calendar days to skip weekends and market holidays.
+    Returns null close when no data is available.
+    """
+    try:
+        import yfinance as yf
+        from datetime import date as date_type, timedelta
+
+        target = date_type.fromisoformat(date)
+        end = target + timedelta(days=7)
+        hist = yf.Ticker(ticker.strip().upper()).history(
+            start=str(target),
+            end=str(end),
+            interval="1d",
+            auto_adjust=True,
+        )
+        if hist.empty:
+            return {"close": None, "actual_date": None}
+
+        first_close = float(hist["Close"].iloc[0])
+        actual_date = hist.index[0]
+        return {
+            "close": first_close,
+            "actual_date": str(actual_date.date()),
+        }
+    except Exception:
+        return {"close": None, "actual_date": None}
+
+
 @router.get("/{ticker}/shares-outstanding")
 def get_shares_outstanding(ticker: str):
     """
