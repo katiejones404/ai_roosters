@@ -123,6 +123,7 @@ const StockMiniCard: React.FC<{
               e.stopPropagation();
               onToggleWatchlist(data.ticker);
             }}
+            title={!isWatchlisted ? "Add to Watchlist" : ""}
             style={{
               background: "none",
               border: "none",
@@ -130,6 +131,7 @@ const StockMiniCard: React.FC<{
               fontSize: "30px",
               lineHeight: "1",
               padding: "0 2px",
+              color: "#D3D3D3",
             }}
           >
             {isWatchlisted ? "⭐" : "☆"}
