@@ -26,6 +26,8 @@ interface ImportEntry {
   error?: string;
   minDate: string | null;
   minDateLoading: boolean;
+  sharesOutstanding: number | null;
+  currentOwned: number;
 }
 
 interface ImportPortfolioMoalProps {
@@ -47,6 +49,8 @@ const emptyEntry = (): ImportEntry => ({
   status: "idle",
   minDate: null,
   minDateLoading: false,
+  sharesOutstanding: null,
+  currentOwned: 0,
 });
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -209,7 +213,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
       </button>
 
       {(minDateLoading || minDateHint) && (
-        <div style={{ fontSize: "0.7rem", color:"#64748b", marginTop: "0.2rem" }}>
+        <div className="imp-date-hint">
           {minDateLoading ? "Fetching earliest available date..." : minDateHint}
         </div>
       )}
@@ -562,6 +566,30 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
     }
   };
 
+  const fetchSharesInfo = async (entryId: string, ticker: string) => {
+    if (!ticker) return;
+    const token = getToken();
+    const [outstandingRes, ownedRes] = await Promise.allSettled([
+      axios.get(`${API_BASE}/api/stocks/${encodeURIComponent(ticker)}/shares-outstanding`),
+      token
+        ? axios.get(`${API_BASE}/api/portfolio/${encodeURIComponent(ticker)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        : Promise.reject(),
+    ]);
+    const sharesOutstanding =
+      outstandingRes.status === "fulfilled"
+        ? (outstandingRes.value.data.shares_outstanding ?? null)
+        : null;
+    const currentOwned =
+      ownedRes.status === "fulfilled" ? (ownedRes.value.data.quantity ?? 0) : 0;
+    setEntries((prev) =>
+      prev.map((e) =>
+        e.id === entryId ? { ...e, sharesOutstanding, currentOwned } : e,
+      ),
+    );
+  };
+
   const updateEntry = (id: string, field: keyof ImportEntry, value: string) => {
     setEntries((prev) =>
       prev.map((e) =>
@@ -688,8 +716,8 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
             <p
               style={{
                 margin: "6px 0 0",
-                fontSize: "0.75rem",
-                color: "#475569",
+                fontSize: "0.85rem",
+                color: "#8191a7",
                 fontStyle: "italic",
               }}
             >
@@ -723,6 +751,12 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
                 ? qty * resolvedPrice
                 : null;
             const isSaved = entry.status === "saved";
+            const isTickerValid = allStocks.some(s => s.ticker === entry.ticker);
+            const maxAdditional = entry.sharesOutstanding !== null
+              ? Math.max(0, entry.sharesOutstanding - entry.currentOwned)
+              : null;
+            const qtyNum = parseFloat(entry.quantity);
+            const exceedsMax = maxAdditional !== null && !isNaN(qtyNum) && qtyNum > maxAdditional;
             const minDateHint = entry.minDate ? (() => { const [y, m, d] = entry.minDate!.split("-"); return `Earliest: ${m}/${d}/${y}`;})() 
               : undefined;
 
@@ -738,6 +772,7 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
                     onChange={(val) => {
                       updateEntry(entry.id, "ticker", val);
                       fetchTickerMinDate(entry.id, val);
+                      fetchSharesInfo(entry.id, val);
                       if (entry.purchase_date)
                         lookupPrice(entry.id, val, entry.purchase_date);
                     }}
@@ -746,29 +781,40 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
                   />
                 </div>
                 {/* Quantity */}
-                <div className="imp-field">
+                <div className="imp-field imp-field-qty">
                   <input
                     className="imp-input"
                     type="number"
                     placeholder="e.g. 10"
                     min="0.0001"
+                    max={maxAdditional !== null ? maxAdditional : undefined}
                     step="any"
                     value={entry.quantity}
                     onChange={(e) =>
                       updateEntry(entry.id, "quantity", e.target.value)
                     }
-                    disabled={isSaved || submitting}
+                    disabled={isSaved || submitting || !isTickerValid}
                   />
+                  {maxAdditional !== null && !exceedsMax && (
+                    <span className="imp-max-hint">
+                      Max: {maxAdditional.toLocaleString()}
+                    </span>
+                  )}
+                  {exceedsMax && (
+                    <span className="imp-max-hint imp-max-exceeded">
+                      Max: {maxAdditional!.toLocaleString()}
+                    </span>
+                  )}
                 </div>
                 {/* Purchase date */}
-                <div className="imp-field">
+                <div className="imp-field imp-field-date">
                   <DatePicker
                     value={entry.purchase_date}
                     maxDate={today}
                     minDate={entry.minDate ?? undefined}
                     minDateHint={minDateHint}
                     minDateLoading={entry.minDateLoading}
-                    disabled={isSaved || submitting}
+                    disabled={isSaved || submitting || !isTickerValid}
                     onChange={(date) => {
                       updateEntry(entry.id, "purchase_date", date);
                       if (entry.ticker)
@@ -824,7 +870,10 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
                   )}
                 </div>
                 {/* Total cost */}
-                <div className="imp-field imp-field-total">
+                <div
+                  className="imp-field imp-field-total"
+                  data-tooltip={total !== null ? `$${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : undefined}
+                >
                   {total !== null ? (
                     <span className="imp-total-val">
                       $

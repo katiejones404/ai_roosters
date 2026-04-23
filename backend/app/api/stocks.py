@@ -489,6 +489,21 @@ def upsert_sentiment_snapshot(ticker: str, payload: SentimentSnapshotBase, db: S
     )
 
 
+@router.get("/{ticker}/shares-outstanding")
+def get_shares_outstanding(ticker: str):
+    """
+    Return the total shares outstanding for a ticker via yfinance.
+    Returns null if the data is unavailable.
+    """
+    try:
+        import yfinance as yf
+        info = yf.Ticker(ticker.strip().upper()).info
+        shares = info.get("sharesOutstanding")
+        return {"shares_outstanding": int(shares) if shares else None}
+    except Exception:
+        return {"shares_outstanding": None}
+
+
 @router.delete("/{ticker}/snapshots/{snapshot_date}")
 def delete_sentiment_snapshot(ticker: str, snapshot_date: date, db: Session = Depends(get_db)):
     """
