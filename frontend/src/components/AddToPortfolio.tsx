@@ -3,7 +3,7 @@
  * Modal component for adding a new stock position to the user's portfolio,
  * with fields for ticker, quantity, and average purchase price.
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { getToken } from "../utils/auth";
 import axios from "axios";
 import "./AddToPortfolio.css";
@@ -26,10 +26,30 @@ const AddToPortfolioModal: React.FC<AddToPortfolioModalProps> = ({
     const [quantity, setQuantity] = useState<string>("");
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [sharesOutstanding, setSharesOutstanding] = useState<number | null>(null);
+    const [currentOwned, setCurrentOwned] = useState<number>(0);
+
+    useEffect(() => {
+        const token = getToken();
+        Promise.all([
+            axios.get(`${API_BASE}/api/stocks/${encodeURIComponent(ticker)}/shares-outstanding`)
+                .then(r => setSharesOutstanding(r.data.shares_outstanding ?? null))
+                .catch(() => {}),
+            token
+                ? axios.get(`${API_BASE}/api/portfolio/${encodeURIComponent(ticker)}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                  }).then(r => setCurrentOwned(r.data.quantity ?? 0)).catch(() => {})
+                : Promise.resolve(),
+        ]);
+    }, [ticker]);
 
     const MIN_SHARES = 0.0001;
+    const maxAdditional = sharesOutstanding !== null
+        ? Math.max(0, sharesOutstanding - currentOwned)
+        : null;
     const parsedQty = parseFloat(quantity);
-    const isValid = !isNaN(parsedQty) && parsedQty >= MIN_SHARES;
+    const exceedsMax = maxAdditional !== null && !isNaN(parsedQty) && parsedQty > maxAdditional;
+    const isValid = !isNaN(parsedQty) && parsedQty >= MIN_SHARES && !exceedsMax;
     const totalCost = isValid ? parsedQty * currentPrice : 0;
 
     const formatTotalCost = (value: number): string => {
@@ -39,7 +59,11 @@ const AddToPortfolioModal: React.FC<AddToPortfolioModalProps> = ({
 
     const handleSubmit = async () => {
         if (!isValid) {
-            setError("Please enter a number of shares of at least 0.0001.");
+            if (maxAdditional !== null && parsedQty > maxAdditional) {
+                setError(`You can add at most ${maxAdditional.toLocaleString()} shares (shares outstanding minus what you already own).`);
+            } else {
+                setError("Please enter a number of shares of at least 0.0001.");
+            }
             return;
         }
 
@@ -100,6 +124,7 @@ const AddToPortfolioModal: React.FC<AddToPortfolioModalProps> = ({
                         className="modal-input"
                         type="number"
                         min="0.0001"
+                        max={maxAdditional !== null ? maxAdditional : undefined}
                         step="any"
                         placeholder="e.g. 10"
                         value={quantity}
@@ -110,6 +135,16 @@ const AddToPortfolioModal: React.FC<AddToPortfolioModalProps> = ({
                         onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                         autoFocus
                     />
+                    {maxAdditional !== null && !exceedsMax && (
+                        <p className="modal-max-hint">
+                            Max: {maxAdditional.toLocaleString()} shares available
+                        </p>
+                    )}
+                    {exceedsMax && (
+                        <p className="modal-error">
+                            Exceeds shares outstanding. Max you can add: {maxAdditional!.toLocaleString()}
+                        </p>
+                    )}
 
                     {isValid && (
                         <div className="modal-cost-preview">
