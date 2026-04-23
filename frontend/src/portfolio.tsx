@@ -207,8 +207,8 @@ const Portfolio = () => {
 
     const sellShares = async (ticker: string, currentQty: number) => {
         const qty = parseFloat(sellQty);
-        if (isNaN(qty) || qty <= 0) {
-            setActionError('Enter a valid number of shares to sell.');
+        if (isNaN(qty) || qty < 0.0001) {
+            setActionError('Enter a number of shares to sell of at least 0.0001.');
             return;
         }
         try {

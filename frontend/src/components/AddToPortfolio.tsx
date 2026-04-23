@@ -27,13 +27,19 @@ const AddToPortfolioModal: React.FC<AddToPortfolioModalProps> = ({
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const MIN_SHARES = 0.0001;
     const parsedQty = parseFloat(quantity);
-    const isValid = !isNaN(parsedQty) && parsedQty > 0;
+    const isValid = !isNaN(parsedQty) && parsedQty >= MIN_SHARES;
     const totalCost = isValid ? parsedQty * currentPrice : 0;
+
+    const formatTotalCost = (value: number): string => {
+        if (value >= 0.005) return `$${value.toFixed(2)}`;
+        return `$${parseFloat(value.toFixed(6))}`;
+    };
 
     const handleSubmit = async () => {
         if (!isValid) {
-            setError("Please enter a valid positive number of shares.");
+            setError("Please enter a number of shares of at least 0.0001.");
             return;
         }
 
@@ -108,7 +114,7 @@ const AddToPortfolioModal: React.FC<AddToPortfolioModalProps> = ({
                     {isValid && (
                         <div className="modal-cost-preview">
                             <span className="modal-label">Total Cost</span>
-                            <span className="modal-cost-value">${totalCost.toFixed(2)}</span>
+                            <span className="modal-cost-value">{formatTotalCost(totalCost)}</span>
                         </div>
                     )}
                     {error && <p className="modal-error">{error}</p>}

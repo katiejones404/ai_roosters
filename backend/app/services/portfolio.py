@@ -299,21 +299,21 @@ def get_portfolio_summary(
             lp.current_price,
             lp.price_date,
             CASE WHEN lp.close_1d_ago   IS NOT NULL AND lp.close_1d_ago   <> 0
-                 THEN (lp.current_price - lp.close_1d_ago)   / lp.close_1d_ago   * 100
+                 THEN (lp.current_price - lp.close_1d_ago)   / lp.close_1d_ago
                  END AS return_1d,
             CASE WHEN lp.close_30d_ago  IS NOT NULL AND lp.close_30d_ago  <> 0
-                 THEN (lp.current_price - lp.close_30d_ago)  / lp.close_30d_ago  * 100
+                 THEN (lp.current_price - lp.close_30d_ago)  / lp.close_30d_ago
                  END AS return_30d,
             CASE WHEN lp.close_120d_ago IS NOT NULL AND lp.close_120d_ago <> 0
-                 THEN (lp.current_price - lp.close_120d_ago) / lp.close_120d_ago * 100
+                 THEN (lp.current_price - lp.close_120d_ago) / lp.close_120d_ago
                  END AS return_120d,
             CASE WHEN lp.close_360d_ago IS NOT NULL AND lp.close_360d_ago <> 0
-                 THEN (lp.current_price - lp.close_360d_ago) / lp.close_360d_ago * 100
+                 THEN (lp.current_price - lp.close_360d_ago) / lp.close_360d_ago
                  END AS return_360d,
             (p.quantity * p.avg_price) AS cost_basis,
             (p.quantity * COALESCE(lp.current_price, p.avg_price)) AS current_value,
             (p.quantity * COALESCE(lp.current_price, p.avg_price)) - (p.quantity * p.avg_price) AS total_gain_loss,
-            ((COALESCE(lp.current_price, p.avg_price) - p.avg_price) / p.avg_price * 100) AS gain_loss_pct
+            ((COALESCE(lp.current_price, p.avg_price) - p.avg_price) / p.avg_price) AS gain_loss_pct
         FROM portfolio p
         LEFT JOIN latest_prices lp ON p.ticker = lp.ticker
         WHERE p.user_id = :user_id
