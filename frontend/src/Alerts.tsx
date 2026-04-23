@@ -2,8 +2,9 @@
  * Alerts.tsx
  * Price alerts page where users create, view, and delete stock price alerts.
  */
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 import "./Alerts.css";
 import LoadingScreen from "./components/LoadingScreen";
 import { getNotificationPreferences } from "./utils/auth";
@@ -45,6 +46,7 @@ function formatDate(iso: string | null): string {
 }
 
 export default function Alerts() {
+  const location = useLocation();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +58,20 @@ export default function Alerts() {
   const [direction, setDirection] = useState<"above" | "below">("above");
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const preselectedTicker = useMemo(() => {
+    const raw = new URLSearchParams(location.search).get("ticker");
+    return raw?.trim().toUpperCase() || "";
+  }, [location.search]);
+
+  const tickerOptions = useMemo(() => {
+    if (!preselectedTicker) {
+      return WEBSITE_TICKERS;
+    }
+    return WEBSITE_TICKERS.includes(preselectedTicker)
+      ? WEBSITE_TICKERS
+      : [preselectedTicker, ...WEBSITE_TICKERS];
+  }, [preselectedTicker]);
 
   const fetchAlerts = async () => {
     setLoading(true);
@@ -84,6 +100,12 @@ export default function Alerts() {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (preselectedTicker) {
+      setTicker(preselectedTicker);
+    }
+  }, [preselectedTicker]);
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
@@ -163,7 +185,7 @@ export default function Alerts() {
                   value={ticker}
                   onChange={(e) => setTicker(e.target.value)}
                 >
-                  {WEBSITE_TICKERS.map((t) => (
+                  {tickerOptions.map((t) => (
                     <option key={t} value={t}>
                       {t}
                     </option>
