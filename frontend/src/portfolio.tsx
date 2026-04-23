@@ -303,11 +303,11 @@ const Portfolio = () => {
         const rows = portfolio_items.map((item: PortfolioItemWithMetrics) => [
             item.ticker,
             item.quantity.toString(),
-            `$${item.avg_price?.toFixed(2) ?? 'N/A'}`,
-            `$${item.current_price?.toFixed(2) ?? 'N/A'}`,
-            `$${item.cost_basis?.toFixed(2) ?? 'N/A'}`,
-            `$${item.current_value?.toFixed(2) ?? 'N/A'}`,
-            `$${item.total_gain_loss?.toFixed(2) ?? 'N/A'}`,
+            formatCurrency(item.avg_price ?? null),
+            formatCurrency(item.current_price ?? null),
+            formatCurrency(item.cost_basis ?? null),
+            formatCurrency(item.current_value ?? null),
+            formatCurrency(item.total_gain_loss ?? null),
             item.gain_loss_pct != null ? `${(item.gain_loss_pct * 100).toFixed(2)}%` : 'N/A',
         ]);
         autoTable(doc, {
@@ -619,12 +619,14 @@ const Portfolio = () => {
                                             <XAxis dataKey="ticker" tick={{ fontSize: 12, fill: '#94a3b8' }} />
                                             <YAxis tickFormatter={(v: number) => `$${v}`} tick={{ fontSize: 11, fill: '#94a3b8' }} />
                                             <Tooltip
+                                                cursor={{ fill: 'rgba(255, 255, 255, 0.24)' }}
                                                 formatter={(v, name) =>
                                                     name === 'gainLoss'
                                                         ? [`$${(v as number).toFixed(2)}`, 'Gain/Loss']
                                                         : [`${(v as number).toFixed(2)}%`, 'Return']
                                                 }
-                                                contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                                                contentStyle={{ background:'#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                                                itemStyle={{ color: '#eaeaea' }}
                                             />
                                             <Bar dataKey="gainLoss" radius={[4, 4, 0, 0]}>
                                                 {plChartData.map((entry, index) => (
