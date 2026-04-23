@@ -856,6 +856,12 @@ const ImportPortfolioModal: React.FC<ImportPortfolioMoalProps> = ({
                 {entry.status === "error" && entry.error && (
                   <div className="imp-row-err-msg">{entry.error}</div>
                 )}
+
+                {entry.purchase_date && entry.purchase_date < today && !isSaved && (
+                  <div className="imp-split-note">
+                    Prices are split-adjusted. If {entry.ticker || "this stock"} has split since your purchase date, enter your <strong>current</strong> share count (post-split), not your original quantity.
+                  </div>
+                )}
               </div>
             );
           })}
