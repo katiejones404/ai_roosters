@@ -59,8 +59,7 @@ export const logout = async (): Promise<void> => {
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
-    } catch {
-    }
+    } catch {}
   }
 
   removeToken();
@@ -94,7 +93,7 @@ export const updateProfilePicture = async (base64: string): Promise<void> => {
   await axios.put(
     `${API_URL}/api/auth/me/picture`,
     { profile_picture: base64 },
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers: { Authorization: `Bearer ${token}` } },
   );
 };
 
@@ -112,13 +111,13 @@ export const updateProfile = async (data: {
 
 export const changePassword = async (
   currentPassword: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<void> => {
   const token = getToken();
   await axios.patch(
     `${API_URL}/api/auth/me/password`,
     { current_password: currentPassword, new_password: newPassword },
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers: { Authorization: `Bearer ${token}` } },
   );
 };
 
@@ -127,21 +126,26 @@ export interface NotificationPreferences {
   pushNotifications: boolean;
 }
 
-export const getNotificationPreferences = async (): Promise<NotificationPreferences> => {
-  const token = getToken();
-  const response = await axios.get(`${API_URL}/api/auth/me/notifications`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
-};
+export const getNotificationPreferences =
+  async (): Promise<NotificationPreferences> => {
+    const token = getToken();
+    const response = await axios.get(`${API_URL}/api/auth/me/notifications`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  };
 
 export const updateNotificationPreferences = async (
-  data: Partial<NotificationPreferences>
+  data: Partial<NotificationPreferences>,
 ): Promise<NotificationPreferences> => {
   const token = getToken();
-  const response = await axios.patch(`${API_URL}/api/auth/me/notifications`, data, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await axios.patch(
+    `${API_URL}/api/auth/me/notifications`,
+    data,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
   return response.data;
 };
 

@@ -94,7 +94,6 @@ const Login: React.FC = () => {
       </div>
 
       <div className="login-content">
-        {/* Left Side - Branding */}
         <div className="login-left">
           <div className="login-branding">
             <h2 className="login-brand-name">
@@ -126,12 +125,24 @@ const Login: React.FC = () => {
                 />
 
                 <defs>
-                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <linearGradient
+                    id="gradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
                     <stop offset="0%" stopColor="#10b981" />
                     <stop offset="100%" stopColor="#34d399" />
                   </linearGradient>
 
-                  <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient
+                    id="barGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="0%"
+                    y2="100%"
+                  >
                     <stop offset="0%" stopColor="#10b981" stopOpacity="0.8" />
                     <stop offset="100%" stopColor="#10b981" stopOpacity="0.3" />
                   </linearGradient>
@@ -170,7 +181,6 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side - Login Form */}
         <div className="login-right">
           <div className="login-form-container">
             <h1 className="welcome-title">Welcome Back</h1>

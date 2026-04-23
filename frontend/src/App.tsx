@@ -18,7 +18,6 @@ import ResetPassword from "./ResetPassword";
 import Settings from "./settings";
 import Dashboard from "./Dashboard";
 import Portfolio from "./portfolio";
-import StockComparison from "./stock_comparison";
 import NetWorth from "./NetWorth";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./ProtectedRoute";
@@ -72,7 +71,6 @@ function AppContent() {
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/compare" element={<StockComparison />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/networth" element={<NetWorth />} />
           <Route path="/settings" element={<Settings />} />

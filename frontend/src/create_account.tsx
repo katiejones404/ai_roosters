@@ -149,7 +149,7 @@ const CreateAccount: React.FC = () => {
         formData.email,
         formData.username,
         formData.password,
-        formData.retypePassword
+        formData.retypePassword,
       );
 
       navigate("/login", { replace: true });
