@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StockSense — AI-Powered Stock Sentiment & Portfolio Platform</title>
+    <title>StockSense: AI-Powered Stock Sentiment and Portfolio Platform</title>
     <meta
       name="description"
       content="StockSense combines real-time news sentiment, portfolio tracking, and AI-powered summaries to help investors understand what is driving the market."
@@ -586,8 +586,9 @@
       <ul class="nav-links">
         <li><a href="#features">Features</a></li>
         <li><a href="#how-it-works">How It Works</a></li>
-        <li><a href="about.html">About</a></li>
         <li><a href="#screenshots">Screenshots</a></li>
+        <li><a href="#demo">Demo</a></li>
+        <li><a href="about.html">About</a></li>
         <li>
           <a
             class="nav-cta"
@@ -755,78 +756,77 @@
           </div>
         </section>
 
-        <!-- Screenshots Section - 4 images in a row with click-to-enlarge -->
+        <!-- Screenshots Section -->
         <section id="screenshots" class="section">
           <div class="section-title">Built for clarity at every step</div>
           <p class="section-sub">
-            <strong>Click any image card to expand and see details.</strong>
-            Four screenshots shown side by side for easy comparison.
+            <strong>Click any screenshot to enlarge.</strong>
+            Real screenshots from the live application.
           </p>
           <div class="grid-4">
             <div
               class="card screenshot-item"
-              data-icon=""
+              data-src="assets/screenshots/home-dashboard.png"
               data-title="Home Dashboard"
-              data-caption="Home Dashboard — portfolio summary and sentiment overview with live data. See all your holdings at a glance with real-time sentiment indicators."
+              data-caption="Portfolio summary and market sentiment overview with live data. See all your holdings at a glance with real-time sentiment indicators."
             >
-              <div class="screenshot-ph" role="button">
-                <div class="ph-icon"></div>
-                <div style="font-weight: 600">Home Dashboard</div>
-                <div style="font-size: 0.8rem">
-                  Portfolio summary & sentiment
-                </div>
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img
+                  src="assets/screenshots/home-dashboard.png"
+                  alt="Home Dashboard showing portfolio summary and sentiment overview"
+                  style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;"
+                  loading="lazy"
+                />
               </div>
-              <div class="screenshot-label">
-                Home Dashboard — portfolio summary and sentiment overview
-              </div>
+              <div class="screenshot-label">Home Dashboard</div>
             </div>
             <div
               class="card screenshot-item"
-              data-icon=""
-              data-title="Stock Detail"
-              data-caption="Stock Detail — price history, sentiment indicators, and AI news summary. Track individual stocks with interactive charts and AI-powered insights."
+              data-src="assets/screenshots/stock-detail.png"
+              data-title="Stock Detail Page"
+              data-caption="Price history charts with sentiment overlays and AI-generated news summaries. Track individual stocks with interactive charts and AI-powered insights."
             >
-              <div class="screenshot-ph" role="button">
-                <div class="ph-icon"></div>
-                <div style="font-weight: 600">Stock Detail Page</div>
-                <div style="font-size: 0.8rem">Price & sentiment history</div>
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img
+                  src="assets/screenshots/stock-detail.png"
+                  alt="Stock detail page with price chart and sentiment analysis"
+                  style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;"
+                  loading="lazy"
+                />
               </div>
-              <div class="screenshot-label">
-                Stock Detail — price history, sentiment indicators, and AI news
-                summary
-              </div>
+              <div class="screenshot-label">Stock Detail + Sentiment</div>
             </div>
             <div
               class="card screenshot-item"
-              data-icon=""
-              data-title="Portfolio Analytics"
-              data-caption="Portfolio Analytics — gains, losses, comparison charts, and export tools. Analyze your portfolio performance with detailed metrics and visualizations."
+              data-src="assets/screenshots/news-feed.png"
+              data-title="News Feed"
+              data-caption="Curated financial news with FinBERT sentiment scores and GPT summaries. Stay informed on what is moving the market."
             >
-              <div class="screenshot-ph" role="button">
-                <div class="ph-icon"></div>
-                <div style="font-weight: 600">Portfolio Analytics</div>
-                <div style="font-size: 0.8rem">Gains, losses & charts</div>
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img
+                  src="assets/screenshots/news-feed.png"
+                  alt="News feed with sentiment scoring"
+                  style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;"
+                  loading="lazy"
+                />
               </div>
-              <div class="screenshot-label">
-                Portfolio Analytics — gains, losses, comparison charts, and
-                export tools
-              </div>
+              <div class="screenshot-label">AI News Feed</div>
             </div>
             <div
               class="card screenshot-item"
-              data-icon=""
-              data-title="Alerts & Net Worth"
-              data-caption="Alerts & Net Worth — real-time notifications and complete financial overview. Set price alerts and track your total net worth across all accounts."
+              data-src="assets/screenshots/settings.png"
+              data-title="Settings & Alerts"
+              data-caption="Manage price alerts, notification preferences, portfolio exports, and account settings all in one place."
             >
-              <div class="screenshot-ph" role="button">
-                <div class="ph-icon"></div>
-                <div style="font-weight: 600">Alerts & Net Worth</div>
-                <div style="font-size: 0.8rem">Smart triggers + finances</div>
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img
+                  src="assets/screenshots/settings.png"
+                  alt="Settings page with alerts and notification configuration"
+                  style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;"
+                  loading="lazy"
+                />
               </div>
-              <div class="screenshot-label">
-                Alerts & Net Worth — real-time price triggers and total
-                financial health
-              </div>
+              <div class="screenshot-label">Settings and Alerts</div>
             </div>
           </div>
         </section>
@@ -846,74 +846,53 @@
           </div>
         </section>
 
-        <!-- Video Section - Now with click-to-enlarge popup (same as images) -->
-        <section class="section">
-          <div
-            class="card video-box big-video"
-            id="videoCard"
-            data-icon=""
-            data-title="Product Demo Video"
-            data-caption="Watch the full StockSense walkthrough — from sentiment analysis to portfolio tracking and AI-powered news summaries. See how our platform helps you make smarter investment decisions with real-time data."
-          >
-            <div style="width: 100%">
-              <div
-                class="video-frame"
-                style="
-                  width: 100%;
-                  min-height: 380px;
-                  border-radius: 20px;
-                  border: 1px dashed rgba(255, 255, 255, 0.18);
-                  background: linear-gradient(
-                    135deg,
-                    rgba(99, 102, 241, 0.08),
-                    rgba(16, 185, 129, 0.05)
-                  );
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  justify-content: center;
-                  gap: 1.2rem;
-                "
-              >
-                <div
-                  class="video-label"
-                  style="
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                    color: var(--muted);
-                    text-transform: uppercase;
-                    letter-spacing: 0.12em;
-                  "
-                >
-                  Product Demo Video
-                </div>
-                <div class="play-btn">
+        <!-- Video Section -->
+        <section id="demo" class="section">
+          <div class="section-title">Watch the Demo</div>
+          <p class="section-sub">
+            See the full platform in action: from sentiment analysis to
+            portfolio tracking and AI-powered news summaries.
+          </p>
+          <div class="card" style="padding: 0; overflow: hidden; border-radius: 16px;">
+            <!-- Replace the src below with your YouTube embed URL when the video is ready. -->
+            <!-- Example: src="https://www.youtube.com/embed/YOUR_VIDEO_ID" -->
+            <div style="
+              position: relative;
+              width: 100%;
+              padding-top: 56.25%;
+              background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.05));
+              border: 1px dashed rgba(255,255,255,0.15);
+              border-radius: 16px;
+            ">
+              <div style="
+                position: absolute;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 1rem;
+                text-align: center;
+                padding: 2rem;
+              ">
+                <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.12em;">Final Demo Video</div>
+                <div class="play-btn" style="margin: 0;">
                   <svg viewBox="0 0 24 24" width="32" height="32">
                     <polygon points="5,3 19,12 5,21" fill="var(--green)" />
                   </svg>
                 </div>
-                <div style="color: var(--muted-2); font-size: 0.9rem">
-                  Click anywhere to watch the demo
-                </div>
+                <div style="color: var(--text); font-weight: 600; font-size: 1.05rem;">Video coming soon</div>
+                <div style="color: var(--muted-2); font-size: 0.85rem; max-width: 420px;">The full walkthrough video will be embedded here. Replace the placeholder with a YouTube embed when ready.</div>
               </div>
-              <div
-                class="section-title"
-                style="margin-bottom: 0.25rem; margin-top: 1.5rem"
-              >
-                Product Demo
-              </div>
-              <p class="section-sub" style="margin: 0 auto 1.25rem">
-                See the full platform in action — from sentiment analysis to
-                portfolio tracking and AI summaries.
-              </p>
-              <a
-                class="btn-primary"
-                href="https://ai-roosters-webpage.vercel.app/"
-                target="_blank"
-                style="display: inline-block"
-                >Get Started — It's Free →</a
-              >
             </div>
+          </div>
+          <div style="margin-top: 1.5rem;">
+            <a
+              class="btn-primary"
+              href="https://ai-roosters-webpage.vercel.app/"
+              target="_blank"
+              >Get Started - It's Free</a
+            >
           </div>
         </section>
 
@@ -940,48 +919,27 @@
 
     <!-- Lightbox Overlay -->
     <div id="lightbox" class="lightbox">
-      <div class="close-lightbox" id="closeLightbox">×</div>
-      <div class="lightbox-content">
-        <div class="lightbox-icon" id="lightboxIcon"></div>
-        <div class="lightbox-title" id="lightboxTitle"></div>
-        <div class="lightbox-caption" id="lightboxCaption"></div>
-        <div id="lightboxVideoContainer" style="display: none">
-          <div class="lightbox-video-placeholder">
-            <div class="play-btn" style="margin: 0">
-              <svg viewBox="0 0 24 24" width="48" height="48">
-                <polygon points="5,3 19,12 5,21" fill="var(--green)" />
-              </svg>
-            </div>
-            <div style="color: var(--muted); font-size: 1rem">
-              Product demo video would play here
-            </div>
-            <div style="color: var(--muted-2); font-size: 0.85rem">
-              In production, this would embed a full walkthrough of StockSense
-              features
-            </div>
-          </div>
-        </div>
+      <div class="close-lightbox" id="closeLightbox">x</div>
+      <div class="lightbox-content" style="padding: 1rem;">
+        <div class="lightbox-title" id="lightboxTitle" style="margin-bottom: 0.75rem;"></div>
+        <img id="lightboxImg" src="" alt="" style="max-width:80vw;max-height:72vh;border-radius:12px;display:block;margin:0 auto;" />
+        <div class="lightbox-caption" id="lightboxCaption" style="margin-top: 0.75rem;"></div>
       </div>
     </div>
 
     <script>
       const screenshotItems = document.querySelectorAll(".screenshot-item");
-      const videoCard = document.getElementById("videoCard");
       const lightbox = document.getElementById("lightbox");
-      const lightboxIcon = document.getElementById("lightboxIcon");
+      const lightboxImg = document.getElementById("lightboxImg");
       const lightboxTitle = document.getElementById("lightboxTitle");
       const lightboxCaption = document.getElementById("lightboxCaption");
-      const lightboxVideoContainer = document.getElementById(
-        "lightboxVideoContainer",
-      );
       const closeLightboxBtn = document.getElementById("closeLightbox");
 
-      function openLightbox(icon, title, caption, isVideo) {
-        lightboxIcon.textContent = icon;
+      function openLightbox(src, title, caption) {
+        lightboxImg.src = src;
+        lightboxImg.alt = title;
         lightboxTitle.textContent = title;
         lightboxCaption.textContent = caption;
-        lightboxVideoContainer.style.display = isVideo ? "block" : "none";
-        lightboxIcon.style.display = isVideo ? "none" : "block";
         lightbox.classList.add("active");
         document.body.style.overflow = "hidden";
       }
@@ -989,50 +947,35 @@
       function closeLightbox() {
         lightbox.classList.remove("active");
         document.body.style.overflow = "";
+        lightboxImg.src = "";
       }
 
-      // Screenshot cards
       screenshotItems.forEach((item) => {
         const clickArea = item.querySelector(".screenshot-ph");
-        const icon = item.getAttribute("data-icon") || "📸";
+        const src = item.getAttribute("data-src") || "";
         const title = item.getAttribute("data-title") || "Screenshot";
         const caption = item.getAttribute("data-caption") || "";
 
         clickArea.addEventListener("click", (e) => {
           e.stopPropagation();
-          openLightbox(icon, title, caption, false);
+          openLightbox(src, title, caption);
+        });
+        clickArea.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") openLightbox(src, title, caption);
         });
       });
 
-      // Video card
-      if (videoCard) {
-        videoCard.addEventListener("click", (e) => {
-          if (e.target.tagName === "A") return;
-          const icon = videoCard.getAttribute("data-icon") || "🎬";
-          const title = videoCard.getAttribute("data-title") || "Demo Video";
-          const caption = videoCard.getAttribute("data-caption") || "";
-          openLightbox(icon, title, caption, true);
-        });
-      }
-
-      // Close button
       closeLightboxBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         closeLightbox();
       });
 
-      // Click backdrop to close
       lightbox.addEventListener("click", (e) => {
-        if (e.target === lightbox) {
-          closeLightbox();
-        }
+        if (e.target === lightbox) closeLightbox();
       });
 
-      // Escape key to close
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          closeLightbox();
-        }
+        if (e.key === "Escape") closeLightbox();
       });
     </script>
   </body>
