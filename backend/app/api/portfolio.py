@@ -51,12 +51,34 @@ async def add_to_portfolio(item: PortfolioCreateItem, current_user: User = Depen
     -----
     If the ticker already exists in the portfolio, the quantity is increased and
     the average price is recalculated using a weighted average of old and new shares.
+    Rejects quantities that would exceed the total shares outstanding for the ticker.
 
     Returns
     -------
     PortfolioItem
         The created or updated portfolio position.
     """
+    try:
+        import yfinance as yf
+        info = yf.Ticker(item.ticker).info
+        shares_outstanding = info.get("sharesOutstanding")
+        if shares_outstanding:
+            existing = portfolio.get_portfolio_item_by_ticker(db, current_user.id, item.ticker)
+            total_after = (existing.quantity if existing else 0.0) + item.quantity
+            if total_after > shares_outstanding:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Quantity exceeds total shares outstanding for {item.ticker} "
+                        f"({shares_outstanding:,.0f} shares). "
+                        f"You requested {total_after:,.4f} shares."
+                    ),
+                )
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # Fail open if yfinance is unavailable
+
     return portfolio.add_or_update_position(db, current_user.id, item)
 
 
