@@ -466,6 +466,14 @@
         border-top: 1px solid var(--border);
         color: var(--text);
         font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .screenshot-desc {
+        color: var(--muted-2);
+        font-size: 0.78rem;
+        font-weight: 400;
+        margin-top: 0.3rem;
+        line-height: 1.45;
       }
       /* Lightbox styles */
       .lightbox {
@@ -761,69 +769,77 @@
             Real screenshots from the live application.
           </p>
           <div class="grid-4">
-            <div
-              class="card screenshot-item"
-              data-src="assets/screenshots/home-dashboard.png"
-              data-title="Home Dashboard"
-              data-caption="Portfolio summary and market sentiment overview with live data. See all your holdings at a glance with real-time sentiment indicators."
-            >
+            <div class="card screenshot-item" data-src="assets/screenshots/homepage.png" data-title="Homepage">
               <div class="screenshot-ph" role="button" tabindex="0">
-                <img
-                  src="assets/screenshots/home-dashboard.png"
-                  alt="Home Dashboard showing portfolio summary and sentiment overview"
-                  style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;"
-                  loading="lazy"
-                />
+                <img src="assets/screenshots/homepage.png" alt="StockSense homepage" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
               </div>
-              <div class="screenshot-label">Home Dashboard</div>
+              <div class="screenshot-label">
+                Homepage
+                <p class="screenshot-desc">The StockSense landing page, including fun finance facts and an investor quiz, a "What-If" investment calculator, a daily streak counter, and alert and portfolio summaries.</p>
+              </div>
             </div>
-            <div
-              class="card screenshot-item"
-              data-src="assets/screenshots/stock-detail.png"
-              data-title="Stock Detail Page"
-              data-caption="Price history charts with sentiment overlays and AI-generated news summaries. Track individual stocks with interactive charts and AI-powered insights."
-            >
+            <div class="card screenshot-item" data-src="assets/screenshots/login.png" data-title="Login">
               <div class="screenshot-ph" role="button" tabindex="0">
-                <img
-                  src="assets/screenshots/stock-detail.png"
-                  alt="Stock detail page with price chart and sentiment analysis"
-                  style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;"
-                  loading="lazy"
-                />
+                <img src="assets/screenshots/login.png" alt="Login page" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
               </div>
-              <div class="screenshot-label">Stock Detail + Sentiment</div>
+              <div class="screenshot-label">
+                Login
+                <p class="screenshot-desc">Secure account login to access your personalized portfolio, alerts, and recent stock news feed.</p>
+              </div>
             </div>
-            <div
-              class="card screenshot-item"
-              data-src="assets/screenshots/news-feed.png"
-              data-title="News Feed"
-              data-caption="Curated financial news with FinBERT sentiment scores and GPT summaries. Stay informed on what is moving the market."
-            >
+            <div class="card screenshot-item" data-src="assets/screenshots/dashboard.png" data-title="Dashboard">
               <div class="screenshot-ph" role="button" tabindex="0">
-                <img
-                  src="assets/screenshots/news-feed.png"
-                  alt="News feed with sentiment scoring"
-                  style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;"
-                  loading="lazy"
-                />
+                <img src="assets/screenshots/dashboard.png" alt="Main dashboard with portfolio overview" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
               </div>
-              <div class="screenshot-label">AI News Feed</div>
+              <div class="screenshot-label">
+                Dashboard
+                <p class="screenshot-desc">Your portfolio at a glance. Includes holdings, gain/loss tracking, and real-time sentiment indicators in one view.</p>
+              </div>
             </div>
-            <div
-              class="card screenshot-item"
-              data-src="assets/screenshots/settings.png"
-              data-title="Settings & Alerts"
-              data-caption="Manage price alerts, notification preferences, portfolio exports, and account settings all in one place."
-            >
+            <div class="card screenshot-item" data-src="assets/screenshots/news.png" data-title="AI News Feed">
               <div class="screenshot-ph" role="button" tabindex="0">
-                <img
-                  src="assets/screenshots/settings.png"
-                  alt="Settings page with alerts and notification configuration"
-                  style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;"
-                  loading="lazy"
-                />
+                <img src="assets/screenshots/news.png" alt="AI news feed with sentiment scoring" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
               </div>
-              <div class="screenshot-label">Settings and Alerts</div>
+              <div class="screenshot-label">
+                AI News Feed
+                <p class="screenshot-desc">Curated financial news with FinBERT sentiment scores and GPT-generated summaries. Users can understand what's moving the market.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/alerts.png" data-title="Price Alerts">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/alerts.png" alt="Price alerts configuration" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Price Alerts
+                <p class="screenshot-desc">Set custom price thresholds for your tracked stocks and get notified when your target is hit.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/price_alert_notifications_example.png" data-title="Alert Notifications">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/price_alert_notifications_example.png" alt="Price alert notification example" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Alert Notifications
+                <p class="screenshot-desc">Real-time price alert notifications delivered when your stocks hit the thresholds you've set.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/compare.png" data-title="Stock Comparison">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/compare.png" alt="Stock comparison view" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Stock Comparison
+                <p class="screenshot-desc">Compare multiple stocks side-by-side with overlaid sentiment trends to identify relative performance.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/networth.png" data-title="Net Worth Tracker">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/networth.png" alt="Net worth tracker with history graph" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Net Worth Tracker
+                <p class="screenshot-desc">Track your complete financial picture, combine your portfolio with manual assets and liabilities for a full net worth view.</p>
+              </div>
             </div>
           </div>
         </section>
@@ -888,7 +904,7 @@
               class="btn-primary"
               href="https://ai-roosters-webpage.vercel.app/"
               target="_blank"
-              >Get Started - It's Free</a
+              >Get Started - Launch the Website</a
             >
           </div>
         </section>
@@ -908,7 +924,7 @@
           </div>
           <div>
             Built by Team AI Roosters · University of South Carolina Capstone
-            2025
+            August 2025- April 2026 
           </div>
         </footer>
       </div>
@@ -920,7 +936,6 @@
       <div class="lightbox-content" style="padding: 1rem;">
         <div class="lightbox-title" id="lightboxTitle" style="margin-bottom: 0.75rem;"></div>
         <img id="lightboxImg" src="" alt="" style="max-width:80vw;max-height:72vh;border-radius:12px;display:block;margin:0 auto;" />
-        <div class="lightbox-caption" id="lightboxCaption" style="margin-top: 0.75rem;"></div>
       </div>
     </div>
 
@@ -929,14 +944,12 @@
       const lightbox = document.getElementById("lightbox");
       const lightboxImg = document.getElementById("lightboxImg");
       const lightboxTitle = document.getElementById("lightboxTitle");
-      const lightboxCaption = document.getElementById("lightboxCaption");
       const closeLightboxBtn = document.getElementById("closeLightbox");
 
-      function openLightbox(src, title, caption) {
+      function openLightbox(src, title) {
         lightboxImg.src = src;
         lightboxImg.alt = title;
         lightboxTitle.textContent = title;
-        lightboxCaption.textContent = caption;
         lightbox.classList.add("active");
         document.body.style.overflow = "hidden";
       }
@@ -951,14 +964,13 @@
         const clickArea = item.querySelector(".screenshot-ph");
         const src = item.getAttribute("data-src") || "";
         const title = item.getAttribute("data-title") || "Screenshot";
-        const caption = item.getAttribute("data-caption") || "";
 
         clickArea.addEventListener("click", (e) => {
           e.stopPropagation();
-          openLightbox(src, title, caption);
+          openLightbox(src, title);
         });
         clickArea.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" || e.key === " ") openLightbox(src, title, caption);
+          if (e.key === "Enter" || e.key === " ") openLightbox(src, title);
         });
       });
 
