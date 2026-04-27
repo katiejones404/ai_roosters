@@ -36,7 +36,8 @@ interface Alert {
 
 function fmtPct(v: number | null): string {
   if (v === null || v === undefined) return "N/A";
-  return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
+  const pct = v * 100;
+  return `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`;
 }
 
 function fmtDollar(v: number | null): string {
@@ -143,7 +144,7 @@ export default function HomePage() {
                               <span className="hp-pct">
                                 {" "}
                                 ({item.gain_loss_pct >= 0 ? "+" : ""}
-                                {(item.gain_loss_pct * 100).toFixed(1)}%)
+                                {item.gain_loss_pct.toFixed(1)}%)
                               </span>
                             )}
                           </td>
