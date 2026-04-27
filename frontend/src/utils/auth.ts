@@ -167,18 +167,6 @@ axios.interceptors.response.use(
   (error) => {
     if (error?.response?.status === 401) {
       removeToken();
-
-      const path = window.location.pathname;
-      const isPublicRoute =
-        path === "/" ||
-        path === "/login" ||
-        path === "/signup" ||
-        path === "/forgot-password" ||
-        path === "/reset-password";
-
-      if (!isPublicRoute) {
-        window.location.href = "/login";
-      }
     }
 
     return Promise.reject(error);

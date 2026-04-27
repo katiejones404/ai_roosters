@@ -23,11 +23,11 @@ export default function LandingPage() {
             portfolio tracking, and AI-powered analytics.
           </p>
 
-          <div className="nav-links">
-            <Link to="/signup" className="nav-link nav-link-primary">
+          <div className="landing-nav-links">
+            <Link to="/signup" className="landing-nav-link landing-nav-link-primary">
               Create Account
             </Link>
-            <Link to="/login" className="nav-link nav-link-secondary">
+            <Link to="/login" className="landing-nav-link landing-nav-link-secondary">
               Sign In
             </Link>
           </div>
