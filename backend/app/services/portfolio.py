@@ -177,10 +177,11 @@ def add_or_update_position(
         db.rollback()
         raise
     
-def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quantity: float, price: float, realized_gain: Optional[float] = None, executed_at: Optional[str] = None) -> None:
-    db.execute(text("""
+def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quantity: float, price: float, realized_gain: Optional[float] = None, executed_at: Optional[str] = None) -> str:
+    row = db.execute(text("""
         INSERT INTO transactions (user_id, ticker, action, quantity, price, realized_gain, executed_at)
         VALUES (:uid, :ticker, :action, :qty, :price, :gain, COALESCE(CAST(:executed_at AS timestamptz), now()))
+        RETURNING id
     """), {
         "uid": str(user_id),
         "ticker": ticker,
@@ -190,7 +191,18 @@ def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quant
         "gain": realized_gain,
         "executed_at": executed_at,
         },
+    ).fetchone()
+    transaction_id = str(row_to_dict(row)["id"]) if row else ""
+    logger.info(
+        "Logged transaction: id=%s user=%s ticker=%s action=%s qty=%s price=%s",
+        transaction_id,
+        user_id,
+        ticker,
+        action,
+        quantity,
+        price,
     )
+    return transaction_id
 
 def update_portfolio_item(
     db: Session, user_id: UUID, ticker: str, item: PortfolioUpdateItem
@@ -279,6 +291,32 @@ def delete_transaction(db: Session, user_id: UUID, transaction_id: str) -> bool:
     ).fetchone()
 
     if not tx_row:
+        existing_any_user = db.execute(
+            text("""
+                SELECT user_id, ticker, action, quantity, price
+                FROM transactions
+                WHERE id = :tid
+            """),
+            {"tid": transaction_id},
+        ).fetchone()
+        if existing_any_user:
+            existing = row_to_dict(existing_any_user)
+            logger.warning(
+                "Delete transaction denied: id=%s requested_user=%s owner_user=%s ticker=%s action=%s qty=%s price=%s",
+                transaction_id,
+                user_id,
+                existing["user_id"],
+                existing["ticker"],
+                existing["action"],
+                existing["quantity"],
+                existing["price"],
+            )
+        else:
+            logger.warning(
+                "Delete transaction failed: id=%s requested_user=%s not found",
+                transaction_id,
+                user_id,
+            )
         return False
 
     tx = row_to_dict(tx_row)
