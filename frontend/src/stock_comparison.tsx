@@ -406,6 +406,7 @@ export default function StockComparison() {
                         border: "1px solid rgba(255,255,255,0.1)",
                         borderRadius: 8,
                       }}
+                      labelStyle={{ color: "#ffffff" }}
                     />
                     <Legend wrapperStyle={{ paddingTop: 12 }} />
                     {selectedTickers.map((ticker, index) => (

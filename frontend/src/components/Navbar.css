@@ -1,4 +1,9 @@
 .navbar {
+  --navbar-logo-gap: 44px;
+  --navbar-link-gap: 18px;
+  --navbar-link-font-size: 1.02rem;
+  --navbar-link-padding: 8px 10px;
+
   width: 100%;
   background: #0f172a;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -26,7 +31,7 @@
 .navbar-left-group {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--navbar-logo-gap);
   flex: 1 1 0;
   min-width: 0;
 }
@@ -49,7 +54,7 @@
 .navbar-links {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--navbar-link-gap);
   flex: 1 1 auto;
   min-width: 0;
   overflow: visible;
@@ -100,19 +105,19 @@
   display: block;
 }
 
-.nav-link {
-  font-size: 0.9rem;
-  font-weight: 500;
+.navbar .nav-link {
+  font-size: var(--navbar-link-font-size);
+  font-weight: 600;
   text-decoration: none;
   color: #94a3b8;
-  padding: 7px 10px;
+  padding: var(--navbar-link-padding);
   border-radius: 8px;
   transition: all 0.2s;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.nav-link.active {
+.navbar .nav-link.active {
   background: #4f46e5;
   color: #ffffff;
 }
@@ -137,7 +142,7 @@
   min-width: 0;
 }
 
-.nav-search-input {
+.navbar .nav-search-input {
   width: 100%;
   min-width: 0;
   padding: 10px 14px;
@@ -149,8 +154,14 @@
   box-sizing: border-box;
 }
 
-.nav-search-input::placeholder {
+.navbar .nav-search-input::placeholder {
   color: #94a3b8;
+}
+
+.navbar .nav-search-input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
+  transform: none;
 }
 
 .search-suggestions {
@@ -348,6 +359,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.2;
   color: #ffffff;
   text-decoration: none;
   background: none;
@@ -375,14 +390,12 @@
   white-space: nowrap;
 }
 
-@media (max-width: 1100px) {
-  .navbar-left-group {
-    gap: 8px;
-  }
-
-  .nav-link {
-    padding: 7px 8px;
-    font-size: 0.85rem;
+@media (max-width: 1300px) {
+  .navbar {
+    --navbar-logo-gap: 24px;
+    --navbar-link-gap: 8px;
+    --navbar-link-font-size: 0.92rem;
+    --navbar-link-padding: 7px 8px;
   }
 
   .nav-search-wrapper {
@@ -395,6 +408,19 @@
 
   .username {
     max-width: 80px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .navbar {
+    --navbar-logo-gap: 10px;
+    --navbar-link-gap: 2px;
+    --navbar-link-font-size: 0.82rem;
+    --navbar-link-padding: 5px 5px;
+  }
+
+  .nav-search-wrapper {
+    width: clamp(110px, 11vw, 170px);
   }
 }
 
