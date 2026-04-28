@@ -1,6 +1,6 @@
 /*
  * Login.tsx
- * Login page where existing users authenticate with their email and password.
+ * Login page where existing users authenticate with their email/username and password.
  * Includes a link to the forgot password flow for account recovery.
  */
 import React, { useState } from "react";
@@ -49,10 +49,7 @@ const Login: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.email.trim()) newErrors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
+    if (!formData.email.trim()) newErrors.email = "Email or username is required";
 
     if (!formData.password) {
       newErrors.password = "Password is required";
@@ -197,7 +194,7 @@ const Login: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="login-form" noValidate>
               <div className="form-group">
-                <label htmlFor="email">Email Address</label>
+                <label htmlFor="email">Email or Username</label>
                 <div className="input-wrapper">
                   <input
                     type="text"
@@ -206,8 +203,8 @@ const Login: React.FC = () => {
                     value={formData.email}
                     onChange={handleChange}
                     className={errors.email ? "error" : ""}
-                    placeholder="Enter your email"
-                    autoComplete="email"
+                    placeholder="Enter your email or username"
+                    autoComplete="username"
                   />
                   <span className="input-icon">📧</span>
                 </div>

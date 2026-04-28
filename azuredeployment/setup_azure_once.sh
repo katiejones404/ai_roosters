@@ -209,6 +209,8 @@ az containerapp job create \
   --parallelism 1 \
   --replica-completion-count 1 \
   --replica-retry-limit 1 \
+  --cpu 2.0 \
+  --memory 4.0Gi \
   --replica-timeout 7200 \
   --command "python" \
   --args "app/jobs/run_sentiment_summary_once.py" \

@@ -39,9 +39,9 @@ export const register = async (
   return response.data;
 };
 
-export const login = async (email: string, password: string): Promise<void> => {
+export const login = async (identifier: string, password: string): Promise<void> => {
   const response = await axios.post(`${API_URL}/api/auth/login`, {
-    email,
+    email: identifier,
     password,
   });
 
