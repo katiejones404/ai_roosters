@@ -8,9 +8,11 @@ All SQL queries use parameterized statements to prevent injection.
 """
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional
 from uuid import UUID, uuid4
 from decimal import Decimal
+from datetime import datetime, timezone
 import math
 import logging
 
@@ -178,11 +180,15 @@ def add_or_update_position(
         raise
     
 def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quantity: float, price: float, realized_gain: Optional[float] = None, executed_at: Optional[str] = None) -> str:
+    if executed_at is None:
+        executed_at = datetime.now(timezone.utc)
+
     row = db.execute(text("""
-        INSERT INTO transactions (user_id, ticker, action, quantity, price, realized_gain, executed_at)
-        VALUES (:uid, :ticker, :action, :qty, :price, :gain, COALESCE(CAST(:executed_at AS timestamptz), now()))
+        INSERT INTO transactions (id, user_id, ticker, action, quantity, price, realized_gain, executed_at)
+        VALUES (:id, :uid, :ticker, :action, :qty, :price, :gain, :executed_at)
         RETURNING id
     """), {
+        "id": str(uuid4()),
         "uid": str(user_id),
         "ticker": ticker,
         "action": action,
@@ -244,11 +250,15 @@ def update_portfolio_item(
     return get_portfolio_item_by_ticker(db, user_id, ticker)
 
 def _get_latest_price(db: Session, ticker: str) -> Optional[float]:
-    row = db.execute(text("""
-        SELECT close FROM stocks
-        WHERE ticker = :ticker
-        ORDER BY date DESC LIMIT 1
-    """), {"ticker": ticker}).fetchone()
+    try:
+        row = db.execute(text("""
+            SELECT close FROM stocks
+            WHERE ticker = :ticker
+            ORDER BY date DESC LIMIT 1
+        """), {"ticker": ticker}).fetchone()
+    except SQLAlchemyError as exc:
+        logger.info("Latest price unavailable for %s; falling back to average price. error=%s", ticker, exc)
+        return None
     return float(row[0]) if row and row[0] is not None else None
 
 def remove_from_portfolio(db: Session, user_id: UUID, ticker: str) -> bool:
