@@ -324,9 +324,3 @@ News limits:
 - `NEWS_API_LIMIT_PER_PAGE`
 - `NEWS_MAX_ARTICLES_PER_TICKER`
 - `NEWS_LOOKBACK_HOURS`
-
-## Notes
-
-- Local `docker-compose.yml` intentionally keeps API article ingest off by default. Run docker-compose pipeline commands manually to ingest articles yourself.
-- Notification email delivery depends on both alert-level and user-level notification settings.
-- If pipeline behavior changes, update both this file and `.env.example`.
