@@ -868,38 +868,35 @@
             portfolio tracking and AI-powered news summaries.
           </p>
           <div class="card" style="padding: 0; overflow: hidden; border-radius: 16px;">
-            <!-- Replace the src below with your YouTube embed URL when the video is ready. -->
-            <!-- Example: src="https://www.youtube.com/embed/YOUR_VIDEO_ID" -->
             <div style="
               position: relative;
               width: 100%;
               padding-top: 56.25%;
               background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.05));
-              border: 1px dashed rgba(255,255,255,0.15);
               border-radius: 16px;
             ">
-              <div style="
+              <iframe
+                src="https://www.youtube.com/embed/aaCODOCKKi8"
+                title="StockSense Demo Video"
+                style="
                 position: absolute;
                 inset: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                gap: 1rem;
-                text-align: center;
-                padding: 2rem;
-              ">
-                <div style="font-size: 0.78rem; font-weight: 700; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.12em;">Final Demo Video</div>
-                <div class="play-btn" style="margin: 0;">
-                  <svg viewBox="0 0 24 24" width="32" height="32">
-                    <polygon points="5,3 19,12 5,21" fill="var(--green)" />
-                  </svg>
-                </div>
-                <div style="color: var(--text); font-weight: 600; font-size: 1.05rem;">Video coming soon</div>
-                <div style="color: var(--muted-2); font-size: 0.85rem; max-width: 420px;">The full walkthrough video will be embedded here via a Youtube Link by the final release deadline.</div>
-              </div>
+                width: 100%;
+                height: 100%;
+                border: 0;
+                border-radius: 16px;
+              "
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
             </div>
           </div>
+          <p style="margin-top: 0.85rem; color: var(--muted-2); font-size: 0.9rem;">
+            If the embedded video does not load locally,
+            <a href="https://youtu.be/aaCODOCKKi8" target="_blank" rel="noreferrer" style="color: var(--green); font-weight: 700;">
+              watch it on YouTube
+            </a>.
+          </p>
           <div style="margin-top: 1.5rem;">
             <a
               class="btn-primary"
