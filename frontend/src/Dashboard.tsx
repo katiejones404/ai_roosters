@@ -9,6 +9,7 @@ import "./app-header.css";
 import "./Stocks.css";
 import axios from "axios";
 import { TICKER_NAMES } from "./utils/stockNames";
+import { getWatchlist, addToWatchlist, removeFromWatchlist } from "./utils/auth";
 
 import AddToPortfolioModal from "./components/AddToPortfolio";
 import LoadingScreen from "./components/LoadingScreen";
@@ -200,11 +201,7 @@ const Dashboard: React.FC = () => {
   const [searchTicker, setSearchTicker] = useState("");
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-  // Watchlist addition
-  const [watchlist, setWatchlist] = useState<string[]>(() => {
-    const saved = localStorage.getItem("watchlist");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [watchlist, setWatchlist] = useState<string[]>([]);
 
   const [sortOption, setSortOption] = useState("default");
 
@@ -228,25 +225,24 @@ const Dashboard: React.FC = () => {
       setArticleSummary(null);
     }
   };
-  // Auto-load all stocks + summary on mount
   useEffect(() => {
     handleLoadAll();
     fetchArticleSummary();
+    getWatchlist().then(setWatchlist).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toggleWatchlist = (ticker: string) => {
-  let updated: string[];
-
-  if (watchlist.includes(ticker)) {
-    updated = watchlist.filter((t) => t !== ticker);
-  } else {
-    updated = [...watchlist, ticker];
-  }
-
-  setWatchlist(updated);
-  localStorage.setItem("watchlist", JSON.stringify(updated));
-};
+  const toggleWatchlist = async (ticker: string) => {
+    if (watchlist.includes(ticker)) {
+      setWatchlist((prev) => prev.filter((t) => t !== ticker));
+      try { await removeFromWatchlist(ticker); }
+      catch { setWatchlist((prev) => [...prev, ticker]); }
+    } else {
+      setWatchlist((prev) => [...prev, ticker]);
+      try { await addToWatchlist(ticker); }
+      catch { setWatchlist((prev) => prev.filter((t) => t !== ticker)); }
+    }
+  };
 
   const fetchLatestForTicker = async (ticker: string): Promise<StockCard | null> => {
     try {
@@ -427,6 +423,7 @@ const Dashboard: React.FC = () => {
           <p>Overview of your tracked stocks and sentiment predictions.
           
           Due to scale constraints for the Capstone project, we only have 40 stocks in our portfolio.</p>
+          <p>Click the star on a stock card to add or remove it from your watchlist.</p>
 
           {/* Article sentiment counts */}
           {articleSummary && (

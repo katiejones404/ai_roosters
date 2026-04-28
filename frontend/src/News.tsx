@@ -57,6 +57,11 @@ function formatDate(iso: string | null): string {
   });
 }
 
+function stripHtml(html: string | null): string | null {
+  if (!html) return html;
+  return html.replace(/<[^>]*>/g, "").replace(/&[a-z]+;/gi, " ").trim();
+}
+
 function sortArticlesNewestFirst(a: NewsArticle, b: NewsArticle): number {
   const aTime = a.published_at ? new Date(a.published_at).getTime() : 0;
   const bTime = b.published_at ? new Date(b.published_at).getTime() : 0;
@@ -73,6 +78,10 @@ function dedupeArticles(items: NewsArticle[]): NewsArticle[] {
   });
 }
 
+function cleanArticle(a: NewsArticle): NewsArticle {
+  return { ...a, title: stripHtml(a.title), description: stripHtml(a.description) };
+}
+
 export default function News() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [portfolioArticles, setPortfolioArticles] = useState<NewsArticle[]>([]);
@@ -81,7 +90,7 @@ export default function News() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [filter, setFilter] = useState<FilterMode>("portfolio");
+  const [filter, setFilter] = useState<FilterMode>("all");
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
@@ -122,13 +131,12 @@ export default function News() {
     const res = await axios.get<NewsArticle[]>(`${API_BASE}/api/articles`, {
       params: { ticker, limit: LIMIT, offset: newOffset },
     });
-
+    const cleaned = res.data.map(cleanArticle);
     if (replace) {
-      setArticles(res.data);
+      setArticles(cleaned);
     } else {
-      setArticles((prev) => [...prev, ...res.data]);
+      setArticles((prev) => dedupeArticles([...prev, ...cleaned]));
     }
-
     setHasMore(res.data.length === LIMIT);
   };
 
@@ -136,13 +144,12 @@ export default function News() {
     const res = await axios.get<NewsArticle[]>(`${API_BASE}/api/articles`, {
       params: { limit: LIMIT, offset: newOffset },
     });
-
+    const cleaned = dedupeArticles(res.data.map(cleanArticle));
     if (replace) {
-      setArticles(res.data);
+      setArticles(cleaned);
     } else {
-      setArticles((prev) => [...prev, ...res.data]);
+      setArticles((prev) => dedupeArticles([...prev, ...cleaned]));
     }
-
     setHasMore(res.data.length === LIMIT);
   };
 
@@ -170,7 +177,7 @@ export default function News() {
     );
 
     const merged = dedupeArticles(
-      responses.flatMap((response) => response.data)
+      responses.flatMap((response) => response.data.map(cleanArticle))
     ).sort(sortArticlesNewestFirst);
 
     setPortfolioArticles(merged);
@@ -237,8 +244,8 @@ export default function News() {
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           >
-            <option value="portfolio">Portfolio Holdings</option>
             <option value="all">All</option>
+            <option value="portfolio">Portfolio Holdings</option>
             {WEBSITE_TICKERS.map((t) => (
               <option key={t} value={t}>
                 {t}

@@ -14,9 +14,12 @@ from datetime import date
 from pydantic import BaseModel
 
 from app.db.main import get_db
+from app.core import cache
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
 RETURNS_START_DATE = "2020-01-01"
+_PRICE_TTL = 10 * 60   # 10 minutes — prices update every 15 min via Azure job
+_TICKER_TTL = 60 * 60  # 1 hour — ticker list never changes at runtime
 
 # ---------------------------------------------------------------------------
 # Pydantic models
@@ -101,29 +104,21 @@ def _build_date_clause(start_date: Optional[date], end_date: Optional[date], par
 
 @router.get("", response_model=List[StockSummary])
 def list_stocks(db: Session = Depends(get_db)):
-    """
-    Return distinct tickers from the stocks table.
-    Useful for dropdowns, dashboard filters, etc.
-    """
-    sql = text("""
-        SELECT DISTINCT ticker
-        FROM stocks
-        ORDER BY ticker
-    """)
+    cached = cache.get("stocks:list", _TICKER_TTL)
+    if cached is not None:
+        return cached
+    sql = text("SELECT DISTINCT ticker FROM stocks ORDER BY ticker")
     rows = db.execute(sql).mappings().all()
-    return [StockSummary(ticker=row["ticker"]) for row in rows]
+    result = [StockSummary(ticker=row["ticker"]) for row in rows]
+    cache.set("stocks:list", result)
+    return result
 
 
 @router.get("/latest", response_model=List[StockLatestRow])
 def get_all_latest_prices(db: Session = Depends(get_db)):
-    """
-    Return the single most-recent price row for every ticker in one query.
-
-    IMPORTANT:
-    - Computes return_1d and return_30d on-the-fly from price history using window functions.
-    - Uses adjusted_close when available, else close.
-    - Uses trading-row offsets (1 and ~21) rather than calendar days.
-    """
+    cached = cache.get("stocks:latest", _PRICE_TTL)
+    if cached is not None:
+        return cached
     sql = text("""
         WITH priced AS (
             SELECT
@@ -167,8 +162,7 @@ def get_all_latest_prices(db: Session = Depends(get_db)):
         ORDER BY ticker, date DESC
     """)
     rows = db.execute(sql, {"returns_start_date": RETURNS_START_DATE}).mappings().all()
-
-    return [
+    result = [
         StockLatestRow(
             ticker=row["ticker"],
             date=row["date"],
@@ -178,6 +172,8 @@ def get_all_latest_prices(db: Session = Depends(get_db)):
         )
         for row in rows
     ]
+    cache.set("stocks:latest", result)
+    return result
 
 
 @router.get("/{ticker}/prices", response_model=List[StockPriceRow])
@@ -197,6 +193,13 @@ def get_stock_prices(
     - Keeps ORDER BY date ASC for charts.
     """
     normalized_ticker = ticker.strip().upper()
+    # Only cache unfiltered full-history requests (no date params)
+    cache_key = f"stocks:prices:{normalized_ticker}" if not start_date and not end_date else None
+    if cache_key:
+        cached = cache.get(cache_key, _PRICE_TTL)
+        if cached is not None:
+            return cached
+
     params = {"ticker": normalized_ticker, "returns_start_date": RETURNS_START_DATE}
     date_clause = _build_date_clause(start_date, end_date, params)
 
@@ -258,7 +261,7 @@ def get_stock_prices(
     if not rows:
         raise HTTPException(status_code=404, detail="No price data found for this ticker")
 
-    return [
+    result = [
         StockPriceRow(
             ticker=row["ticker"],
             date=row["date"],
@@ -271,6 +274,9 @@ def get_stock_prices(
         )
         for row in rows
     ]
+    if cache_key:
+        cache.set(cache_key, result)
+    return result
 
 
 # ---------------------------------------------------------------------------
