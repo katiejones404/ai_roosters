@@ -111,18 +111,18 @@ This brings up:
 
 ### 3. Common manual commands
 
-```bash
+```powershell
 # run only API + DB
 docker compose up --build postgres api
 
-# run API tests (PowerShell helper)
-./run_testing.ps1
+# run backend API tests
+.\Testing\run_all_tests.cmd -Suite backend
 
-# run all tests (Python runner)
-python run_testing.py
+# run all default tests
+.\Testing\run_all_tests.cmd
 
 # run only stocks behavior tests
-python -m pytest Testing/Stocks/behavior/test_stocks_api.py -v
+docker compose exec api python -m pytest /app/Testing/Stocks/behavior/test_stocks_api.py -v -ra
 ```
 
 ### 4. Manual pipeline commands (from repo root)
