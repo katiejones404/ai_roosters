@@ -16,6 +16,12 @@ class FakeFetchResult:
     def fetchall(self) -> List[Dict[str, Any]]:
         return list(self._rows)
 
+    def mappings(self) -> "FakeFetchResult":
+        return self
+
+    def all(self) -> List[Dict[str, Any]]:
+        return list(self._rows)
+
 
 class FakeDB:
     """A minimal DB/session test double for sentiment endpoints."""

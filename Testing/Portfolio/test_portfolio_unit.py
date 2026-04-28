@@ -7,7 +7,7 @@ from datetime import datetime
 import sys
 sys.path.insert(0, '/app')
 
-from backend.app.services.portfolio import (
+from app.services.portfolio import (
     get_user_portfolio,
     get_portfolio_item_by_ticker,
     add_or_update_position,
@@ -15,7 +15,7 @@ from backend.app.services.portfolio import (
     remove_from_portfolio,
     get_portfolio_summary
 )
-from backend.app.schema.schemas import (
+from app.schema.schemas import (
     PortfolioCreateItem,
     PortfolioUpdateItem
 )
