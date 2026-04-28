@@ -111,6 +111,23 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
+    const handlePictureUpdate = (e: Event) => {
+      const { picture } = (e as CustomEvent<{ picture: string }>).detail;
+      setUser((prev) => (prev ? { ...prev, profile_picture: picture } : prev));
+    };
+    const handleProfileUpdate = (e: Event) => {
+      const detail = (e as CustomEvent<Partial<CurrentUser>>).detail;
+      setUser((prev) => (prev ? { ...prev, ...detail } : prev));
+    };
+    window.addEventListener("profilePictureUpdated", handlePictureUpdate);
+    window.addEventListener("userProfileUpdated", handleProfileUpdate);
+    return () => {
+      window.removeEventListener("profilePictureUpdated", handlePictureUpdate);
+      window.removeEventListener("userProfileUpdated", handleProfileUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
         dropdownRef.current &&
