@@ -4,6 +4,7 @@ Authentication API endpoints
 import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from datetime import timedelta, date
 from typing import Annotated
@@ -211,8 +212,18 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """Login user and return JWT token"""
-    # Find user
-    user = db.query(User).filter(User.email == user_data.email.lower()).first()
+    # The login field accepts either email or username for convenience.
+    login_identifier = user_data.email.strip().lower()
+    user = (
+        db.query(User)
+        .filter(
+            or_(
+                func.lower(User.email) == login_identifier,
+                func.lower(User.username) == login_identifier,
+            )
+        )
+        .first()
+    )
 
     if not user or not verify_password(user_data.password, user.password_hash):
         # --- Feature #3: Delay on failed login to slow brute-force attacks ---
