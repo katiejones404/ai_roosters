@@ -1,3 +1,4 @@
+"""SQLAlchemy ORM model for user trade transactions in StockSense."""
 import uuid
 from sqlalchemy import Column, String, Date, Numeric, ForeignKey, TIMESTAMP
 from sqlalchemy.sql import func
@@ -7,6 +8,7 @@ from app.db.types import GUID
 
 
 class Transaction(Base):
+    """Records a single buy or sell trade event for a user, including realized gain on sells."""
     __tablename__ = "transactions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)

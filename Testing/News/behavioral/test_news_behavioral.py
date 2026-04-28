@@ -1,3 +1,9 @@
+"""
+test_news_behavioral.py  -  BEHAVIORAL TESTS
+Behavioral API tests for the news endpoints.
+Uses an isolated FastAPI app with a fake in-memory route to verify article
+listing, sentiment summary, and response shape without touching a real database.
+"""
 from __future__ import annotations
 
 import uuid

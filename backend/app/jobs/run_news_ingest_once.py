@@ -1,3 +1,10 @@
+"""
+One-shot job entry point that ingests news from all configured sources and exits.
+
+Runs Marketaux, NewsAPI, AlphaVantage, and Guardian in sequence. Each source is
+skipped gracefully if its API key environment variable is not set.
+Intended to be executed by an Azure Container Apps Job on a cron schedule.
+"""
 import logging
 import os
 import sys
@@ -17,10 +24,12 @@ def _bootstrap_import_path() -> None:
 
 
 def _has_env(name: str) -> bool:
+    """Return True if the named environment variable is set to a non-empty value."""
     return bool((os.getenv(name) or "").strip())
 
 
 def main() -> None:
+    """Run news ingestion for each source whose API key is present in the environment."""
     logging.basicConfig(level=logging.INFO)
     _bootstrap_import_path()
 

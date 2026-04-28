@@ -1,3 +1,9 @@
+"""
+test_price_ingest.py  -  UNIT TESTS
+Unit tests for app.services.ingesting_pipelines.prices_ingest.
+Covers DB URL construction, PriceIngestor initialization, ticker resolution,
+and stock storage logic using mocked SQLAlchemy engines and tables.
+"""
 from unittest.mock import MagicMock
 import pandas as pd
 from sqlalchemy import MetaData, Table, Column, String, Date, Float, Integer

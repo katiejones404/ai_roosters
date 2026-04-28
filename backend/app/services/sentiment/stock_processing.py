@@ -1,3 +1,10 @@
+"""
+Stock return computation pipeline for StockSense.
+
+Loads price history from the stocks table, computes 1-day, 30-day, 120-day,
+and 360-day percentage returns per ticker, and writes them back to the database.
+Returns before 2020-01-01 are set to NULL by policy.
+"""
 import os
 import logging
 from typing import Optional, List

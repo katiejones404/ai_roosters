@@ -1,3 +1,8 @@
+"""
+test_sentiment_api_unit.py  -  UNIT TESTS
+Tests for the sentiment API functions: label_from_return, get_sentiment_indicators,
+and delete_ticker_indicators. Uses a fake in-memory DB session to avoid live DB calls.
+"""
 from __future__ import annotations
 
 import math

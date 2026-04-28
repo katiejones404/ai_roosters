@@ -1,6 +1,8 @@
 """
-Notes - Net worth calculation utilities and CRUD operations.
-Handles portfolio value, assets, liabilities, snapshots, and summary generation.
+Net worth service layer: calculation utilities and CRUD operations.
+
+Handles portfolio value lookups, manual asset and liability records, point-in-time
+net worth snapshots, and the combined net worth summary returned by the API.
 """
 
 from sqlalchemy.orm import Session
@@ -33,6 +35,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def safe_float(value, default=0.0):
+    """Safely convert a value to float, returning the default for None, NaN, or infinity."""
     if value is None:
         return None if default == 0.0 else default
     try:
@@ -45,6 +48,7 @@ def safe_float(value, default=0.0):
 
 
 def row_to_dict(row):
+    """Convert a SQLAlchemy Row or mapping to a plain dict."""
     if row is None:
         return None
     if hasattr(row, '_mapping'):
@@ -53,6 +57,7 @@ def row_to_dict(row):
 
 
 def safe_datetime_to_str(value):
+    """Convert a datetime object to an ISO-format string, or return the value unchanged if already a string."""
     if value is None:
         return None
     if isinstance(value, str):
@@ -67,6 +72,7 @@ def safe_datetime_to_str(value):
 # ---------------------------------------------------------------------------
 
 def _get_portfolio_value(db: Session, user_id: UUID) -> float:
+    """Calculate the current market value of all positions in a user's portfolio using the latest stock prices."""
     sql = text("""
         SELECT COALESCE(SUM(p.quantity * COALESCE(cp.close, p.avg_price)), 0) AS portfolio_value
         FROM portfolio p
@@ -91,6 +97,7 @@ def _get_portfolio_value(db: Session, user_id: UUID) -> float:
 # ---------------------------------------------------------------------------
 
 def get_summary(db: Session, user_id: UUID) -> NetworthSummary:
+    """Build a full net worth summary including portfolio market value, manual assets, liabilities, and totals."""
     portfolio_value = _get_portfolio_value(db, user_id)
 
     asset_rows = db.execute(
@@ -149,6 +156,7 @@ def get_summary(db: Session, user_id: UUID) -> NetworthSummary:
 # ---------------------------------------------------------------------------
 
 def get_history(db: Session, user_id: UUID, days: int = 30) -> List[NetworthSnapshotOut]:
+    """Return daily net worth snapshots for a user over the past N days, ordered chronologically."""
     cutoff = (date.today() - timedelta(days=days)).isoformat()
     rows = db.execute(
         text("""
@@ -174,6 +182,7 @@ def get_history(db: Session, user_id: UUID, days: int = 30) -> List[NetworthSnap
 
 
 def record_snapshot(db: Session, user_id: UUID) -> None:
+    """Save or update today's net worth snapshot for a user. Only one row per user per day is kept."""
     summary = get_summary(db, user_id)
     today = date.today().isoformat()
     db.execute(
@@ -206,6 +215,7 @@ def record_snapshot(db: Session, user_id: UUID) -> None:
 # ---------------------------------------------------------------------------
 
 def get_assets(db: Session, user_id: UUID) -> List[NetworthAssetOut]:
+    """Return all manual asset records for a user, ordered by creation date."""
     rows = db.execute(
         text("SELECT id, name, category, balance, updated_at FROM networth_assets WHERE user_id = :uid ORDER BY created_at ASC"),
         {"uid": str(user_id)},
@@ -224,6 +234,7 @@ def get_assets(db: Session, user_id: UUID) -> List[NetworthAssetOut]:
 
 
 def add_asset(db: Session, user_id: UUID, item: NetworthAssetCreate) -> NetworthAssetOut:
+    """Insert a new manual asset record for a user and return it."""
     new_id = str(uuid4())
     db.execute(
         text("INSERT INTO networth_assets (id, user_id, name, category, balance) VALUES (:id, :uid, :name, :cat, :bal)"),
@@ -234,6 +245,7 @@ def add_asset(db: Session, user_id: UUID, item: NetworthAssetCreate) -> Networth
 
 
 def update_asset(db: Session, user_id: UUID, asset_id: str, item: NetworthAssetUpdate) -> Optional[NetworthAssetOut]:
+    """Update name, category, or balance on an existing asset record. Returns None if the asset does not exist or belongs to another user."""
     fields, params = [], {"uid": str(user_id), "asset_id": asset_id}
     if item.name is not None:
         fields.append("name = :name"); params["name"] = item.name
@@ -266,6 +278,7 @@ def update_asset(db: Session, user_id: UUID, asset_id: str, item: NetworthAssetU
 
 
 def delete_asset(db: Session, user_id: UUID, asset_id: str) -> bool:
+    """Delete an asset record belonging to the user. Returns True if a row was deleted."""
     result = db.execute(
         text("DELETE FROM networth_assets WHERE id = :asset_id AND user_id = :uid"),
         {"asset_id": asset_id, "uid": str(user_id)},
@@ -279,6 +292,7 @@ def delete_asset(db: Session, user_id: UUID, asset_id: str) -> bool:
 # ---------------------------------------------------------------------------
 
 def get_liabilities(db: Session, user_id: UUID) -> List[NetworthLiabilityOut]:
+    """Return all liability records for a user, ordered by creation date."""
     rows = db.execute(
         text("SELECT id, name, category, balance, updated_at FROM networth_liabilities WHERE user_id = :uid ORDER BY created_at ASC"),
         {"uid": str(user_id)},
@@ -297,6 +311,7 @@ def get_liabilities(db: Session, user_id: UUID) -> List[NetworthLiabilityOut]:
 
 
 def add_liability(db: Session, user_id: UUID, item: NetworthLiabilityCreate) -> NetworthLiabilityOut:
+    """Insert a new liability record for a user and return it."""
     new_id = str(uuid4())
     db.execute(
         text("INSERT INTO networth_liabilities (id, user_id, name, category, balance) VALUES (:id, :uid, :name, :cat, :bal)"),
@@ -307,6 +322,7 @@ def add_liability(db: Session, user_id: UUID, item: NetworthLiabilityCreate) -> 
 
 
 def update_liability(db: Session, user_id: UUID, liability_id: str, item: NetworthLiabilityUpdate) -> Optional[NetworthLiabilityOut]:
+    """Update name, category, or balance on an existing liability record. Returns None if the liability does not exist or belongs to another user."""
     fields, params = [], {"uid": str(user_id), "lid": liability_id}
     if item.name is not None:
         fields.append("name = :name"); params["name"] = item.name
@@ -339,6 +355,7 @@ def update_liability(db: Session, user_id: UUID, liability_id: str, item: Networ
 
 
 def delete_liability(db: Session, user_id: UUID, liability_id: str) -> bool:
+    """Delete a liability record belonging to the user. Returns True if a row was deleted."""
     result = db.execute(
         text("DELETE FROM networth_liabilities WHERE id = :lid AND user_id = :uid"),
         {"lid": liability_id, "uid": str(user_id)},

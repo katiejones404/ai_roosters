@@ -1,5 +1,5 @@
 """
-Notes - Pydantic schemas for authentication, portfolio management, sentiment data,
+Pydantic schemas for authentication, portfolio management, sentiment data,
 and net worth tracking used throughout the StockSense backend.
 """
 

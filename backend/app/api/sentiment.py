@@ -1,10 +1,9 @@
 """
-Notes - FastAPI routes for stock sentiment data and GPT‑generated news summaries.
-Provides:
-  • Latest sentiment indicators (30d/120d/360d)
-  • News explanation windows (7d/30d)
-  • Combined stock overview endpoint
-  • Delete utilities for sentiment and news records
+FastAPI routes for stock sentiment data and GPT-generated news summaries.
+
+Provides the latest FinBERT-derived sentiment indicators per ticker (30d/120d/360d),
+GPT news explanation windows (7d/30d), a combined stock overview endpoint, and
+admin delete utilities for sentiment and news records.
 """
 
 from fastapi import APIRouter, Depends, Query
@@ -79,6 +78,7 @@ class StockOverviewOut(BaseModel):
 
 
 def label_from_return(value: Optional[float]) -> SentimentLabel:
+    """Convert a decimal return value to a bullish/neutral/bearish label using a 2% threshold."""
     if value is None:
         return "neutral"
     try:
@@ -95,6 +95,7 @@ def label_from_return(value: Optional[float]) -> SentimentLabel:
 
 
 def sort_by_website_order(rows: List[dict]) -> List[dict]:
+    """Sort rows to match the canonical WEBSITE_TICKERS display order, with unknown tickers sorted last alphabetically."""
     return sorted(rows, key=lambda row: (TICKER_ORDER.get(row["ticker"], 10_000), row["ticker"]))
 
 
@@ -103,6 +104,7 @@ def get_sentiment_indicators(
     ticker: Optional[str] = Query(None, description="If provided, filter by ticker"),
     db: Session = Depends(get_db),
 ):
+    """Return the most recent sentiment snapshot indicators for all tracked tickers, or a single ticker if specified."""
     where_clauses = [f"UPPER(ticker) IN ({TICKER_SQL_LIST})"]
     params = {}
     if ticker:
@@ -152,6 +154,7 @@ def get_news_explanations(
     ticker: Optional[str] = Query(None, description="If provided, filter by ticker"),
     db: Session = Depends(get_db),
 ):
+    """Return GPT-generated news summary windows (7-day and 30-day) for all tracked tickers, or a single ticker if specified."""
     where_clauses = [f"UPPER(ticker) IN ({TICKER_SQL_LIST})", "window_days IN (7, 30)"]
     params = {}
     if ticker:
@@ -234,6 +237,7 @@ def get_stock_overview(
     ticker: Optional[str] = Query(None, description="If provided, filter by ticker"),
     db: Session = Depends(get_db),
 ):
+    """Return a combined view of sentiment indicators and news explanations for all tracked tickers."""
     indicator_rows = get_sentiment_indicators(ticker=ticker, db=db)
     explanation_rows = get_news_explanations(ticker=ticker, db=db)
     explanation_map = {row.ticker: row for row in explanation_rows}
@@ -271,6 +275,7 @@ def get_stock_overview(
 
 @router.delete("/indicators/{ticker}")
 def delete_ticker_indicators(ticker: str, db: Session = Depends(get_db)):
+    """Delete all sentiment snapshot rows for a given ticker."""
     sql = text("DELETE FROM sentiment_snapshots WHERE ticker = :ticker")
     result = db.execute(sql, {"ticker": ticker})
     db.commit()
@@ -279,6 +284,7 @@ def delete_ticker_indicators(ticker: str, db: Session = Depends(get_db)):
 
 @router.delete("/news-explanations/{ticker}")
 def delete_ticker_news_explanations(ticker: str, db: Session = Depends(get_db)):
+    """Delete all GPT news summary rows for a given ticker."""
     sql = text("DELETE FROM stock_news_summaries WHERE ticker = :ticker")
     result = db.execute(sql, {"ticker": ticker})
     db.commit()

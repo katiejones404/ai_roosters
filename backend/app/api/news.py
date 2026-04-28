@@ -25,6 +25,7 @@ class ArticleSentimentSummary(BaseModel):
     unknown: int
 
 def _normalize_sentiment_label(raw: Optional[str]) -> str:
+    """Map raw sentiment label variants (pos, positive, neg, negative, etc.) to a consistent string."""
     if not raw: return "unknown"
     s = raw.strip().lower()
     if s in {"pos", "positive"}: return "positive"
@@ -37,6 +38,7 @@ def get_article_sentiment_summary(
     start: Optional[str] = Query(default=None),
     end: Optional[str] = Query(default=None),
 ) -> ArticleSentimentSummary:
+    """Return aggregate sentiment counts (positive, negative, neutral, unknown) across all articles, with optional date filtering."""
     where = []
     params: Dict[str, object] = {}
     if start:
@@ -74,6 +76,7 @@ def get_news_articles(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> List[NewsArticleOut]:
+    """Return a paginated list of news articles, optionally filtered by ticker symbol."""
     query = db.query(StockNewsArticle)
     if ticker:
         query = query.filter(StockNewsArticle.ticker == ticker.strip().upper())
