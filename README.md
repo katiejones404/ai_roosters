@@ -147,6 +147,83 @@ docker compose --profile pipeline run --rm pipeline python -m app.services.senti
 docker compose --profile pipeline run --rm pipeline python -m app.services.sentiment.aggregator
 ```
 
+## Testing
+
+All tests live under the `Testing/` directory.
+
+Unit test files match the pattern: `Testing/*/unit/test_*.py` and `Testing/Alerts/test_*_unit.py`
+
+Behavioral test files match the pattern: `Testing/*/behavioral/test_*.py` and `Testing/Stocks/behavior/test_*.py`
+
+Sentiment BDD tests use Behave and live in: `Testing/Sentiment/behavioral/`
+
+### Run all tests (recommended, requires Docker)
+
+```powershell
+.\Testing\run_all_tests.cmd
+```
+
+### Run only unit tests (no Docker required)
+
+```powershell
+.\Testing\run_all_tests.cmd -Suite unit -Mode local
+```
+
+### Run only behavioral tests (requires Docker running)
+
+```powershell
+.\Testing\run_all_tests.cmd -Suite behavioral
+```
+
+### Run unit tests manually (from repo root, no Docker)
+
+```bash
+cd backend
+python -m pytest \
+  ../Testing/Alerts/test_alerts_logic_unit.py \
+  ../Testing/Alerts/test_alert_scheduler_unit.py \
+  ../Testing/Email/unit/test_email_service_unit.py \
+  ../Testing/News/unit/test_news_unit.py \
+  ../Testing/Networth/unit/test_networth_unit.py \
+  ../Testing/Portfolio/unit/test_portfolio_service_unit.py \
+  ../Testing/Sentiment/unit/test_sentiment_logic_unit.py \
+  ../Testing/Stocks/unit/test_price_ingest.py \
+  ../Testing/User/unit/test_security_unit.py \
+  ../Testing/User/unit/test_user_model.py \
+  -v
+```
+
+### Run behavioral tests manually (requires Docker running)
+
+```bash
+docker compose up -d
+docker compose exec api python -m pytest \
+  ./Testing/Alerts/behavioral/test_alerts_behavioral.py \
+  ./Testing/Email/behavioral/test_email_behavioral.py \
+  ./Testing/Networth/behavioral/test_networth_behavioral.py \
+  ./Testing/News/behavioral/test_news_behavioral.py \
+  ./Testing/Portfolio/behavioral/test_portfolio_behavioral.py \
+  ./Testing/User/behavioral/test_auth_endpoints.py \
+  ./Testing/Stocks/behavior/test_stocks_api.py \
+  -v
+```
+
+### Run sentiment BDD tests (requires Docker running)
+
+```bash
+docker compose exec api python -m behave /app/Testing/Sentiment/behavioral
+```
+
+### Run a single test file
+
+```bash
+# unit (local, from backend/)
+python -m pytest ../Testing/Stocks/unit/test_price_ingest.py -v
+
+# behavioral (Docker)
+docker compose exec api python -m pytest ./Testing/Stocks/behavior/test_stocks_api.py -v
+```
+
 ## Scheduler/Startup Behavior (Important)
 
 - API startup jobs are controlled by:
