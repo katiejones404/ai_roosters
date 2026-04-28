@@ -14,6 +14,7 @@ export const getToken = (): string | null => {
 
 export const setToken = (token: string): void => {
   localStorage.setItem("token", token);
+  localStorage.removeItem("watchlist");
 };
 
 export const removeToken = (): void => {
@@ -147,6 +148,19 @@ export const updateNotificationPreferences = async (
     },
   );
   return response.data;
+};
+
+export const getWatchlist = async (): Promise<string[]> => {
+  const response = await axios.get(`${API_URL}/api/watchlist`);
+  return response.data.tickers;
+};
+
+export const addToWatchlist = async (ticker: string): Promise<void> => {
+  await axios.post(`${API_URL}/api/watchlist/${encodeURIComponent(ticker)}`);
+};
+
+export const removeFromWatchlist = async (ticker: string): Promise<void> => {
+  await axios.delete(`${API_URL}/api/watchlist/${encodeURIComponent(ticker)}`);
 };
 
 axios.interceptors.request.use(

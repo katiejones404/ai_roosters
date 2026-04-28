@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 from app.api.auth import get_current_user
 from app.db.main import get_db
-from app.models.models import Portfolio, StockNewsArticle, User
+from app.models.models import StockNewsArticle, User
 
 router = APIRouter()
 
@@ -74,12 +74,21 @@ def get_news_articles(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> List[NewsArticleOut]:
-    held_tickers = [row[0].upper() for row in db.query(Portfolio.ticker).filter(Portfolio.user_id == current_user.id).distinct().all() if row[0]]
-    if not held_tickers: return []
-    query = db.query(StockNewsArticle).filter(StockNewsArticle.ticker.in_(held_tickers))
+    query = db.query(StockNewsArticle)
     if ticker:
-        normalized_ticker = ticker.upper()
-        if normalized_ticker not in held_tickers: return []
-        query = query.filter(StockNewsArticle.ticker == normalized_ticker)
+        query = query.filter(StockNewsArticle.ticker == ticker.strip().upper())
     rows = query.order_by(StockNewsArticle.published_at.desc().nulls_last()).offset(offset).limit(limit).all()
-    return [NewsArticleOut(id=str(row.id), ticker=row.ticker, url=row.url, title=row.title, source=row.source, description=row.description, image_url=row.image_url, published_at=row.published_at.isoformat() if row.published_at else None, relevance_score=float(row.relevance_score) if row.relevance_score is not None else None) for row in rows]
+    return [
+        NewsArticleOut(
+            id=str(row.id),
+            ticker=row.ticker,
+            url=row.url,
+            title=row.title,
+            source=row.source,
+            description=row.description,
+            image_url=row.image_url,
+            published_at=row.published_at.isoformat() if row.published_at else None,
+            relevance_score=float(row.relevance_score) if row.relevance_score is not None else None,
+        )
+        for row in rows
+    ]

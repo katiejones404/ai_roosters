@@ -312,7 +312,7 @@ export default function StockComparison() {
             </div>
 
             <div className="comparison-panel">
-              <h3>Selected Stocks</h3>
+              <h3>Selected Stocks (Miminum 2)</h3>
               {selectedTickers.length === 0 ? (
                 <p className="comparison-muted">Choose at least two stocks.</p>
               ) : (

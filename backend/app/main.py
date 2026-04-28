@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text as sa_text
 
-from app.api import auth, sentiment, portfolio, news, stocks, alerts as alerts_router, networth
+from app.api import auth, sentiment, portfolio, news, stocks, alerts as alerts_router, networth, watchlist as watchlist_router
 from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
 from app.services.alert_scheduler import run_alert_checks
 from app.db_init import init_db
@@ -80,6 +80,7 @@ app.include_router(portfolio.router, prefix="/api")
 app.include_router(news.router, prefix="/api")
 app.include_router(alerts_router.router, prefix="/api/alerts")
 app.include_router(networth.router, prefix="/api")
+app.include_router(watchlist_router.router, prefix="/api")
 from app.stock_proxy import router as proxy_router   
 app.include_router(proxy_router)                     
 
@@ -160,8 +161,20 @@ def ingest_stock_prices_on_startup():
             _conn.execute(sa_text(
                 "ALTER TABLE users DROP COLUMN IF EXISTS notify_weekly_report_enabled"
             ))
+            _conn.execute(sa_text("""
+                CREATE TABLE IF NOT EXISTS watchlist (
+                    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    ticker text NOT NULL,
+                    created_at timestamptz DEFAULT now(),
+                    UNIQUE (user_id, ticker)
+                )
+            """))
+            _conn.execute(sa_text(
+                "CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist (user_id)"
+            ))
         _mig_engine.dispose()
-        logger.info("Migration: price_alerts table and notification columns ensured.")
+        logger.info("Migration: price_alerts table, notification columns, and watchlist table ensured.")
     except Exception as e:
         logger.warning(f"Notification migrations skipped: {e}")
 
