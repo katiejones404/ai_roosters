@@ -25,6 +25,7 @@ def get_watchlist(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Return all tickers in the authenticated user's watchlist, ordered by when they were added."""
     rows = db.execute(
         text("SELECT ticker FROM watchlist WHERE user_id = :uid ORDER BY created_at ASC"),
         {"uid": current_user.id},
@@ -38,6 +39,7 @@ def add_to_watchlist(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Add a ticker to the authenticated user's watchlist. Silently ignores duplicates."""
     normalized = ticker.strip().upper()
     db.execute(
         text("""
@@ -57,6 +59,7 @@ def remove_from_watchlist(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Remove a ticker from the authenticated user's watchlist. Returns 404 if not found."""
     normalized = ticker.strip().upper()
     result = db.execute(
         text("DELETE FROM watchlist WHERE user_id = :uid AND ticker = :ticker"),

@@ -1,3 +1,11 @@
+"""
+GPT-powered news summary generator for StockSense.
+
+Reads recent articles from stock_news_articles for each tracked ticker, builds a
+prompt from the article metadata, calls a chat completion API (OpenAI-compatible),
+and upserts the resulting plain-text paragraph into stock_news_summaries. Summaries
+are generated per ticker per configurable time window (default: 7 and 30 days).
+"""
 from __future__ import annotations
 
 import os

@@ -1,6 +1,9 @@
 """
-Notes - Email utilities for StockSense.
-Handles price alert emails and password reset messages using SMTP settings.
+Email utilities for StockSense.
+
+Sends price alert notification emails and password reset emails via SMTP.
+Reads connection settings from SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
+and ALERT_FROM_EMAIL environment variables.
 """
 
 import os
@@ -17,6 +20,7 @@ def send_price_alert_email(
     target_price: float,
     current_price: float,
 ) -> None:
+    """Send an HTML email notifying a user that their price alert for a ticker has been triggered."""
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_user = os.getenv("SMTP_USER", "")

@@ -1,5 +1,5 @@
 """
-Notes - Proxy endpoint for fetching historical stock price data from Yahoo Finance.
+Proxy endpoint for fetching historical stock price data from Yahoo Finance.
 Forwards ticker, date range, and interval to Yahoo’s chart API and returns the raw JSON.
 """
 
@@ -15,6 +15,7 @@ async def stock_history(
     period2: int = Query(...),
     interval: str = Query(default="1mo"),
 ):
+    """Proxy a Yahoo Finance chart request and return the raw JSON response."""
     url = (
         f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker.upper()}"
         f"?period1={period1}&period2={period2}&interval={interval}"

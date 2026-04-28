@@ -1,5 +1,9 @@
 """
-Authentication API endpoints
+Authentication API endpoints for StockSense.
+
+Handles user registration, login, logout, profile management, password reset,
+daily streak tracking, and notification preferences. All protected routes
+require a valid JWT token issued at login.
 """
 import os
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -68,6 +72,7 @@ token_blacklist: set[str] = set()
 
 
 def _normalize_visit_days(raw: str | None) -> list[str]:
+    """Parse the JSON-encoded visit-day list stored on the user record into a plain list of date strings."""
     if not raw:
         return []
     try:
@@ -80,6 +85,7 @@ def _normalize_visit_days(raw: str | None) -> list[str]:
 
 
 def _serialize_streak(current_user: User) -> StreakResponse:
+    """Compute and update the user's daily login streak, then return the current streak data."""
     today = date.today()
     today_s = today.isoformat()
 
@@ -127,6 +133,7 @@ def _serialize_streak(current_user: User) -> StreakResponse:
 
 
 def _serialize_notification_preferences(current_user: User) -> NotificationPreferencesResponse:
+    """Build a notification preferences response from the user's stored column values."""
     return NotificationPreferencesResponse(
         marketAlerts=bool(
             True if current_user.notify_market_alerts_enabled is None else current_user.notify_market_alerts_enabled

@@ -1,3 +1,10 @@
+"""
+Marketaux daily news ingestion pipeline for StockSense.
+
+Fetches recent stock news articles from the Marketaux API for all tracked tickers
+and upserts them into the stock_news_articles table. Rate limits and article caps
+are configurable via environment variables to stay within free-tier quotas.
+"""
 from __future__ import annotations
 
 import os
@@ -106,7 +113,10 @@ def dedupe_keep_order(values: List[str]) -> List[str]:
 
 
 class StockNewsIngestor:
+    """Fetches and stores recent news articles from Marketaux for all tracked stock tickers."""
+
     def __init__(self, db_url: Optional[str] = None):
+        """Connect to the database, validate required tables, and read the Marketaux API token."""
         if db_url is None:
             db_url = build_db_url()
 
@@ -136,6 +146,7 @@ class StockNewsIngestor:
             )
 
     def resolve_target_tickers(self) -> List[str]:
+        """Return the ticker list to ingest, using the NEWS_SYMBOLS env override if set, otherwise the default universe."""
         # Optional override if you ever want to test a smaller subset
         env_symbols = (os.getenv("NEWS_SYMBOLS") or "").strip()
         if env_symbols:
@@ -148,6 +159,7 @@ class StockNewsIngestor:
         return TARGET_TICKERS.copy()
 
     def get_last_published_at_for_ticker(self, ticker: str) -> Optional[datetime]:
+        """Return the most recently stored article publication time for a ticker, or None if no articles exist."""
         stmt = (
             select(func.max(self.stock_news_articles.c.published_at))
             .where(self.stock_news_articles.c.ticker == ticker)
@@ -164,6 +176,7 @@ class StockNewsIngestor:
         lookback_hours: int,
         overlap_minutes: int,
     ) -> datetime:
+        """Determine the earliest publication timestamp to request for a ticker, respecting the configured lookback floor."""
         floor_dt = utc_now() - timedelta(hours=lookback_hours)
         last_dt = self.get_last_published_at_for_ticker(ticker)
 
@@ -206,6 +219,7 @@ class StockNewsIngestor:
         symbol: str,
         item: Dict[str, Any],
     ) -> Optional[Dict[str, Any]]:
+        """Extract and normalize a single Marketaux article payload into a dict ready for database insertion."""
         url = clean_text(item.get("url"))
         if not url:
             return None
@@ -239,6 +253,7 @@ class StockNewsIngestor:
         }
 
     def _store_articles(self, records: List[Dict[str, Any]]) -> int:
+        """Upsert a batch of normalized article records into stock_news_articles and return the count written."""
         if not records:
             return 0
 
@@ -277,6 +292,7 @@ class StockNewsIngestor:
         flush_batch_size: int = 100,
         language: str = "en",
     ) -> None:
+        """Fetch and store recent news for each ticker from Marketaux, flushing to the DB in batches."""
         if tickers is None:
             tickers = self.resolve_target_tickers()
 

@@ -1,3 +1,10 @@
+"""
+Stock price ingestion pipeline for StockSense.
+
+Fetches OHLCV price data from Yahoo Finance (yfinance) for all tracked tickers
+and upserts it into the stocks table. Supports full-history, date-range, and
+incremental ingest modes controlled by environment variables.
+"""
 from __future__ import annotations
 
 import os
@@ -36,6 +43,7 @@ WEBSITE_TICKERS = [
 
 
 def build_db_url() -> str:
+    """Construct the database URL from DATABASE_URL env var or individual PG_* component variables."""
     db_url = os.getenv("DATABASE_URL")
     if db_url:
         return db_url
@@ -50,6 +58,7 @@ def build_db_url() -> str:
 
 
 def dedupe_keep_order(values: List[str]) -> List[str]:
+    """Remove duplicate strings from a list while preserving the original order."""
     seen = set()
     out: List[str] = []
     for v in values:
@@ -60,7 +69,10 @@ def dedupe_keep_order(values: List[str]) -> List[str]:
 
 
 class PriceIngestor:
+    """Fetches stock price data from Yahoo Finance and writes it to the stocks table."""
+
     def __init__(self, db_url: Optional[str] = None):
+        """Connect to the database and reflect the stocks table schema."""
         if db_url is None:
             db_url = build_db_url()
 
@@ -80,6 +92,7 @@ class PriceIngestor:
         logger.info("Successfully reflected 'stocks' table.")
 
     def resolve_target_tickers(self) -> List[str]:
+        """Return the list of tickers to ingest, using the PRICE_TICKERS env override if set, otherwise the default universe."""
         raw = (os.getenv("PRICE_TICKERS") or "").strip()
         if raw:
             tickers = [x.strip().upper() for x in raw.split(",") if x.strip()]
@@ -220,6 +233,7 @@ class PriceIngestor:
     # ------------------------------------------------------------
 
     def store_prices(self, df: pd.DataFrame, update_existing: bool = False) -> None:
+        """Upsert a DataFrame of OHLCV rows into the stocks table in batches of 500 rows."""
         if df.empty:
             logger.warning("No data to store (DataFrame is empty).")
             return
@@ -275,6 +289,7 @@ class PriceIngestor:
         update_existing: bool = False,
         use_article_window_if_missing: bool = True,
     ) -> None:
+        """Fetch and store price data for a list of tickers, resolving the date window automatically if not provided."""
         if period and not start_date and not end_date:
             logger.info(f"Price ingest using period={period}")
         else:

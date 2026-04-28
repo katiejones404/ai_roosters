@@ -123,6 +123,7 @@ def get_portfolio_item_by_ticker(
 def add_or_update_position(
     db: Session, user_id: UUID, item: PortfolioCreateItem
 ) -> PortfolioItem:
+    """Insert a new portfolio position or merge additional shares into an existing one using a weighted average price."""
     logger.info(f"add_or_update_position called: user={user_id}, ticker={item.ticker}, qty={item.quantity}, price={item.avg_price}")
     
     try:
@@ -180,6 +181,7 @@ def add_or_update_position(
         raise
     
 def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quantity: float, price: float, realized_gain: Optional[float] = None, executed_at: Optional[str] = None) -> str:
+    """Insert a buy or sell transaction record and return the new transaction ID."""
     if executed_at is None:
         executed_at = datetime.now(timezone.utc)
 
@@ -213,6 +215,7 @@ def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quant
 def update_portfolio_item(
     db: Session, user_id: UUID, ticker: str, item: PortfolioUpdateItem
 ) -> Optional[PortfolioItem]:
+    """Update quantity or average price for an existing portfolio position, logging a sell transaction if shares were reduced."""
     existing = get_portfolio_item_by_ticker(db, user_id, ticker)
     if not existing:
         return None
@@ -250,6 +253,7 @@ def update_portfolio_item(
     return get_portfolio_item_by_ticker(db, user_id, ticker)
 
 def _get_latest_price(db: Session, ticker: str) -> Optional[float]:
+    """Fetch the most recent closing price for a ticker from the stocks table."""
     try:
         row = db.execute(text("""
             SELECT close FROM stocks
@@ -262,6 +266,7 @@ def _get_latest_price(db: Session, ticker: str) -> Optional[float]:
     return float(row[0]) if row and row[0] is not None else None
 
 def remove_from_portfolio(db: Session, user_id: UUID, ticker: str) -> bool:
+    """Remove a ticker position from the portfolio and log the full sell with realized gain."""
     existing = get_portfolio_item_by_ticker(db, user_id, ticker)
     if existing:
         sell_price = _get_latest_price(db, ticker) or existing.avg_price
@@ -550,6 +555,7 @@ def get_portfolio_summary(
     )
 
 def get_transactions(db: Session, user_id: UUID) -> List[dict]:
+    """Return all buy and sell transactions for a user, ordered by most recent first."""
     rows = db.execute(text("""
         SELECT id, ticker, action, quantity, price, realized_gain, executed_at
         FROM transactions
@@ -570,6 +576,7 @@ def get_transactions(db: Session, user_id: UUID) -> List[dict]:
     ]
 
 def get_realized_summary(db: Session, user_id: UUID) -> List[dict]:
+    """Return per-ticker realized gain totals and sell counts for a user, sorted by total realized gain descending."""
     row = db.execute(
         text("""
             SELECT 

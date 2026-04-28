@@ -1,3 +1,8 @@
+"""
+test_stocks_api.py  -  BEHAVIORAL TESTS
+End-to-end API tests for the stocks endpoints using an in-memory SQLite database.
+Covers stock listing, price history retrieval, and the 2020-01-01 return cutoff policy.
+"""
 from sqlalchemy import text
 from app.api.stocks import router
 

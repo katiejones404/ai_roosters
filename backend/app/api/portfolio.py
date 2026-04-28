@@ -98,17 +98,19 @@ async def get_portfolio_summary(current_user: User = Depends(get_current_user), 
 
 @router.get("/transactions", response_model=List[TransactionItem])
 async def get_transactions(
-    current_user: User = Depends(get_current_user), 
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Return all buy and sell transaction history for the authenticated user, newest first."""
     return portfolio.get_transactions(db, current_user.id)
 
 
 @router.get("/transactions/summary")
 async def get_realized_summary(
-    current_user: User = Depends(get_current_user), 
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Return per-ticker realized gain totals and sell counts for the authenticated user."""
     return portfolio.get_realized_summary(db, current_user.id)
 
 

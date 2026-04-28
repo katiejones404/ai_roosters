@@ -1,3 +1,11 @@
+"""
+HuggingFace historical news ingestion pipeline for StockSense.
+
+Loads financial news articles from HuggingFace datasets (Yahoo Finance, Reddit,
+NYT, CNBC, Benzinga, and others) and upserts them into the articles table.
+Used for bulk historical backfill on first deploy; ongoing news comes from the
+four live API sources (Marketaux, NewsAPI, AlphaVantage, The Guardian).
+"""
 from __future__ import annotations
 
 import os
