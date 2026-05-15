@@ -117,6 +117,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#94a3b8",
 };
 
+const MAX_BALANCE = 999_999_999_999;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -327,6 +329,11 @@ const NetWorth = () => {
       setFormError("Enter a valid balance.");
       return;
     }
+
+    if (balance > MAX_BALANCE) {
+      setFormError("Balance cannot exceed $999,999,999,999.");
+      return;
+    }
     setSubmitting(true);
     setFormError(null);
     try {
@@ -425,8 +432,8 @@ const NetWorth = () => {
         doc.text(`Total Assets: ${formatCurrency(s.total_assets)}`, 14, 64);
         doc.text(`Total Liabilities: ${formatCurrency(s.total_liabilities)}`, 14, 72);
         const assetRows = [
-            ['Stock Portfolio', 'Portfolio', `$${s.portfolio_value.toFixed(2)}`],
-            ...s.assets.map(a => [a.name, CATEGORY_LABELS[a.category] || a.category, `$${a.balance.toFixed(2)}`]),
+            ['Stock Portfolio', 'Portfolio', formatCurrency(s.portfolio_value)],
+            ...s.assets.map(a => [a.name, CATEGORY_LABELS[a.category] || a.category, formatCurrency(a.balance)]),
         ];
         autoTable(doc, {
             head: [['Asset', 'Category', 'Balance']],
@@ -439,7 +446,7 @@ const NetWorth = () => {
             const finalY = (doc as any).lastAutoTable.finalY + 10;
             autoTable(doc, {
                 head: [['Liability', 'Category', 'Balance']],
-                body: s.liabilities.map(l => [l.name, CATEGORY_LABELS[l.category] || l.category, `$${l.balance.toFixed(2)}`]),
+                body: s.liabilities.map(l => [l.name, CATEGORY_LABELS[l.category] || l.category, formatCurrency(l.balance)]),
                 startY: finalY,
                 styles: { fontSize: 9 },
                 headStyles: { fillColor: [239, 68, 68] },
@@ -830,11 +837,19 @@ const NetWorth = () => {
                 className="modal-input"
                 type="number"
                 min="0"
+                max="999999999999"
                 step="0.01"
                 placeholder="e.g. 5000"
                 value={formBalance}
                 onChange={(e) => {
-                  setFormBalance(e.target.value);
+                  const value = e.target.value;
+
+                  if (value && parseFloat(value) > MAX_BALANCE) {
+                    setFormError("Max allowed is $999,999,999,999.");
+                    return;
+                  }
+
+                  setFormBalance(value);
                   setFormError(null);
                 }}
                 onKeyDown={(e) => e.key === "Enter" && handleModalSubmit()}

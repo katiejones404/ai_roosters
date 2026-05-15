@@ -1,5 +1,5 @@
 """
-Notes - Database initialization script.
+Database initialization script.
 Loads the SQL schema file and executes all CREATE statements using DATABASE_URL.
 Used for setting up tables during local or containerized development.
 """
@@ -36,6 +36,7 @@ def load_sql_script() -> str:
 
 
 def init_db():
+    """Connect to the database and execute all DDL statements from the SQL init script."""
     db_url = get_database_url()
     print(f"[db_init] Using DATABASE_URL = {db_url}")
 

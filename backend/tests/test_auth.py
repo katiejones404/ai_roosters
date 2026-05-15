@@ -9,6 +9,8 @@ and the forgot-password flow. All tests run against an in-memory SQLite database
 """
 import pytest
 
+from app.api import auth as auth_module
+
 
 REGISTER_URL = "/api/auth/register"
 LOGIN_URL = "/api/auth/login"

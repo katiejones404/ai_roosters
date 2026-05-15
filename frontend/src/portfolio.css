@@ -29,10 +29,14 @@
 }
 
 .summary-stat-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1.5rem 2rem;
   display: flex;
   align-items: flex-start;
   gap: 1rem;
@@ -43,18 +47,30 @@
 .summary-stat-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
   border-color: rgba(16, 185, 129, 0.3);
 }
 
 .summary-stat-card.positive {
   border-color: rgba(16, 185, 129, 0.3);
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.08) 0%,
+    rgba(16, 185, 129, 0.02) 100%
+  );
 }
 
 .summary-stat-card.negative {
   border-color: rgba(239, 68, 68, 0.3);
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.08) 0%,
+    rgba(239, 68, 68, 0.02) 100%
+  );
 }
 
 .stat-icon {
@@ -76,10 +92,12 @@
 }
 
 .stat-valueP {
-  font-size: 1.75rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: #e2e8f0;
   line-height: 1.2;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .stat-value.positive {
@@ -121,7 +139,11 @@
 .empty-portfolio {
   text-align: center;
   padding: 4rem 2rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   backdrop-filter: blur(10px);
@@ -167,7 +189,11 @@
 
 /* Holding Card */
 .holding-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 1.5rem;
@@ -178,7 +204,11 @@
 .holding-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
   border-color: rgba(16, 185, 129, 0.3);
 }
 
@@ -414,7 +444,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .portfolio-loading p {
@@ -671,6 +703,84 @@
   font-weight: 600;
 }
 
+/* Transaction delete button */
+.tx-delete-cell {
+  width: 1px;
+  padding: 0.5rem 0.75rem !important;
+  text-align: center;
+}
+
+.tx-delete-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s;
+  opacity: 0;
+}
+
+.comparison-table tbody tr:hover .tx-delete-btn {
+  opacity: 1;
+}
+
+.tx-delete-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Delete confirmation modal text */
+.tx-confirm-text {
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  margin: 0 0 0.75rem;
+}
+
+.tx-confirm-details {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  margin-bottom: 0.75rem;
+}
+
+.tx-confirm-warning {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.tx-confirm-delete-btn {
+  flex: 1;
+  padding: 0.7rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.tx-confirm-delete-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.tx-confirm-delete-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Portfolio card override (wider than homepage card) */
 .portfolio-card {
   max-width: 1400px !important;
@@ -698,8 +808,12 @@
 
 /* ── Trending widget ── */
 .trending-widget {
-  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 1.25rem 1.25rem 0.75rem;
   backdrop-filter: blur(10px);
@@ -714,8 +828,12 @@
 
 /* ── Comparison chart section ── */
 .comparison-chart-section {
-  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 1.25rem;
   backdrop-filter: blur(10px);
@@ -742,8 +860,8 @@
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
   color: #94a3b8;
   cursor: pointer;
   transition: all 0.15s;
@@ -845,7 +963,6 @@
   color: #ffffff;
   border: none;
 
-
   border-radius: 10px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -901,7 +1018,6 @@
   border-color: rgba(255, 255, 255, 0.25);
   color: rgba(255, 255, 255, 0.8);
   transform: translateY(-1px);
-
 }
 
 /* Empty portfolio onboarding buttons */

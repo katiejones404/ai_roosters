@@ -2,8 +2,9 @@
  * Alerts.tsx
  * Price alerts page where users create, view, and delete stock price alerts.
  */
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 import "./Alerts.css";
 import LoadingScreen from "./components/LoadingScreen";
 import { getNotificationPreferences } from "./utils/auth";
@@ -31,6 +32,7 @@ interface Alert {
   is_active: boolean;
   email_notify: boolean;
   triggered_at: string | null;
+  triggered_price: number | null;
   created_at: string | null;
 }
 
@@ -44,16 +46,32 @@ function formatDate(iso: string | null): string {
 }
 
 export default function Alerts() {
+  const location = useLocation();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [marketAlertsEnabled, setMarketAlertsEnabled] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [ticker, setTicker] = useState(WEBSITE_TICKERS[0]);
   const [targetPrice, setTargetPrice] = useState("");
   const [direction, setDirection] = useState<"above" | "below">("above");
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const preselectedTicker = useMemo(() => {
+    const raw = new URLSearchParams(location.search).get("ticker");
+    return raw?.trim().toUpperCase() || "";
+  }, [location.search]);
+
+  const tickerOptions = useMemo(() => {
+    if (!preselectedTicker) {
+      return WEBSITE_TICKERS;
+    }
+    return WEBSITE_TICKERS.includes(preselectedTicker)
+      ? WEBSITE_TICKERS
+      : [preselectedTicker, ...WEBSITE_TICKERS];
+  }, [preselectedTicker]);
 
   const fetchAlerts = async () => {
     setLoading(true);
@@ -71,10 +89,23 @@ export default function Alerts() {
   useEffect(() => {
     fetchAlerts();
     getNotificationPreferences()
-      .then((prefs) => setMarketAlertsEnabled(prefs.marketAlerts))
-      .catch(() => setMarketAlertsEnabled(false));
+      .then((prefs) => {
+        setMarketAlertsEnabled(prefs.marketAlerts);
+      })
+      .catch(() => {
+        setMarketAlertsEnabled(false);
+      })
+      .finally(() => {
+        setPrefsLoaded(true);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (preselectedTicker) {
+      setTicker(preselectedTicker);
+    }
+  }, [preselectedTicker]);
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
@@ -82,6 +113,21 @@ export default function Alerts() {
     const price = parseFloat(targetPrice);
     if (!targetPrice || Number.isNaN(price) || price <= 0) {
       setFormError("Enter a valid positive target price.");
+      return;
+    }
+
+    // Prevent duplicate active alerts with the same ticker, direction, and target price
+    const isDuplicate = alerts.some(
+      (a) =>
+        a.is_active &&
+        a.ticker === ticker &&
+        a.direction === direction &&
+        a.target_price === price
+    );
+    if (isDuplicate) {
+      setFormError(
+        `An active alert already exists for ${ticker} ${direction === "above" ? "rising above" : "falling below"} $${price.toFixed(2)}.`
+      );
       return;
     }
 
@@ -114,16 +160,18 @@ export default function Alerts() {
   const active = alerts.filter((a) => a.is_active);
   const triggered = alerts.filter((a) => !a.is_active);
 
+  const subtitle = !prefsLoaded
+    ? "Get notified when a stock hits your target price"
+    : marketAlertsEnabled
+    ? "Get notified when a stock hits your target price"
+    : "Get notified when a stock hits your target price. Turn on Market Alerts in settings to receive email alerts.";
+
   return (
     <div className="app-container app-container-wide">
       <div className="home-card alerts-card">
         <div className="alerts-header">
           <h1 className="alerts-title">Price Alerts</h1>
-          <p className="alerts-subtitle">
-            {marketAlertsEnabled
-              ? "Get notified when a stock hits your target price"
-              : "Get notified when a stock hits your target price. Turn on Market Alerts in settings to receive email alerts."}
-          </p>
+          <p className="alerts-subtitle">{subtitle}</p>
         </div>
 
         <div className="alert-form-card">
@@ -137,7 +185,7 @@ export default function Alerts() {
                   value={ticker}
                   onChange={(e) => setTicker(e.target.value)}
                 >
-                  {WEBSITE_TICKERS.map((t) => (
+                  {tickerOptions.map((t) => (
                     <option key={t} value={t}>
                       {t}
                     </option>
@@ -245,6 +293,7 @@ export default function Alerts() {
                       <th>Ticker</th>
                       <th>Condition</th>
                       <th>Target Price</th>
+                      <th>Triggered Price</th>
                       <th>Triggered</th>
                       <th></th>
                     </tr>
@@ -260,6 +309,9 @@ export default function Alerts() {
                         </td>
                         <td className="alert-price">
                           ${a.target_price.toFixed(2)}
+                        </td>
+                        <td className="alert-price">
+                          {a.triggered_price !== null ? `$${a.triggered_price.toFixed(2)}` : "-"}
                         </td>
                         <td className="alert-date">
                           {formatDate(a.triggered_at)}

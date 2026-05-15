@@ -5,6 +5,41 @@ This folder contains unit and behavioral tests for every backend module.
 
 ## How to Run Tests
 
+### Easiest option
+
+Run everything from the repo root with the PowerShell helper:
+
+```powershell
+.\Testing\run_all_tests.cmd
+```
+
+By default, this starts the Docker API service and its dependencies, then runs the `Testing/` suite, `Backend/tests`, and the Behave sentiment feature tests inside the API container.
+The default suite uses the API-compatible test set. Pipeline-only tests that need heavy ML/Hugging Face packages are not included in this default run.
+
+Useful shortcuts:
+
+```powershell
+# Run only the Testing folder tests
+.\Testing\run_all_tests.cmd -Suite testing
+
+# Run only Backend/tests
+.\Testing\run_all_tests.cmd -Suite backend
+
+# Run local unit tests without Docker
+.\Testing\run_all_tests.cmd -Suite unit -Mode local
+
+# Rebuild the API image before running
+.\Testing\run_all_tests.cmd -Build
+
+# Pass extra pytest arguments after the script args
+.\Testing\run_all_tests.cmd -Suite testing -k alerts
+
+# Raw recursive collection of every test file, including pipeline-only tests
+.\Testing\run_all_tests.cmd -Suite raw-all
+```
+
+---
+
 ### Unit Tests (run locally)
 
 Unit tests use no real database or HTTP server,all dependencies are mocked.

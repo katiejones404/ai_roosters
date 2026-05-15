@@ -3,10 +3,18 @@
  * Interactive quiz component that determines the user's investor personality type
  * based on their answers to a series of risk and strategy questions.
  */
-import { useState } from "react";
-import { FaArrowRight, FaBalanceScale, FaBullseye, FaChartLine, FaRocket, FaShieldAlt } from "react-icons/fa";
+import { useState, useEffect, useRef } from "react";
+import {
+  FaArrowRight,
+  FaBalanceScale,
+  FaCrosshairs,
+  FaChartLine,
+  FaRocket,
+  FaShieldAlt,
+} from "react-icons/fa";
 import type { IconType } from "react-icons";
 import "../networth.css";
+import { getCurrentUser } from "../utils/auth";
 
 const QUIZ_QUESTIONS = [
   {
@@ -122,12 +130,59 @@ const QUIZ_PROFILES: Array<{
   },
 ];
 
-function AllocBar({ label, pct, color }: { label: string; pct: number; color: string }) {
+interface QuizState {
+  started: boolean;
+  answers: Record<number, number>;
+  submitted: boolean;
+  profileLabel: string | null;
+}
+
+function getStorageKey(userId: string) {
+  return `investorQuizState_${userId}`;
+}
+
+function loadState(userId: string): QuizState | null {
+  try {
+    const raw = localStorage.getItem(getStorageKey(userId));
+    return raw ? (JSON.parse(raw) as QuizState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveState(userId: string, state: QuizState) {
+  try {
+    localStorage.setItem(getStorageKey(userId), JSON.stringify(state));
+  } catch {
+    // localStorage unavailable — silently skip
+  }
+}
+
+function clearState(userId: string) {
+  localStorage.removeItem(getStorageKey(userId));
+}
+
+function profileFromLabel(label: string | null) {
+  return label ? (QUIZ_PROFILES.find((p) => p.label === label) ?? null) : null;
+}
+
+function AllocBar({
+  label,
+  pct,
+  color,
+}: {
+  label: string;
+  pct: number;
+  color: string;
+}) {
   return (
     <div className="quiz-alloc-row">
       <div className="quiz-alloc-label">{label}</div>
       <div className="quiz-alloc-track">
-        <div className="quiz-alloc-fill" style={{ width: `${pct}%`, background: color }} />
+        <div
+          className="quiz-alloc-fill"
+          style={{ width: `${pct}%`, background: color }}
+        />
       </div>
       <div className="quiz-alloc-pct">{pct}%</div>
     </div>
@@ -140,6 +195,46 @@ export default function InvestorQuiz() {
   const [submitted, setSubmitted] = useState(false);
   const [profile, setProfile] = useState<(typeof QUIZ_PROFILES)[0] | null>(null);
 
+  // userId is null while we're still resolving the current user.
+  const [userId, setUserId] = useState<string | null>(null);
+  const initialized = useRef(false);
+
+  // Resolve the current user once on mount, then hydrate saved state.
+  useEffect(() => {
+    getCurrentUser()
+      .then((user) => {
+        const id = user?.id ?? user?.username ?? "guest";
+        setUserId(id);
+
+        if (initialized.current) return;
+        initialized.current = true;
+
+        const saved = loadState(id);
+        if (saved) {
+          setStarted(saved.started);
+          setAnswers(saved.answers);
+          setSubmitted(saved.submitted);
+          setProfile(profileFromLabel(saved.profileLabel));
+        }
+      })
+      .catch(() => {
+        // Could not resolve user — treat as guest with no saved state.
+        setUserId("guest");
+        initialized.current = true;
+      });
+  }, []);
+
+  // Persist state to localStorage whenever anything changes (after userId is ready).
+  useEffect(() => {
+    if (!userId || !initialized.current) return;
+    saveState(userId, {
+      started,
+      answers,
+      submitted,
+      profileLabel: profile?.label ?? null,
+    });
+  }, [userId, started, answers, submitted, profile]);
+
   const answer = (questionId: number, score: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: score }));
   };
@@ -147,7 +242,8 @@ export default function InvestorQuiz() {
   const submit = () => {
     const total = Object.values(answers).reduce((a, b) => a + b, 0);
     const found = QUIZ_PROFILES.find((p) => total >= p.min && total <= p.max);
-    setProfile(found || QUIZ_PROFILES[2]);
+    const resolved = found ?? QUIZ_PROFILES[2];
+    setProfile(resolved);
     setSubmitted(true);
   };
 
@@ -156,6 +252,7 @@ export default function InvestorQuiz() {
     setSubmitted(false);
     setProfile(null);
     setStarted(false);
+    if (userId) clearState(userId);
   };
 
   const answered = Object.keys(answers).length;
@@ -166,7 +263,7 @@ export default function InvestorQuiz() {
       <div className="quiz-section">
         <div className="quiz-start-screen">
           <div className="quiz-start-emoji" aria-hidden="true">
-            <FaBullseye />
+            <FaCrosshairs />
           </div>
           <h2 className="quiz-start-title">Investor Personality Quiz</h2>
           <p className="quiz-start-desc">
@@ -184,7 +281,9 @@ export default function InvestorQuiz() {
     <div className="quiz-section">
       <div className="quiz-section-header">
         <h2 className="nw-section-title">Investor Personality Quiz</h2>
-        <p className="quiz-section-sub">Find out what kind of investor you are</p>
+        <p className="quiz-section-sub">
+          Find out what kind of investor you are
+        </p>
       </div>
 
       {submitted && profile ? (
@@ -203,9 +302,21 @@ export default function InvestorQuiz() {
             <p className="quiz-result-desc">{profile.description}</p>
             <div className="quiz-alloc-title">Suggested Allocation</div>
             <div className="quiz-alloc-bars">
-              <AllocBar label="Stocks" pct={profile.allocation.stocks} color="#6366f1" />
-              <AllocBar label="Bonds" pct={profile.allocation.bonds} color="#10b981" />
-              <AllocBar label="Cash" pct={profile.allocation.cash} color="#64748b" />
+              <AllocBar
+                label="Stocks"
+                pct={profile.allocation.stocks}
+                color="#6366f1"
+              />
+              <AllocBar
+                label="Bonds"
+                pct={profile.allocation.bonds}
+                color="#10b981"
+              />
+              <AllocBar
+                label="Cash"
+                pct={profile.allocation.cash}
+                color="#64748b"
+              />
             </div>
           </div>
           <button className="quiz-retake-btn" onClick={reset}>
@@ -215,7 +326,10 @@ export default function InvestorQuiz() {
       ) : (
         <div className="quiz-inner">
           <div className="quiz-progress-bar-track">
-            <div className="quiz-progress-bar-fill" style={{ width: `${progress}%` }} />
+            <div
+              className="quiz-progress-bar-fill"
+              style={{ width: `${progress}%` }}
+            />
           </div>
           <div className="quiz-progress-label">
             {answered} of {QUIZ_QUESTIONS.length} answered
@@ -231,7 +345,9 @@ export default function InvestorQuiz() {
                   {q.options.map((opt) => (
                     <button
                       key={opt.score}
-                      className={`quiz-option-btn ${answers[q.id] === opt.score ? "selected" : ""}`}
+                      className={`quiz-option-btn ${
+                        answers[q.id] === opt.score ? "selected" : ""
+                      }`}
                       onClick={() => answer(q.id, opt.score)}
                     >
                       {opt.text}
@@ -250,7 +366,9 @@ export default function InvestorQuiz() {
             {answered < QUIZ_QUESTIONS.length
               ? `Answer all questions (${QUIZ_QUESTIONS.length - answered} left)`
               : "See My Profile"}
-            {answered >= QUIZ_QUESTIONS.length && <FaArrowRight style={{ marginLeft: "0.35rem" }} />}
+            {answered >= QUIZ_QUESTIONS.length && (
+              <FaArrowRight style={{ marginLeft: "0.35rem" }} />
+            )}
           </button>
         </div>
       )}

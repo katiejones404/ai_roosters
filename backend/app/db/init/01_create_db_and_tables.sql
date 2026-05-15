@@ -249,6 +249,7 @@ CREATE TABLE IF NOT EXISTS price_alerts (
   email_notify boolean NOT NULL DEFAULT true,
   triggered_at timestamptz,
   created_at timestamptz DEFAULT now(),
+  triggered_price numeric, 
   CONSTRAINT fk_price_alerts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

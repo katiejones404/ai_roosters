@@ -1,3 +1,12 @@
+"""
+Sentiment aggregation and XGBoost return prediction pipeline for StockSense.
+
+Joins daily stock price rows with FinBERT-scored article sentiment from both
+the broad articles table and ticker-specific stock_news_articles, trains XGBoost
+regression models for each return horizon, then writes the combined snapshot rows
+to sentiment_snapshots. Runs as a four-stage pipeline: load stocks, aggregate
+sentiment, XGBoost predictions, write to DB.
+"""
 from __future__ import annotations
 
 import logging

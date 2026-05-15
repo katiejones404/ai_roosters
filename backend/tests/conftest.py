@@ -13,17 +13,23 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
 from app.db.main import get_db
 from app.models.models import User, Portfolio, PriceAlert
+from app.models.transaction import Transaction
 from app.api import auth as auth_module
 from app.api import portfolio as portfolio_module
 from app.api import alerts as alerts_module
 
 TEST_DB_URL = "sqlite:///:memory:"
 
-engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    TEST_DB_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create only the tables needed for tests (avoids PostgreSQL-specific types in other models)
@@ -31,6 +37,7 @@ Base.metadata.create_all(bind=engine, tables=[
     User.__table__,
     Portfolio.__table__,
     PriceAlert.__table__,
+    Transaction.__table__,
 ])
 
 
@@ -54,7 +61,7 @@ def build_test_app() -> FastAPI:
     No startup events are registered, so no pipelines or DB migrations run.
     """
     app = FastAPI()
-    app.include_router(auth_module.router, prefix="/api/auth")
+    app.include_router(auth_module.router, prefix="/api")
     app.include_router(portfolio_module.router, prefix="/api")
     app.include_router(alerts_module.router, prefix="/api/alerts")
     app.dependency_overrides[get_db] = override_get_db

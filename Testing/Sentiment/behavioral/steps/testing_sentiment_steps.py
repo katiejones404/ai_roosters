@@ -20,7 +20,7 @@ from Testing.Sentiment._fakes import FakeDB
 
 def _build_test_client(db: FakeDB) -> TestClient:
     app = FastAPI()
-    app.include_router(sentiment_router)
+    app.include_router(sentiment_router, prefix="/api")
 
     def _override_get_db():
         yield db

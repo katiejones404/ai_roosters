@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text as sa_text
 
-from app.api import auth, sentiment, portfolio, news, stocks, alerts as alerts_router, networth
+from app.api import auth, sentiment, portfolio, news, stocks, alerts as alerts_router, networth, watchlist as watchlist_router
 from app.services.ingesting_pipelines.prices_ingest import PriceIngestor
 from app.services.alert_scheduler import run_alert_checks
 from app.db_init import init_db
@@ -80,6 +80,7 @@ app.include_router(portfolio.router, prefix="/api")
 app.include_router(news.router, prefix="/api")
 app.include_router(alerts_router.router, prefix="/api/alerts")
 app.include_router(networth.router, prefix="/api")
+app.include_router(watchlist_router.router, prefix="/api")
 from app.stock_proxy import router as proxy_router   
 app.include_router(proxy_router)                     
 
@@ -111,13 +112,39 @@ def ingest_stock_prices_on_startup():
         logger.warning(f"Database initialization skipped or failed: {e}")
         logger.info("Tables may already exist, continuing...")
 
-    # Ensure notification-related columns exist for alerts and users
+    # Ensure price_alerts table and notification-related columns exist
     try:
         _mig_url = os.getenv("DATABASE_URL", "postgresql://stock_user:stock_pass@postgres:5432/stock_db")
         _mig_engine = create_engine(_mig_url)
         with _mig_engine.begin() as _conn:
+            # Create price_alerts table if it was missed by the SQL init script
+            _conn.execute(sa_text("""
+                CREATE TABLE IF NOT EXISTS price_alerts (
+                    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id uuid NOT NULL,
+                    ticker text NOT NULL,
+                    target_price numeric NOT NULL,
+                    direction text NOT NULL,
+                    is_active boolean NOT NULL DEFAULT true,
+                    email_notify boolean NOT NULL DEFAULT true,
+                    triggered_at timestamptz,
+                    triggered_price numeric,
+                    created_at timestamptz DEFAULT now(),
+                    CONSTRAINT fk_price_alerts_user FOREIGN KEY (user_id)
+                        REFERENCES users(id) ON DELETE CASCADE
+                )
+            """))
+            _conn.execute(sa_text(
+                "CREATE INDEX IF NOT EXISTS idx_price_alerts_user ON price_alerts (user_id)"
+            ))
+            _conn.execute(sa_text(
+                "CREATE INDEX IF NOT EXISTS idx_price_alerts_active ON price_alerts (is_active) WHERE is_active = true"
+            ))
             _conn.execute(sa_text(
                 "ALTER TABLE price_alerts ADD COLUMN IF NOT EXISTS email_notify BOOLEAN NOT NULL DEFAULT TRUE"
+            ))
+            _conn.execute(sa_text(
+                "ALTER TABLE price_alerts ADD COLUMN IF NOT EXISTS triggered_price NUMERIC"
             ))
             _conn.execute(sa_text(
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_market_alerts_enabled BOOLEAN NOT NULL DEFAULT TRUE"
@@ -134,8 +161,20 @@ def ingest_stock_prices_on_startup():
             _conn.execute(sa_text(
                 "ALTER TABLE users DROP COLUMN IF EXISTS notify_weekly_report_enabled"
             ))
+            _conn.execute(sa_text("""
+                CREATE TABLE IF NOT EXISTS watchlist (
+                    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    ticker text NOT NULL,
+                    created_at timestamptz DEFAULT now(),
+                    UNIQUE (user_id, ticker)
+                )
+            """))
+            _conn.execute(sa_text(
+                "CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist (user_id)"
+            ))
         _mig_engine.dispose()
-        logger.info("Migration: notification columns ensured and legacy notification prefs removed.")
+        logger.info("Migration: price_alerts table, notification columns, and watchlist table ensured.")
     except Exception as e:
         logger.warning(f"Notification migrations skipped: {e}")
 

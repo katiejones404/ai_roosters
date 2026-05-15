@@ -1,5 +1,8 @@
 """
-Database models
+SQLAlchemy ORM models for StockSense.
+
+Defines the database tables and relationships used by the application:
+User, Portfolio, StockNewsArticle, and PriceAlert.
 """
 import uuid
 from sqlalchemy import Column, String, DateTime, Date, Text, Numeric, ForeignKey, TIMESTAMP, Boolean, Integer
@@ -62,6 +65,7 @@ class Portfolio(Base):
 
 
 class StockNewsArticle(Base):
+    """Stores news articles fetched from external sources, linked to a ticker symbol."""
     __tablename__ = "stock_news_articles"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -79,6 +83,7 @@ class StockNewsArticle(Base):
 
 
 class PriceAlert(Base):
+    """Represents a user-defined price threshold alert for a stock ticker."""
     __tablename__ = "price_alerts"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -89,6 +94,7 @@ class PriceAlert(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     email_notify = Column(Boolean, default=True, nullable=False)
     triggered_at = Column(DateTime(timezone=True), nullable=True)
+    triggered_price = Column(Numeric, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")

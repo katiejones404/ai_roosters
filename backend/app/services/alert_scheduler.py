@@ -50,6 +50,8 @@ def run_alert_checks() -> None:
             if not triggered:
                 continue
 
+            trigger_time = datetime.now(timezone.utc)
+
             user_market_alerts_enabled = bool(
                 True
                 if alert.user.notify_market_alerts_enabled is None
@@ -68,19 +70,27 @@ def run_alert_checks() -> None:
                         target_price=target,
                         current_price=current,
                     )
-                    logger.info("Alert email sent: %s %s %s", alert.ticker, alert.direction, target)
+                    logger.info(
+                        "Alert email sent: %s %s %s current=%s",
+                        alert.ticker,
+                        alert.direction,
+                        target,
+                        current,
+                    )
                 except Exception as email_err:
                     logger.warning("Alert email failed for %s: %s", alert.ticker, email_err)
             else:
                 logger.info(
-                    "Alert triggered (email disabled by alert/user preferences): %s %s %s",
+                    "Alert triggered (email disabled by alert/user preferences): %s %s %s current=%s",
                     alert.ticker,
                     alert.direction,
                     target,
+                    current,
                 )
 
             alert.is_active = False
-            alert.triggered_at = datetime.now(timezone.utc)
+            alert.triggered_at = trigger_time
+            alert.triggered_price = current
 
         db.commit()
     except Exception as e:

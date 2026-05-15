@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StockSense: AI-Powered Stock Sentiment and Portfolio Platform</title>
+    <meta
+      name="description"
+      content="StockSense combines real-time news sentiment, portfolio tracking, and AI-powered summaries to help investors understand what is driving the market."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --bg: #0f172a;
+        --bg2: #111827;
+        --surface: #1e293b;
+        --surface-2: #0b1220;
+        --border: rgba(255, 255, 255, 0.07);
+        --border-2: rgba(255, 255, 255, 0.1);
+        --text: #e2e8f0;
+        --muted: rgba(255, 255, 255, 0.7);
+        --muted-2: rgba(255, 255, 255, 0.55);
+        --green: #10b981;
+        --green-dark: #059669;
+        --green-darker: #047857;
+        --red: #ef4444;
+        --purple: #818cf8;
+        --font: "Inter", sans-serif;
+        --shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+        --shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.28);
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: var(--font);
+        background:
+          radial-gradient(
+            circle at top left,
+            rgba(99, 102, 241, 0.08),
+            transparent 28%
+          ),
+          radial-gradient(
+            circle at bottom right,
+            rgba(139, 92, 246, 0.06),
+            transparent 24%
+          ),
+          linear-gradient(180deg, #0f172a 0%, #111827 100%);
+        color: var(--text);
+        line-height: 1.7;
+        overflow-x: hidden;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      img {
+        max-width: 100%;
+        display: block;
+      }
+      nav {
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        height: 72px;
+        background: linear-gradient(
+          180deg,
+          rgba(15, 23, 42, 0.94) 0%,
+          rgba(17, 24, 39, 0.94) 100%
+        );
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-logo {
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+      .nav-logo span {
+        color: var(--green);
+      }
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        list-style: none;
+      }
+      .nav-links a {
+        color: var(--muted-2);
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      .nav-links a:hover {
+        color: var(--text);
+      }
+      .nav-cta {
+        padding: 0.6rem 1rem;
+        border-radius: 10px;
+        font-weight: 700 !important;
+        background: linear-gradient(
+          135deg,
+          var(--green) 0%,
+          var(--green-dark) 100%
+        );
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+      .nav-cta:hover {
+        background: linear-gradient(
+          135deg,
+          var(--green-dark) 0%,
+          var(--green-darker) 100%
+        );
+      }
+      .page {
+        min-height: 100vh;
+        padding: 7rem 1.5rem 4rem;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      .card {
+        background:
+          linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.05) 0%,
+            rgba(255, 255, 255, 0.02) 100%
+          ),
+          linear-gradient(
+            135deg,
+            rgba(99, 102, 241, 0.06),
+            rgba(118, 75, 162, 0.04)
+          );
+        border: 1px solid var(--border-2);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow-soft);
+      }
+      .hero-card {
+        padding: 3.5rem 3rem;
+        text-align: left;
+        margin-bottom: 2.5rem;
+        position: relative;
+        overflow: hidden;
+      }
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding: 0.35rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--green);
+        background: linear-gradient(
+          135deg,
+          rgba(16, 185, 129, 0.12),
+          rgba(99, 102, 241, 0.06)
+        );
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .hero-title {
+        font-size: clamp(2.4rem, 6vw, 4.6rem);
+        line-height: 0.98;
+        letter-spacing: -0.05em;
+        color: white;
+        margin-bottom: 1rem;
+        font-weight: 850;
+        max-width: 11ch;
+      }
+      .hero-title em {
+        font-style: normal;
+        color: var(--green);
+      }
+      .hero-subtitle {
+        color: var(--muted);
+        max-width: 720px;
+        margin: 0 0 1.75rem;
+        font-size: 1.06rem;
+      }
+      .btn-row {
+        display: flex;
+        justify-content: flex-start;
+        gap: 0.9rem;
+        flex-wrap: wrap;
+      }
+      .btn-primary,
+      .btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+      }
+      .btn-primary {
+        background: linear-gradient(
+          135deg,
+          var(--green) 0%,
+          var(--green-dark) 100%
+        );
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+      .btn-primary:hover {
+        background: linear-gradient(
+          135deg,
+          var(--green-dark) 0%,
+          var(--green-darker) 100%
+        );
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+      }
+      .btn-ghost {
+        background: linear-gradient(
+          135deg,
+          rgba(99, 102, 241, 0.06),
+          rgba(16, 185, 129, 0.03)
+        );
+        border: 1px solid var(--border-2);
+        color: var(--text);
+      }
+      .btn-ghost:hover {
+        background: rgba(255, 255, 255, 0.06);
+        transform: translateY(-2px);
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin: 2.25rem 0 0;
+      }
+      .metric-strip {
+        padding: 1.25rem 1.15rem;
+        border-left: 3px solid rgba(255, 255, 255, 0.14);
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.04) 0%,
+          rgba(255, 255, 255, 0.015) 100%
+        );
+        border-radius: 14px;
+      }
+      .stat-labelP {
+        font-size: 0.74rem;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        color: var(--muted-2);
+        font-weight: 700;
+      }
+      .stat-valueP {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--text);
+        word-break: break-word;
+      }
+      .stat-subvalue {
+        font-size: 0.86rem;
+        font-weight: 600;
+      }
+      .positive {
+        color: var(--green) !important;
+      }
+      .section {
+        margin-top: 2.5rem;
+      }
+      .section-title {
+        font-size: 1.7rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 0.9rem;
+        letter-spacing: -0.03em;
+      }
+      .section-sub {
+        color: var(--muted);
+        max-width: 760px;
+        margin-bottom: 2rem;
+      }
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.75rem;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.75rem;
+      }
+      .feature-card,
+      .step {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        backdrop-filter: blur(10px);
+        padding: 1.65rem;
+      }
+      .feature-card h3,
+      .step h3 {
+        color: white;
+        margin-bottom: 0.5rem;
+        font-size: 1.02rem;
+      }
+      .feature-card p,
+      .step p {
+        color: var(--muted);
+      }
+      .feature-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        background: linear-gradient(
+          135deg,
+          rgba(16, 185, 129, 0.12),
+          rgba(99, 102, 241, 0.06)
+        );
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .feature-icon svg {
+        width: 22px;
+        height: 22px;
+        stroke: var(--green);
+        fill: none;
+        stroke-width: 1.75;
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+      }
+      .step-num {
+        font-size: 2.3rem;
+        font-weight: 800;
+        color: rgba(16, 185, 129, 0.18);
+        margin-bottom: 0.65rem;
+      }
+      .video-box {
+        padding: 2.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .video-box:hover {
+        transform: scale(1.01);
+        border-color: rgba(16, 185, 129, 0.3);
+      }
+      .play-btn {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          rgba(16, 185, 129, 0.12),
+          rgba(99, 102, 241, 0.06)
+        );
+        border: 2px solid rgba(16, 185, 129, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .play-btn:hover {
+        transform: scale(1.05);
+        border-color: var(--green);
+      }
+      .play-btn svg {
+        width: 28px;
+        height: 28px;
+        fill: var(--green);
+        margin-left: 4px;
+      }
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-top: 1rem;
+      }
+      .tag {
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        border: 1px solid var(--border-2);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      .tag.accent {
+        background: linear-gradient(
+          135deg,
+          rgba(16, 185, 129, 0.1),
+          rgba(99, 102, 241, 0.05)
+        );
+        border-color: rgba(16, 185, 129, 0.3);
+        color: var(--green);
+      }
+      .footer {
+        margin-top: 2rem;
+        padding: 1.5rem 0 0;
+        border-top: 1px solid var(--border);
+        color: var(--muted-2);
+        text-align: center;
+      }
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.85rem;
+      }
+      .footer a:hover {
+        color: var(--green);
+      }
+      .screenshot-ph {
+        min-height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.75rem;
+        color: var(--muted-2);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-radius: 12px;
+        padding: 1rem;
+      }
+      .screenshot-ph:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: scale(1.02);
+      }
+      .ph-icon {
+        font-size: 3rem;
+      }
+      .screenshot-label {
+        padding: 1rem 1.25rem 1.2rem;
+        border-top: 1px solid var(--border);
+        color: var(--text);
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .screenshot-desc {
+        color: var(--muted-2);
+        font-size: 0.78rem;
+        font-weight: 400;
+        margin-top: 0.3rem;
+        line-height: 1.45;
+      }
+      /* Lightbox styles */
+      .lightbox {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(12px);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        visibility: hidden;
+        opacity: 0;
+        transition:
+          visibility 0.2s,
+          opacity 0.2s ease;
+        cursor: pointer;
+      }
+      .lightbox.active {
+        visibility: visible;
+        opacity: 1;
+      }
+      .lightbox-content {
+        max-width: 90vw;
+        max-height: 85vh;
+        background: rgba(20, 30, 45, 0.9);
+        border-radius: 28px;
+        padding: 2rem;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        box-shadow: 0 30px 50px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        cursor: default;
+      }
+      .lightbox-icon {
+        font-size: 6rem;
+        margin-bottom: 1rem;
+      }
+      .lightbox-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.5rem;
+      }
+      .lightbox-caption {
+        color: var(--muted);
+        font-size: 1rem;
+        max-width: 500px;
+      }
+      .lightbox-video-placeholder {
+        width: 100%;
+        min-width: 400px;
+        min-height: 300px;
+        background: linear-gradient(
+          135deg,
+          rgba(16, 185, 129, 0.1),
+          rgba(99, 102, 241, 0.05)
+        );
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 2rem;
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+      }
+      .close-lightbox {
+        position: absolute;
+        top: 24px;
+        right: 32px;
+        font-size: 2rem;
+        color: white;
+        background: rgba(0, 0, 0, 0.5);
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-family: monospace;
+        font-size: 28px;
+      }
+      .close-lightbox:hover {
+        background: var(--green);
+        transform: rotate(90deg);
+      }
+      @media (max-width: 1100px) {
+        .grid-4 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 720px) {
+        .nav-links {
+          display: none;
+        }
+        .grid-4 {
+          grid-template-columns: 1fr;
+        }
+        .page {
+          padding-top: 5.5rem;
+        }
+        .lightbox-video-placeholder {
+          min-width: 280px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="#" class="nav-logo">Stock<span>Sense</span></a>
+      <ul class="nav-links">
+        <li><a href="https://sccapstone.github.io/ai_roosters/index.html#">Home</a></li>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="about.html#team">Meet the Team</a></li>
+        <li>
+          <a
+            class="nav-cta"
+            href="https://ai-roosters-webpage.vercel.app/"
+            target="_blank"
+            >Launch App →</a
+          >
+        </li>
+      </ul>
+    </nav>
+    <main class="page">
+      <div class="container">
+        <!-- Hero Section -->
+        <section class="card hero-card">
+          <div class="hero-badge">AI-Powered Stock Intelligence</div>
+          <h1 class="hero-title">
+            Markets move.<br />Your <em>insight</em> should too.
+          </h1>
+          <p class="hero-subtitle">
+            StockSense combines real-time news sentiment with stock price data
+            so you can track portfolios, set smart alerts, and understand why
+            your stocks move.
+          </p>
+          <div class="btn-row">
+            <a
+              class="btn-primary"
+              href="https://ai-roosters-webpage.vercel.app/"
+              target="_blank"
+              >Launch StockSense →</a
+            >
+            <a
+              class="btn-ghost"
+              href="https://github.com/SCCapstone/ai_roosters"
+              target="_blank"
+              >View on GitHub</a
+            >
+          </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="section">
+          <div class="section-title">
+            A cleaner system for understanding the market
+          </div>
+          <div class="grid-3">
+            <div class="feature-card">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M3 3v18h18" />
+                  <path d="m7 16 4-4 4 4 4-8" />
+                </svg>
+              </div>
+              <h3>Live Sentiment Scoring</h3>
+              <p>
+                FinBERT-powered analysis reads financial news and summarizes
+                market sentiment.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24">
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <line x1="8" y1="21" x2="16" y2="21" />
+                  <line x1="12" y1="17" x2="12" y2="21" />
+                </svg>
+              </div>
+              <h3>Portfolio Management</h3>
+              <p>
+                Add, buy, sell, and track positions with gain/loss tracking and
+                CSV/PDF export.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+              </div>
+              <h3>Smart Price Alerts</h3>
+              <p>
+                Set price thresholds and get notified when your target is
+                reached.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                  <path d="M12 17h.01" />
+                </svg>
+              </div>
+              <h3>AI News Summaries</h3>
+              <p>
+                GPT-generated summaries give you context behind the latest
+                headlines.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </div>
+              <h3>Net Worth Tracker</h3>
+              <p>
+                Combine portfolio with assets and liabilities for a complete
+                financial picture.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+                  />
+                </svg>
+              </div>
+              <h3>What-If Analysis</h3>
+              <p>
+                Run historical scenario analysis to see what an investment would
+                be worth today.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- How It Works -->
+        <section id="how-it-works" class="section">
+          <div class="section-title">How the product works</div>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">01</div>
+              <h3>Sign Up & Build Your Portfolio</h3>
+              <p>
+                Create an account and add supported stocks to your watchlist or
+                portfolio.
+              </p>
+            </div>
+            <div class="step">
+              <div class="step-num">02</div>
+              <h3>AI Reads the News</h3>
+              <p>
+                Our pipeline ingests financial news and runs sentiment analysis
+                automatically.
+              </p>
+            </div>
+            <div class="step">
+              <div class="step-num">03</div>
+              <h3>Track, Analyze, and Act</h3>
+              <p>
+                View charts with sentiment context and set price alerts in one
+                place.
+              </p>
+            </div>
+            <div class="step">
+              <div class="step-num">04</div>
+              <h3>Export and Report</h3>
+              <p>
+                Download portfolio data and net worth snapshots as PDF or CSV.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Screenshots Section -->
+        <section id="screenshots" class="section">
+          <div class="section-title">Built for clarity at every step</div>
+          <p class="section-sub">
+            <strong>Click any screenshot to enlarge.</strong>
+            Real screenshots from the live application.
+          </p>
+          <div class="grid-4">
+            <div class="card screenshot-item" data-src="assets/screenshots/homepage.png" data-title="Homepage">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/homepage.png" alt="StockSense homepage" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Homepage
+                <p class="screenshot-desc">The StockSense landing page, including fun finance facts and an investor quiz, a "What-If" investment calculator, a daily streak counter, and alert and portfolio summaries.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/login.png" data-title="Login">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/login.png" alt="Login page" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Login
+                <p class="screenshot-desc">Secure account login to access your personalized portfolio, alerts, and recent stock news feed.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/dashboard.png" data-title="Dashboard">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/dashboard.png" alt="Main dashboard with portfolio overview" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Dashboard
+                <p class="screenshot-desc">Your portfolio at a glance. Includes holdings, gain/loss tracking, and real-time sentiment indicators in one view. Click on any stock to view it's recent data and AI stock-sentiment analysis.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/news.png" data-title="AI News Feed">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/news.png" alt="AI news feed with sentiment scoring" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                AI News Feed
+                <p class="screenshot-desc">Curated financial news based on current stock library, utilizing various news API sources. Users can understand what news is moving the market.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/alerts.png" data-title="Price Alerts">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/alerts.png" alt="Price alerts configuration" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Price Alerts
+                <p class="screenshot-desc">Set custom price thresholds for your tracked stocks and get notified when your target is hit.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/price_alert_notifications_example.png" data-title="Alert Notifications">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/price_alert_notifications_example.png" alt="Price alert notification example" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Alert Notifications
+                <p class="screenshot-desc">Real-time price alert notifications delivered when your stocks hit the thresholds you've set.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/compare.png" data-title="Stock Comparison">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/compare.png" alt="Stock comparison view" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Stock Comparison
+                <p class="screenshot-desc">Compare multiple stocks side-by-side with overlaid sentiment trends to identify relative performance.</p>
+              </div>
+            </div>
+            <div class="card screenshot-item" data-src="assets/screenshots/networth.png" data-title="Net Worth Tracker">
+              <div class="screenshot-ph" role="button" tabindex="0">
+                <img src="assets/screenshots/networth.png" alt="Net worth tracker with history graph" style="width:100%;height:180px;object-fit:cover;object-position:top;border-radius:10px;" loading="lazy" />
+              </div>
+              <div class="screenshot-label">
+                Net Worth Tracker
+                <p class="screenshot-desc">Track your complete financial picture, combine your portfolio with manual assets and liabilities for a full net worth view.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tech Stack -->
+        <section class="section">
+          <div class="section-title">Built with production-grade tools</div>
+          <div class="tags">
+            <span class="tag accent">React + TypeScript</span>
+            <span class="tag accent">FastAPI</span>
+            <span class="tag accent">FinBERT</span>
+            <span class="tag accent">OpenAI GPT</span>
+            <span class="tag">PostgreSQL</span>
+            <span class="tag">Docker</span>
+            <span class="tag">Azure Container Apps</span>
+            <span class="tag">GitHub Actions</span>
+          </div>
+        </section>
+
+        <!-- Video Section -->
+        <section id="demo" class="section">
+          <div class="section-title">Watch the Demo</div>
+          <p class="section-sub">
+            See the full platform in action: from sentiment analysis to
+            portfolio tracking and AI-powered news summaries.
+          </p>
+          <div class="card" style="padding: 0; overflow: hidden; border-radius: 16px;">
+            <div style="
+              position: relative;
+              width: 100%;
+              padding-top: 56.25%;
+              background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.05));
+              border-radius: 16px;
+            ">
+              <iframe
+                src="https://www.youtube.com/embed/aaCODOCKKi8"
+                title="StockSense Demo Video"
+                style="
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                border: 0;
+                border-radius: 16px;
+              "
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
+            </div>
+          </div>
+          <p style="margin-top: 0.85rem; color: var(--muted-2); font-size: 0.9rem;">
+            If the embedded video does not load locally,
+            <a href="https://youtu.be/aaCODOCKKi8" target="_blank" rel="noreferrer" style="color: var(--green); font-weight: 700;">
+              watch it on YouTube
+            </a>.
+          </p>
+          <div style="margin-top: 1.5rem;">
+            <a
+              class="btn-primary"
+              href="https://ai-roosters-webpage.vercel.app/"
+              target="_blank"
+              >Get Started - Launch the Website</a
+            >
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <div class="footer-links">
+            <a href="#">Home</a>
+            <a href="#features">Features</a>
+            <a href="about.html">About</a>
+            <a href="https://github.com/SCCapstone/ai_roosters" target="_blank"
+              >GitHub</a
+            >
+            <a href="https://ai-roosters-webpage.vercel.app/" target="_blank"
+              >Launch App</a
+            >
+          </div>
+          <div>
+            Built by Team AI Roosters · University of South Carolina Capstone
+            August 2025- April 2026 
+          </div>
+        </footer>
+      </div>
+    </main>
+
+    <!-- Lightbox Overlay -->
+    <div id="lightbox" class="lightbox">
+      <div class="close-lightbox" id="closeLightbox">x</div>
+      <div class="lightbox-content" style="padding: 1rem;">
+        <div class="lightbox-title" id="lightboxTitle" style="margin-bottom: 0.75rem;"></div>
+        <img id="lightboxImg" src="" alt="" style="max-width:80vw;max-height:72vh;border-radius:12px;display:block;margin:0 auto;" />
+      </div>
+    </div>
+
+    <script>
+      const screenshotItems = document.querySelectorAll(".screenshot-item");
+      const lightbox = document.getElementById("lightbox");
+      const lightboxImg = document.getElementById("lightboxImg");
+      const lightboxTitle = document.getElementById("lightboxTitle");
+      const closeLightboxBtn = document.getElementById("closeLightbox");
+
+      function openLightbox(src, title) {
+        lightboxImg.src = src;
+        lightboxImg.alt = title;
+        lightboxTitle.textContent = title;
+        lightbox.classList.add("active");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeLightbox() {
+        lightbox.classList.remove("active");
+        document.body.style.overflow = "";
+        lightboxImg.src = "";
+      }
+
+      screenshotItems.forEach((item) => {
+        const clickArea = item.querySelector(".screenshot-ph");
+        const src = item.getAttribute("data-src") || "";
+        const title = item.getAttribute("data-title") || "Screenshot";
+
+        clickArea.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openLightbox(src, title);
+        });
+        clickArea.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") openLightbox(src, title);
+        });
+      });
+
+      closeLightboxBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeLightbox();
+      });
+
+      lightbox.addEventListener("click", (e) => {
+        if (e.target === lightbox) closeLightbox();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeLightbox();
+      });
+    </script>
+  </body>
+</html>

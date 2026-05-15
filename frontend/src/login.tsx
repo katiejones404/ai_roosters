@@ -1,6 +1,6 @@
 /*
  * Login.tsx
- * Login page where existing users authenticate with their email and password.
+ * Login page where existing users authenticate with their email/username and password.
  * Includes a link to the forgot password flow for account recovery.
  */
 import React, { useState } from "react";
@@ -49,10 +49,7 @@ const Login: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.email.trim()) newErrors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
+    if (!formData.email.trim()) newErrors.email = "Email or username is required";
 
     if (!formData.password) {
       newErrors.password = "Password is required";
@@ -94,7 +91,6 @@ const Login: React.FC = () => {
       </div>
 
       <div className="login-content">
-        {/* Left Side - Branding */}
         <div className="login-left">
           <div className="login-branding">
             <h2 className="login-brand-name">
@@ -105,7 +101,6 @@ const Login: React.FC = () => {
           <div className="chart-container">
             <div className="chart-graphic">
               <svg viewBox="0 0 400 300" className="stock-chart">
-                {/* Grid lines */}
                 {[250, 200, 150, 100, 50].map((y, i) => (
                   <line
                     key={i}
@@ -118,7 +113,6 @@ const Login: React.FC = () => {
                   />
                 ))}
 
-                {/* Line chart */}
                 <path
                   d="M 0 250 L 50 240 L 100 220 L 150 200 L 200 170 L 250 140 L 300 100 L 350 70 L 400 50"
                   fill="none"
@@ -128,18 +122,29 @@ const Login: React.FC = () => {
                 />
 
                 <defs>
-                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <linearGradient
+                    id="gradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
                     <stop offset="0%" stopColor="#10b981" />
                     <stop offset="100%" stopColor="#34d399" />
                   </linearGradient>
 
-                  <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <linearGradient
+                    id="barGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="0%"
+                    y2="100%"
+                  >
                     <stop offset="0%" stopColor="#10b981" stopOpacity="0.8" />
                     <stop offset="100%" stopColor="#10b981" stopOpacity="0.3" />
                   </linearGradient>
                 </defs>
 
-                {/* Bars */}
                 {[200, 180, 160, 130, 100, 70, 50].map((y, i) => (
                   <rect
                     key={i}
@@ -173,7 +178,6 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side - Login Form */}
         <div className="login-right">
           <div className="login-form-container">
             <h1 className="welcome-title">Welcome Back</h1>
@@ -190,7 +194,7 @@ const Login: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="login-form" noValidate>
               <div className="form-group">
-                <label htmlFor="email">Email Address</label>
+                <label htmlFor="email">Email or Username</label>
                 <div className="input-wrapper">
                   <input
                     type="text"
@@ -199,8 +203,8 @@ const Login: React.FC = () => {
                     value={formData.email}
                     onChange={handleChange}
                     className={errors.email ? "error" : ""}
-                    placeholder="Enter your email"
-                    autoComplete="email"
+                    placeholder="Enter your email or username"
+                    autoComplete="username"
                   />
                   <span className="input-icon">📧</span>
                 </div>

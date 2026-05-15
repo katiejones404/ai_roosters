@@ -1,3 +1,10 @@
+"""
+FinBERT sentiment scoring pipeline for StockSense.
+
+Reads unscored articles from the configured database tables, scores them using
+the ProsusAI/finbert model, and writes sentiment labels and probability scores
+back to the same tables. Supports GPU (CUDA) with automatic CPU fallback.
+"""
 from __future__ import annotations
 
 import logging

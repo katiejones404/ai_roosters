@@ -56,7 +56,7 @@ Base.metadata.create_all(
 with _engine.begin() as conn:
     conn.execute(text("""
         CREATE TABLE IF NOT EXISTS transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             ticker TEXT NOT NULL,
             action TEXT NOT NULL,

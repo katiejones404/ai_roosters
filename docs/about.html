@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About the Team - StockSense</title>
+    <meta
+      name="description"
+      content="Meet the StockSense team from the University of South Carolina and learn why we built our AI-powered stock sentiment and portfolio platform."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --bg: #0f172a;
+        --bg2: #111827;
+        --surface: #1e293b;
+        --surface-2: #0b1220;
+        --border: rgba(255, 255, 255, 0.08);
+        --border-soft: rgba(255, 255, 255, 0.06);
+        --text: #e2e8f0;
+        --muted: rgba(255, 255, 255, 0.7);
+        --muted-2: rgba(255, 255, 255, 0.55);
+        --green: #10b981;
+        --green-dark: #059669;
+        --green-darker: #047857;
+        --purple: #a78bfa;
+        --font: "Inter", sans-serif;
+        --shadow-soft: 0 18px 40px -12px rgba(0, 0, 0, 0.4);
+        --radius-sm: 14px;
+        --radius-md: 20px;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: var(--font);
+        background: linear-gradient(145deg, #0b1120 0%, #111827 70%);
+        color: var(--text);
+        line-height: 1.6;
+        overflow-x: hidden;
+        letter-spacing: -0.01em;
+        min-height: 100vh;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      nav {
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        height: 72px;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .nav-logo {
+        font-size: 1.35rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: white;
+      }
+      .nav-logo span {
+        color: var(--green);
+        font-weight: 800;
+      }
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        list-style: none;
+      }
+      .nav-links a {
+        color: var(--muted-2);
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: color 0.2s;
+      }
+      .nav-links a:hover {
+        color: white;
+      }
+      .nav-cta {
+        padding: 0.6rem 1.1rem;
+        border-radius: 40px;
+        font-weight: 600 !important;
+        background: #10b981;
+        color: #0a0f1c !important;
+        box-shadow: 0 6px 14px rgba(16, 185, 129, 0.25);
+        transition:
+          background 0.2s,
+          transform 0.1s;
+      }
+      .nav-cta:hover {
+        background: #34d399;
+        transform: scale(1.02);
+      }
+
+      .page {
+        min-height: 100vh;
+        padding: 7rem 1.8rem 4rem;
+      }
+      .container {
+        max-width: 1350px;
+        margin: 0 auto;
+      }
+
+      .hero-block {
+        margin-bottom: 3.5rem;
+        text-align: left;
+      }
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+        padding: 0.25rem 0.9rem;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #a7f0d5;
+        background: rgba(16, 185, 129, 0.12);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        letter-spacing: 0.02em;
+      }
+      .hero-title {
+        font-size: clamp(2.4rem, 6vw, 4.2rem);
+        line-height: 1.1;
+        letter-spacing: -0.04em;
+        color: #f1f5f9;
+        margin-bottom: 1rem;
+        font-weight: 700;
+      }
+      .hero-subtitle {
+        color: #cbd5e1;
+        max-width: 700px;
+        font-size: 1.15rem;
+        margin-top: 0.4rem;
+        line-height: 1.6;
+      }
+
+      .section {
+        margin-top: 4rem;
+      }
+      .section-title {
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 0.9rem;
+        letter-spacing: -0.03em;
+      }
+      .section-sub {
+        color: #94a3b8;
+        max-width: 680px;
+        margin-bottom: 2rem;
+        font-size: 1.05rem;
+      }
+
+      .mission-block {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-md);
+        padding: 2.5rem 2.2rem;
+        backdrop-filter: blur(4px);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-soft);
+      }
+      .mission-block p {
+        color: #cbd5e1;
+        max-width: 820px;
+        margin-bottom: 1.2rem;
+        font-size: 1.05rem;
+      }
+      .mission-block .section-title {
+        margin-top: 0;
+      }
+
+      .team-row {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: center;
+        gap: 1.2rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        scrollbar-width: thin;
+        scrollbar-color: #334155 transparent;
+      }
+      .team-row::-webkit-scrollbar {
+        height: 4px;
+      }
+      .team-row::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 8px;
+      }
+
+      .member-item {
+        flex: 0 0 auto;
+        width: 200px;
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 24px;
+        padding: 1.8rem 1rem 1.5rem;
+        backdrop-filter: blur(8px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.35);
+      }
+      .member-item:hover {
+        border-color: rgba(16, 185, 129, 0.3);
+        background: rgba(20, 30, 50, 0.75);
+      }
+      .member-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(
+          135deg,
+          rgba(16, 185, 129, 0.18),
+          rgba(129, 140, 248, 0.12)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.4rem;
+        color: #6ee7b7;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .member-item h3 {
+        color: #f1f5f9;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.01em;
+      }
+      .member-links {
+        margin-top: 0;
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+      .pill-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.7rem;
+        padding: 0.25rem 0.7rem;
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #cbd5e1;
+        transition: all 0.2s;
+        font-weight: 500;
+      }
+      .pill-link svg {
+        width: 12px;
+        height: 12px;
+        fill: currentColor;
+      }
+      .pill-link:hover {
+        border-color: rgba(16, 185, 129, 0.45);
+        color: #6ee7b7;
+        background: rgba(16, 185, 129, 0.08);
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.2rem;
+        margin-top: 1rem;
+      }
+      .info-item {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 18px;
+        padding: 1.2rem 1.4rem;
+        backdrop-filter: blur(4px);
+      }
+      .info-item .label {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+      }
+      .info-item .value {
+        color: #e2e8f0;
+        font-weight: 600;
+        font-size: 1rem;
+      }
+      .info-item a {
+        color: #6ee7b7;
+        font-weight: 500;
+        word-break: break-word;
+      }
+      .info-item a:hover {
+        text-decoration: underline;
+      }
+
+      .footer {
+        margin-top: 4rem;
+        padding: 1.8rem 0 0.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        color: #94a3b8;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+      }
+      .footer-links {
+        display: flex;
+        gap: 1.8rem;
+        flex-wrap: wrap;
+      }
+      .footer a {
+        color: #cbd5e1;
+        transition: color 0.2s;
+      }
+      .footer a:hover {
+        color: #6ee7b7;
+      }
+
+      @media (max-width: 900px) {
+        .team-row {
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+        .member-item {
+          width: 180px;
+        }
+      }
+      @media (max-width: 650px) {
+        nav {
+          padding: 0 1rem;
+        }
+        .nav-links {
+          gap: 1rem;
+        }
+        .team-row {
+          gap: 1rem;
+        }
+        .member-item {
+          width: 150px;
+        }
+        .footer {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="index.html" class="nav-logo">Stock<span>Sense</span></a>
+      <ul class="nav-links">
+        <li><a href="https://sccapstone.github.io/ai_roosters/index.html#">Home</a></li>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="about.html#team">Meet the Team</a></li>
+        <li>
+          <a
+            class="nav-cta"
+            href="https://ai-roosters-webpage.vercel.app/"
+            target="_blank"
+            rel="noreferrer"
+            >Launch App →</a
+          >
+        </li>
+      </ul>
+    </nav>
+    <main class="page">
+      <div class="container">
+        <div class="hero-block">
+          <h1 class="hero-title">
+            Built by <span style="color: #34d399">AI Roosters</span>
+          </h1>
+          <p class="hero-subtitle">
+            Five computing students from the University of South Carolina
+            building a full-stack AI platform for their senior capstone.
+          </p>
+        </div>
+
+        <div class="mission-block">
+          <div class="section-title" style="font-size: 1.7rem">
+            Why we built StockSense?
+          </div>
+          <p>
+            Stock market data is everywhere, but understanding <i>why</i> a
+            stock moves is still hard. Most platforms drown you in price charts
+            and ticker symbols, yet completely miss the narrative. They leave
+            you juggling a dozen news tabs just to figure out what actually
+            moved the needle.
+          </p>
+          <p>
+            We wanted a tool that doesn't just show you numbers, but connects
+            the dots between real world events and portfolio impact. StockSense
+            combines FinBERT-powered sentiment analysis with GPT-generated
+            summaries and live price data, so you get a clear, human-readable
+            picture of what's driving the market. No more guesswork, just
+            context.
+          </p>
+          <p>
+            This project was born in our senior capstone course at the
+            University of South Carolina. Over two semesters, we set out to
+            prove that AI can make financial data not only accessible, but
+            genuinely useful for everyday investors.
+          </p>
+        </div>
+
+        <div id="team" class="section" style="text-align: center">
+          <div class="section-title">The people behind StockSense</div>
+          <p class="section-sub" style="margin-left: auto; margin-right: auto">
+            Five developers. Two semesters. One full-stack AI application.
+          </p>
+
+          <div class="team-row">
+            <div class="member-item">
+              <div class="member-avatar">KJ</div>
+              <h3>Katie Jones</h3>
+              <div class="member-links">
+                <a
+                  href="https://www.linkedin.com/in/katiejones404"
+                  class="pill-link"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
+                    />
+                    <rect x="2" y="9" width="4" height="12" />
+                    <circle cx="4" cy="4" r="2" />
+                  </svg>
+                  LinkedIn
+                </a>
+              </div>
+            </div>
+
+            <div class="member-item">
+              <div class="member-avatar">CT</div>
+              <h3>Connor Thiele</h3>
+              <div class="member-links">
+                <a
+                  href="https://www.linkedin.com/in/connor-thiele-b98a842a8"
+                  class="pill-link"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
+                    />
+                    <rect x="2" y="9" width="4" height="12" />
+                    <circle cx="4" cy="4" r="2" />
+                  </svg>
+                  LinkedIn
+                </a>
+              </div>
+            </div>
+
+            <div class="member-item">
+              <div class="member-avatar">SB</div>
+              <h3>Sofia Bacha</h3>
+              <div class="member-links">
+                <a
+                  href="https://www.linkedin.com/in/sofia-bacha"
+                  class="pill-link"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
+                    />
+                    <rect x="2" y="9" width="4" height="12" />
+                    <circle cx="4" cy="4" r="2" />
+                  </svg>
+                  LinkedIn
+                </a>
+              </div>
+            </div>
+
+            <div class="member-item">
+              <div class="member-avatar">KD</div>
+              <h3>Kevin Do</h3>
+              <div class="member-links">
+                <a
+                  href="https://www.linkedin.com/in/kevin-do-224a971a8"
+                  class="pill-link"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
+                    />
+                    <rect x="2" y="9" width="4" height="12" />
+                    <circle cx="4" cy="4" r="2" />
+                  </svg>
+                  LinkedIn
+                </a>
+              </div>
+            </div>
+
+            <div class="member-item">
+              <div class="member-avatar">AL</div>
+              <h3>Andrew Lim</h3>
+              <div class="member-links">
+                <a
+                  href="https://www.linkedin.com/in/andrew-lim-081116336?trk=people-guest_people_search-card"
+                  class="pill-link"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
+                    />
+                    <rect x="2" y="9" width="4" height="12" />
+                    <circle cx="4" cy="4" r="2" />
+                  </svg>
+                  LinkedIn
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top: 4.5rem">
+          <div class="section-title">About this project</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="label">Institution</div>
+              <div class="value">University of South Carolina</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Course</div>
+              <div class="value">Senior Capstone - CSCE 490</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Team</div>
+              <div class="value">AI Roosters</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Source Code</div>
+              <a
+                href="https://github.com/SCCapstone/ai_roosters"
+                target="_blank"
+                rel="noreferrer"
+                >github.com/sccapstone/ai-roosters</a
+              >
+            </div>
+            <div class="info-item">
+              <div class="label">Live Application</div>
+              <a
+                href="https://ai-roosters-webpage.vercel.app/"
+                target="_blank"
+                rel="noreferrer"
+                >ai-roosters-webpage.vercel.app</a
+              >
+            </div>
+            <div class="info-item">
+              <div class="label">Completed</div>
+              <div class="value">Spring 2026</div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <div class="footer-links">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a
+              href="https://github.com/SCCapstone/ai_roosters"
+              target="_blank"
+              rel="noreferrer"
+              >GitHub</a
+            >
+            <a
+              href="https://ai-roosters-webpage.vercel.app/"
+              target="_blank"
+              rel="noreferrer"
+              >Launch App</a
+            >
+          </div>
+          <div>
+            Built by Team AI Roosters · University of South Carolina Capstone
+            2026
+          </div>
+        </footer>
+      </div>
+    </main>
+  </body>
+</html>

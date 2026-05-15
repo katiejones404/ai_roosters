@@ -1,9 +1,9 @@
 """
-Notes - Pydantic schemas for authentication, portfolio management, sentiment data,
+Pydantic schemas for authentication, portfolio management, sentiment data,
 and net worth tracking used throughout the StockSense backend.
 """
 
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, Field, validator
 from datetime import datetime, date
 from typing import Optional, Literal, Union
 from uuid import UUID
@@ -106,17 +106,17 @@ class TokenData(BaseModel):
 
 class PortfolioBaseItem(BaseModel):
     ticker: str
-    quantity: float
-    avg_price: float
+    quantity: float = Field(..., ge=0.0001)
+    avg_price: float = Field(..., gt=0)
 
 
 class PortfolioCreateItem(PortfolioBaseItem):
-    pass
+    purchase_date: Optional[str] = None
 
 
 class PortfolioUpdateItem(BaseModel):
-    quantity: Optional[float] = None
-    avg_price: Optional[float] = None
+    quantity: Optional[float] = Field(None, ge=0.0001)
+    avg_price: Optional[float] = Field(None, gt=0)
 
 
 class PortfolioItem(PortfolioBaseItem):

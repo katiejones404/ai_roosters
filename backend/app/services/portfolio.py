@@ -8,9 +8,11 @@ All SQL queries use parameterized statements to prevent injection.
 """
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional
 from uuid import UUID, uuid4
 from decimal import Decimal
+from datetime import datetime, timezone
 import math
 import logging
 
@@ -121,6 +123,7 @@ def get_portfolio_item_by_ticker(
 def add_or_update_position(
     db: Session, user_id: UUID, item: PortfolioCreateItem
 ) -> PortfolioItem:
+    """Insert a new portfolio position or merge additional shares into an existing one using a weighted average price."""
     logger.info(f"add_or_update_position called: user={user_id}, ticker={item.ticker}, qty={item.quantity}, price={item.avg_price}")
     
     try:
@@ -164,7 +167,7 @@ def add_or_update_position(
                 },
             )
 
-        _log_transaction(db, user_id, item.ticker, "buy", item.quantity, item.avg_price)
+        _log_transaction(db, user_id, item.ticker, "buy", item.quantity, item.avg_price, executed_at=getattr(item, 'purchase_date', None))
         db.commit()
         logger.info(f"Committed successfully for {item.ticker}")
 
@@ -177,23 +180,42 @@ def add_or_update_position(
         db.rollback()
         raise
     
-def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quantity: float, price: float, realized_gain: Optional[float] = None) -> None:
-    db.execute(text("""
-        INSERT INTO transactions (user_id, ticker, action, quantity, price, realized_gain)
-        VALUES (:uid, :ticker, :action, :qty, :price, :gain)
+def _log_transaction(db: Session, user_id: UUID, ticker: str, action: str, quantity: float, price: float, realized_gain: Optional[float] = None, executed_at: Optional[str] = None) -> str:
+    """Insert a buy or sell transaction record and return the new transaction ID."""
+    if executed_at is None:
+        executed_at = datetime.now(timezone.utc)
+
+    row = db.execute(text("""
+        INSERT INTO transactions (id, user_id, ticker, action, quantity, price, realized_gain, executed_at)
+        VALUES (:id, :uid, :ticker, :action, :qty, :price, :gain, :executed_at)
+        RETURNING id
     """), {
+        "id": str(uuid4()),
         "uid": str(user_id),
         "ticker": ticker,
         "action": action,
         "qty": quantity,
         "price": price,
-        "gain": realized_gain
+        "gain": realized_gain,
+        "executed_at": executed_at,
         },
+    ).fetchone()
+    transaction_id = str(row_to_dict(row)["id"]) if row else ""
+    logger.info(
+        "Logged transaction: id=%s user=%s ticker=%s action=%s qty=%s price=%s",
+        transaction_id,
+        user_id,
+        ticker,
+        action,
+        quantity,
+        price,
     )
+    return transaction_id
 
 def update_portfolio_item(
     db: Session, user_id: UUID, ticker: str, item: PortfolioUpdateItem
 ) -> Optional[PortfolioItem]:
+    """Update quantity or average price for an existing portfolio position, logging a sell transaction if shares were reduced."""
     existing = get_portfolio_item_by_ticker(db, user_id, ticker)
     if not existing:
         return None
@@ -231,14 +253,20 @@ def update_portfolio_item(
     return get_portfolio_item_by_ticker(db, user_id, ticker)
 
 def _get_latest_price(db: Session, ticker: str) -> Optional[float]:
-    row = db.execute(text("""
-        SELECT close FROM stocks
-        WHERE ticker = :ticker
-        ORDER BY date DESC LIMIT 1
-    """), {"ticker": ticker}).fetchone()
+    """Fetch the most recent closing price for a ticker from the stocks table."""
+    try:
+        row = db.execute(text("""
+            SELECT close FROM stocks
+            WHERE ticker = :ticker
+            ORDER BY date DESC LIMIT 1
+        """), {"ticker": ticker}).fetchone()
+    except SQLAlchemyError as exc:
+        logger.info("Latest price unavailable for %s; falling back to average price. error=%s", ticker, exc)
+        return None
     return float(row[0]) if row and row[0] is not None else None
 
 def remove_from_portfolio(db: Session, user_id: UUID, ticker: str) -> bool:
+    """Remove a ticker position from the portfolio and log the full sell with realized gain."""
     existing = get_portfolio_item_by_ticker(db, user_id, ticker)
     if existing:
         sell_price = _get_latest_price(db, ticker) or existing.avg_price
@@ -254,6 +282,140 @@ def remove_from_portfolio(db: Session, user_id: UUID, ticker: str) -> bool:
     result = db.execute(sql, {"user_id": str(user_id), "ticker": ticker})
     db.commit()
     return result.rowcount > 0
+
+
+def delete_transaction(db: Session, user_id: UUID, transaction_id: str) -> bool:
+    """
+    Delete a single transaction and adjust the portfolio position for that ticker.
+
+    Strategy differs by action:
+    - sell: add the sold quantity back to the current position (or recreate the
+      position if it was fully closed). avg_price is unchanged for sells.
+    - buy: subtract the bought quantity and recompute avg_price from the
+      remaining buy transactions. Removes the portfolio row if nothing is left.
+
+    Returns False if the transaction does not belong to this user.
+    """
+    tx_row = db.execute(
+        text("""
+            SELECT id, ticker, action, quantity, price
+            FROM transactions
+            WHERE id = :tid AND user_id = :uid
+        """),
+        {"tid": transaction_id, "uid": str(user_id)},
+    ).fetchone()
+
+    if not tx_row:
+        existing_any_user = db.execute(
+            text("""
+                SELECT user_id, ticker, action, quantity, price
+                FROM transactions
+                WHERE id = :tid
+            """),
+            {"tid": transaction_id},
+        ).fetchone()
+        if existing_any_user:
+            existing = row_to_dict(existing_any_user)
+            logger.warning(
+                "Delete transaction denied: id=%s requested_user=%s owner_user=%s ticker=%s action=%s qty=%s price=%s",
+                transaction_id,
+                user_id,
+                existing["user_id"],
+                existing["ticker"],
+                existing["action"],
+                existing["quantity"],
+                existing["price"],
+            )
+        else:
+            logger.warning(
+                "Delete transaction failed: id=%s requested_user=%s not found",
+                transaction_id,
+                user_id,
+            )
+        return False
+
+    tx = row_to_dict(tx_row)
+    ticker = tx["ticker"]
+    action = tx["action"]
+    tx_qty = float(tx["quantity"])
+    tx_price = float(tx["price"])
+
+    db.execute(
+        text("DELETE FROM transactions WHERE id = :tid AND user_id = :uid"),
+        {"tid": transaction_id, "uid": str(user_id)},
+    )
+
+    existing = db.execute(
+        text("SELECT id, quantity, avg_price FROM portfolio WHERE user_id = :uid AND ticker = :ticker"),
+        {"uid": str(user_id), "ticker": ticker},
+    ).fetchone()
+    existing_d = row_to_dict(existing) if existing else None
+
+    if action == "sell":
+        # Deleting a sell: give the shares back. avg_price is unaffected by sells.
+        if existing_d:
+            new_qty = float(existing_d["quantity"]) + tx_qty
+            db.execute(
+                text("UPDATE portfolio SET quantity = :qty WHERE user_id = :uid AND ticker = :ticker"),
+                {"qty": new_qty, "uid": str(user_id), "ticker": ticker},
+            )
+        else:
+            # Position was fully closed by this sell. Recreate it.
+            # Use avg_price from remaining buy transactions when available,
+            # falling back to the sell price (best approximation with no buy log).
+            agg = db.execute(
+                text("""
+                    SELECT
+                        SUM(CASE WHEN action = 'buy' THEN quantity * price ELSE 0 END)
+                            / NULLIF(SUM(CASE WHEN action = 'buy' THEN quantity ELSE 0 END), 0)
+                        AS avg_buy_price
+                    FROM transactions
+                    WHERE user_id = :uid AND ticker = :ticker
+                """),
+                {"uid": str(user_id), "ticker": ticker},
+            ).fetchone()
+            avg_price = float((row_to_dict(agg) or {}).get("avg_buy_price") or tx_price)
+            db.execute(
+                text("INSERT INTO portfolio (id, user_id, ticker, quantity, avg_price) VALUES (:id, :uid, :ticker, :qty, :price)"),
+                {"id": str(uuid4()), "uid": str(user_id), "ticker": ticker, "qty": tx_qty, "price": avg_price},
+            )
+
+    else:  # action == "buy"
+        # Deleting a buy: recompute position entirely from remaining transactions.
+        agg = db.execute(
+            text("""
+                SELECT
+                    SUM(CASE WHEN action = 'buy' THEN quantity ELSE -quantity END) AS net_qty,
+                    SUM(CASE WHEN action = 'buy' THEN quantity * price ELSE 0 END)
+                        / NULLIF(SUM(CASE WHEN action = 'buy' THEN quantity ELSE 0 END), 0)
+                        AS avg_buy_price
+                FROM transactions
+                WHERE user_id = :uid AND ticker = :ticker
+            """),
+            {"uid": str(user_id), "ticker": ticker},
+        ).fetchone()
+        agg_d = row_to_dict(agg)
+        net_qty = float(agg_d["net_qty"] or 0)
+        avg_buy_price = float(agg_d["avg_buy_price"] or 0)
+
+        if net_qty <= 0 or avg_buy_price <= 0:
+            db.execute(
+                text("DELETE FROM portfolio WHERE user_id = :uid AND ticker = :ticker"),
+                {"uid": str(user_id), "ticker": ticker},
+            )
+        elif existing_d:
+            db.execute(
+                text("UPDATE portfolio SET quantity = :qty, avg_price = :price WHERE user_id = :uid AND ticker = :ticker"),
+                {"qty": net_qty, "price": avg_buy_price, "uid": str(user_id), "ticker": ticker},
+            )
+        else:
+            db.execute(
+                text("INSERT INTO portfolio (id, user_id, ticker, quantity, avg_price) VALUES (:id, :uid, :ticker, :qty, :price)"),
+                {"id": str(uuid4()), "uid": str(user_id), "ticker": ticker, "qty": net_qty, "price": avg_buy_price},
+            )
+
+    db.commit()
+    return True
 
 
 def get_portfolio_summary(
@@ -298,21 +460,21 @@ def get_portfolio_summary(
             lp.current_price,
             lp.price_date,
             CASE WHEN lp.close_1d_ago   IS NOT NULL AND lp.close_1d_ago   <> 0
-                 THEN (lp.current_price - lp.close_1d_ago)   / lp.close_1d_ago   * 100
+                 THEN (lp.current_price - lp.close_1d_ago)   / lp.close_1d_ago
                  END AS return_1d,
             CASE WHEN lp.close_30d_ago  IS NOT NULL AND lp.close_30d_ago  <> 0
-                 THEN (lp.current_price - lp.close_30d_ago)  / lp.close_30d_ago  * 100
+                 THEN (lp.current_price - lp.close_30d_ago)  / lp.close_30d_ago
                  END AS return_30d,
             CASE WHEN lp.close_120d_ago IS NOT NULL AND lp.close_120d_ago <> 0
-                 THEN (lp.current_price - lp.close_120d_ago) / lp.close_120d_ago * 100
+                 THEN (lp.current_price - lp.close_120d_ago) / lp.close_120d_ago
                  END AS return_120d,
             CASE WHEN lp.close_360d_ago IS NOT NULL AND lp.close_360d_ago <> 0
-                 THEN (lp.current_price - lp.close_360d_ago) / lp.close_360d_ago * 100
+                 THEN (lp.current_price - lp.close_360d_ago) / lp.close_360d_ago
                  END AS return_360d,
             (p.quantity * p.avg_price) AS cost_basis,
             (p.quantity * COALESCE(lp.current_price, p.avg_price)) AS current_value,
             (p.quantity * COALESCE(lp.current_price, p.avg_price)) - (p.quantity * p.avg_price) AS total_gain_loss,
-            ((COALESCE(lp.current_price, p.avg_price) - p.avg_price) / p.avg_price * 100) AS gain_loss_pct
+            ((COALESCE(lp.current_price, p.avg_price) - p.avg_price) / p.avg_price) AS gain_loss_pct
         FROM portfolio p
         LEFT JOIN latest_prices lp ON p.ticker = lp.ticker
         WHERE p.user_id = :user_id
@@ -393,6 +555,7 @@ def get_portfolio_summary(
     )
 
 def get_transactions(db: Session, user_id: UUID) -> List[dict]:
+    """Return all buy and sell transactions for a user, ordered by most recent first."""
     rows = db.execute(text("""
         SELECT id, ticker, action, quantity, price, realized_gain, executed_at
         FROM transactions
@@ -413,6 +576,7 @@ def get_transactions(db: Session, user_id: UUID) -> List[dict]:
     ]
 
 def get_realized_summary(db: Session, user_id: UUID) -> List[dict]:
+    """Return per-ticker realized gain totals and sell counts for a user, sorted by total realized gain descending."""
     row = db.execute(
         text("""
             SELECT 

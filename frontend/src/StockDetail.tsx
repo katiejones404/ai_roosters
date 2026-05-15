@@ -81,13 +81,19 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       }}
     >
       <p style={{ margin: 0, fontSize: 12, color: palette.muted }}>
-        {new Date(label).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        {parseLocalDate(label).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
       </p>
       <p style={{ margin: "4px 0 0", fontSize: 16, fontWeight: 700, color: palette.text }}>
         {formatCurrency(payload[0].value)}
       </p>
     </div>
   );
+};
+
+// Parse YYYY-MM-DD as local date (not UTC midnight, which shifts back one day in US timezones)
+const parseLocalDate = (dateStr: string): Date => {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
 };
 
 const toNumOrNull = (v: any): number | null => {
@@ -269,10 +275,10 @@ const StockDetail: React.FC = () => {
 
             {oldest && latest && (
               <p style={{ margin: "2px 0 0", fontSize: 12, color: palette.muted }}>
-                Data from {new Date(oldest.date).toLocaleDateString()} - {new Date(latest.date).toLocaleDateString()}
+                Data from {parseLocalDate(oldest.date).toLocaleDateString()} - {parseLocalDate(latest.date).toLocaleDateString()}
                 {chartStartDate && chartEndDate && (
                   <>
-                    {" "}* Chart: {new Date(chartStartDate).toLocaleDateString()} - {new Date(chartEndDate).toLocaleDateString()}
+                    {" "}* Chart: {parseLocalDate(chartStartDate).toLocaleDateString()} - {parseLocalDate(chartEndDate).toLocaleDateString()}
                   </>
                 )}
               </p>
@@ -309,6 +315,12 @@ const StockDetail: React.FC = () => {
             of articles available per stock is intentionally limited. This may impact
             the sentiment listed for each stock.
           </p>
+          <p style={{ margin: "0 0 18px", color: palette.muted, fontSize: 13, lineHeight: 1.45 }}>
+            StockSense uses a finance-focused FinBERT model to read recent article
+            text and classify it as positive, neutral, or negative. Those article
+            signals are combined into the sentiment indicators shown below, and the
+            AI summary turns the recent news context into a short explanation.
+          </p>
 
           {sentimentLoading && <div style={{ color: palette.muted }}>Loading sentiment and AI news summary...</div>}
           {!sentimentLoading && sentimentError && <div style={{ color: "#ef4444" }}>{sentimentError}</div>}
@@ -344,7 +356,8 @@ const StockDetail: React.FC = () => {
                   tick={{ fill: palette.muted, fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(d: string) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  interval="preserveStartEnd"
+                  tickFormatter={(d: string) => parseLocalDate(d).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 />
                 <YAxis
                   tick={{ fill: palette.muted, fontSize: 11 }}

@@ -158,7 +158,7 @@
   display: grid;
   grid-template-columns: 140px 1fr 1fr 1fr 130px 44px;
   gap: 0.75rem;
-  align-items: center;
+  align-items: start;
   padding: 0.75rem 1rem;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.02);
@@ -191,6 +191,13 @@
 
 .imp-field-total  { justify-content: flex-end; }
 .imp-field-action { justify-content: center; }
+.imp-field-date,
+.imp-field-qty {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.2rem;
+}
 
 /* ── Inputs ── */
 .imp-input {
@@ -266,6 +273,39 @@
   font-weight: 700;
   color: var(--green);      /* #10b981 */
   letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.imp-field-total {
+  position: relative;
+  cursor: default;
+}
+
+.imp-field-total[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: normal;
+  word-break: break-all;
+  width: max-content;
+  max-width: 180px;
+  text-align: right;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  pointer-events: none;
+  line-height: 1.5;
 }
 
 .imp-total-empty {
@@ -316,15 +356,21 @@
   justify-content: center;
 }
 
-/* ── Row error message ── */
+/* Row error message */
 .imp-row-err-msg {
   grid-column: 1 / -1;
-  font-size: 0.75rem;
-  color: var(--red);        /* #ef4444 — replaces #f87171 (not in palette) */
-  padding: 0.3rem 0.25rem 0.1rem;
+  font-size: 0.85rem;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-left: 3px solid #ef4444;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  margin-top: 0.15rem;
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  line-height: 1.4;
 }
 
 .imp-row-err-msg::before {
@@ -334,12 +380,47 @@
   border-radius: 50%;
   background: rgba(239, 68, 68, 0.2);
   color: var(--red);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+/* Quantity field with max hint */
+.imp-max-hint {
+  font-size: 0.85rem;
+  color: #8c9baf;
+  padding-left: 0.2rem;
+  line-height: 1.2;
+  min-height: 0.82rem;
+}
+
+.imp-max-exceeded {
+  color: #f87171;
+  font-weight: 600;
+}
+
+.imp-date-hint {
+  font-size: 0.85rem;
+  color: #8c9baf;
+  margin-top: 0.2rem;
+  padding-left: 0.2rem;
+  line-height: 1.2;
+  min-height: 0.82rem;
+}
+
+/* ── Stock split note ── */
+.imp-split-note {
+  grid-column: 1 / -1;
+  font-size: 1rem;
+  color: #a6b3c5;
+  background: rgba(148, 163, 184, 0.08);
+  border-left: 2px solid #475569;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0 4px 4px 0;
+  margin-top: 0.1rem;
 }
 
 /* ── Add row button ── */
@@ -490,7 +571,10 @@
   border-radius: 12px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
   z-index: 100;
-  overflow: hidden;
+  max-height: 250px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
 }
 
 .imp-ticker-option {

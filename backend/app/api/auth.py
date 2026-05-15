@@ -1,9 +1,14 @@
 """
-Authentication API endpoints
+Authentication API endpoints for StockSense.
+
+Handles user registration, login, logout, profile management, password reset,
+daily streak tracking, and notification preferences. All protected routes
+require a valid JWT token issued at login.
 """
 import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from datetime import timedelta, date
 from typing import Annotated
@@ -43,7 +48,23 @@ from app.core.security import (
 from app.services.email_service import send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-DEFAULT_PROFILE_PICTURE = os.getenv("DEFAULT_PROFILE_PICTURE", "/default_pfp.jpg")
+_DEFAULT_PROFILE_PICTURE_FALLBACK = "/default_pfp.jpg"
+
+
+def _resolve_default_profile_picture() -> str:
+    configured = (os.getenv("DEFAULT_PROFILE_PICTURE") or "").strip()
+    if not configured:
+        return _DEFAULT_PROFILE_PICTURE_FALLBACK
+
+    lowered = configured.lower()
+    # Guard against common typo/misconfiguration values from env.
+    if lowered.endswith("default_pfp.jgp") or lowered.endswith("default_pfp.jpeg"):
+        return _DEFAULT_PROFILE_PICTURE_FALLBACK
+
+    return configured
+
+
+DEFAULT_PROFILE_PICTURE = _resolve_default_profile_picture()
 
 # --- Token Blacklist (Feature #6) ---
 # In-memory set of invalidated tokens. Resets on server restart.
@@ -51,6 +72,7 @@ token_blacklist: set[str] = set()
 
 
 def _normalize_visit_days(raw: str | None) -> list[str]:
+    """Parse the JSON-encoded visit-day list stored on the user record into a plain list of date strings."""
     if not raw:
         return []
     try:
@@ -63,6 +85,7 @@ def _normalize_visit_days(raw: str | None) -> list[str]:
 
 
 def _serialize_streak(current_user: User) -> StreakResponse:
+    """Compute and update the user's daily login streak, then return the current streak data."""
     today = date.today()
     today_s = today.isoformat()
 
@@ -110,6 +133,7 @@ def _serialize_streak(current_user: User) -> StreakResponse:
 
 
 def _serialize_notification_preferences(current_user: User) -> NotificationPreferencesResponse:
+    """Build a notification preferences response from the user's stored column values."""
     return NotificationPreferencesResponse(
         marketAlerts=bool(
             True if current_user.notify_market_alerts_enabled is None else current_user.notify_market_alerts_enabled
@@ -129,7 +153,12 @@ def _needs_default_profile_picture(profile_picture: str | None) -> bool:
     """
     if not profile_picture or not profile_picture.strip():
         return True
-    return "api.dicebear.com" in profile_picture
+    lowered = profile_picture.strip().lower()
+    if "dicebear.com" in lowered:
+        return True
+    if lowered.endswith("default_pfp.jgp") or lowered.endswith("default_pfp.jpeg"):
+        return True
+    return False
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -176,7 +205,8 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
     new_user = User(
         username=user_data.username,
         email=user_data.email.lower(),
-        password_hash=hashed_password
+        password_hash=hashed_password,
+        profile_picture=DEFAULT_PROFILE_PICTURE,
     )
 
     db.add(new_user)
@@ -189,8 +219,18 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """Login user and return JWT token"""
-    # Find user
-    user = db.query(User).filter(User.email == user_data.email.lower()).first()
+    # The login field accepts either email or username for convenience.
+    login_identifier = user_data.email.strip().lower()
+    user = (
+        db.query(User)
+        .filter(
+            or_(
+                func.lower(User.email) == login_identifier,
+                func.lower(User.username) == login_identifier,
+            )
+        )
+        .first()
+    )
 
     if not user or not verify_password(user_data.password, user.password_hash):
         # --- Feature #3: Delay on failed login to slow brute-force attacks ---
@@ -337,7 +377,8 @@ async def update_profile_picture(
     db: Session = Depends(get_db)
 ):
     """Update the authenticated user's profile picture"""
-    current_user.profile_picture = data.profile_picture
+    profile_picture = (data.profile_picture or "").strip()
+    current_user.profile_picture = profile_picture or DEFAULT_PROFILE_PICTURE
     db.commit()
     db.refresh(current_user)
     return current_user

@@ -1,3 +1,8 @@
+"""
+test_alerts_logic_unit.py
+Unit tests for the pure alert-trigger logic functions in app.services.alerts_logic.
+No database or network dependencies; all inputs are passed directly as arguments.
+"""
 import pytest
 
 from app.services.alerts_logic import is_alert_triggered, should_send_alert_email
