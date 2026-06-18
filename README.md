@@ -6,7 +6,7 @@ This is the public version of the repository for my senior capstone project.
 
 StockSense is an AI-powered stock sentiment and portfolio platform. It combines market news sentiment with stock price data so users can track portfolios, monitor alerts, and understand how sentiment relates to returns.
 
-Live frontend: https://ai-roosters-webpage.vercel.app/
+No-longer-live frontend: https://ai-roosters-webpage.vercel.app/
 
 Deployment and operations guide: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
